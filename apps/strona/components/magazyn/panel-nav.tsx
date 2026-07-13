@@ -10,10 +10,15 @@ import {
   type NavItem,
   type PanelConfig,
 } from "@moduly/ui";
-import { Building2, CircleDollarSign, Images } from "lucide-react";
+import {
+  Building2,
+  CalendarClock,
+  CircleDollarSign,
+  Images,
+} from "lucide-react";
 
 /**
- * Nawigacja panelu z pozycjami własnymi projektu (Cennik, Galeria przed/po,
+ * Nawigacja panelu z pozycjami własnymi projektu (Rezerwacje, Cennik, Galeria,
  * Dane firmy) — kopia PanelSidebarNav z @moduly/ui, bo buildNavItems nie
  * przyjmuje pozycji spoza modułów.
  */
@@ -29,6 +34,12 @@ export function PanelNav({
 
   const base = buildNavItems(config);
   const custom: NavItem[] = [
+    {
+      href: `${panel}/rezerwacje`,
+      label: "Rezerwacje",
+      icon: CalendarClock,
+      exact: false,
+    },
     {
       href: `${panel}/cennik`,
       label: "Cennik",

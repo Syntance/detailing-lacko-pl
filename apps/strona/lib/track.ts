@@ -45,3 +45,8 @@ export function trackFaqOpen(question: string): void {
 export function trackReviewClick(url: string): void {
   track("outbound_click", { url, link_text: "Zostaw opinię" });
 }
+
+export function trackReservationSubmit(email: string): void {
+  const domain = email.includes("@") ? email.split("@")[1] : undefined;
+  track("lead_submit", { source: "rezerwacja", email_domain: domain });
+}

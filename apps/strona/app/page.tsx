@@ -13,6 +13,7 @@ import { Stopka } from "@/components/sections/stopka";
 import { UslugiCennik } from "@/components/sections/uslugi-cennik";
 import { DEFAULT_FAQ } from "@/lib/content-defaults";
 import { getCennik, getGaleria, getKontakt } from "@/lib/site-data";
+import { getDostepnosc } from "@/lib/rezerwacje-store";
 
 /** ISR — treść zmienia się z panelu (rewalidacja przy zapisie) albo co 10 min. */
 export const revalidate = 600;
@@ -30,11 +31,12 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function HomePage() {
-  const [content, cennik, galeria, kontakt] = await Promise.all([
+  const [content, cennik, galeria, kontakt, dostepnosc] = await Promise.all([
     getPageContent("home"),
     getCennik(),
     getGaleria(),
     getKontakt(),
+    getDostepnosc(),
   ]);
 
   const faq = content.faq?.length ? content.faq : DEFAULT_FAQ;
@@ -57,7 +59,7 @@ export default async function HomePage() {
         <Proces kontakt={kontakt} />
         <DlaczegoJa />
         <Faq items={faq} />
-        <Kontakt kontakt={kontakt} />
+        <Kontakt kontakt={kontakt} dostepnosc={dostepnosc} />
       </main>
 
       <Stopka kontakt={kontakt} />

@@ -1,11 +1,19 @@
 import { ContactForm } from "@moduly/magazyn-forms";
 import { Clock, MapPin, MessageCircle, Phone } from "lucide-react";
 import type { KontaktData } from "@/lib/site";
+import type { DostepnoscData } from "@/lib/rezerwacje";
 import { Reveal } from "@/components/motion/reveal";
+import { Rezerwacja } from "./rezerwacja";
 import { MessengerLink, PhoneLink } from "./phone-link";
 
-/** Sekcja „Umów termin" — konwersja (brief §7). */
-export function Kontakt({ kontakt }: { kontakt: KontaktData }) {
+/** Sekcja „Umów termin" — rezerwacja online na górze, formularz kontaktowy niżej. */
+export function Kontakt({
+  kontakt,
+  dostepnosc,
+}: {
+  kontakt: KontaktData;
+  dostepnosc: DostepnoscData;
+}) {
   return (
     <section
       id="kontakt"
@@ -20,9 +28,25 @@ export function Kontakt({ kontakt }: { kontakt: KontaktData }) {
           >
             Umów termin
           </h2>
+          <p className="mt-3 max-w-2xl text-pretty text-muted-foreground">
+            Zarezerwuj termin online w kilka sekund albo zadzwoń — jak Ci wygodniej.
+          </p>
         </Reveal>
 
-        <div className="mt-10 grid gap-10 lg:grid-cols-[1fr_1.1fr]">
+        {dostepnosc.enabled ? (
+          <Reveal className="mt-8">
+            <Rezerwacja config={dostepnosc} />
+          </Reveal>
+        ) : null}
+
+        {/* Kontakt bezpośredni + wiadomość — osobno pod rezerwacją. */}
+        <Reveal className="mt-14">
+          <h3 className="font-serif text-2xl font-medium">
+            Wolisz zadzwonić albo napisać?
+          </h3>
+        </Reveal>
+
+        <div className="mt-8 grid gap-10 lg:grid-cols-[1fr_1.1fr]">
           <Reveal className="space-y-6">
             <PhoneLink
               phoneE164={kontakt.phoneE164}
@@ -93,7 +117,7 @@ export function Kontakt({ kontakt }: { kontakt: KontaktData }) {
           <Reveal delay={0.1}>
             <div className="rounded-2xl border border-border bg-card p-6">
               <h3 className="font-serif text-lg font-medium">
-                Wolisz napisać? Opisz auto i problem
+                Napisz wiadomość — opisz auto i problem
               </h3>
               <p className="mt-1 mb-5 text-sm text-muted-foreground">
                 Odpowiem z ceną i wolnym terminem.

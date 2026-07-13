@@ -60,8 +60,8 @@ export default async function HomePage() {
         <Proces kontakt={kontakt} />
         <DlaczegoJa />
         <RezerwacjaSekcja dostepnosc={dostepnosc} kontakt={kontakt} />
-        <Kontakt kontakt={kontakt} />
         <Faq items={faq} />
+        <Kontakt kontakt={kontakt} />
       </main>
 
       <Stopka kontakt={kontakt} />

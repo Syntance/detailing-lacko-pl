@@ -19,6 +19,10 @@ DOSTEPY.local.md
 # Vercel
 .vercel
 
+# Graphify — lokalny cache grafu (regenerowany przez hook)
+graphify-out/
+.graphify/
+
 # Logs
 npm-debug.log*
 pnpm-debug.log*

@@ -66,6 +66,8 @@ w `apps/strona/.env.local` i uruchom `pnpm migrate` (upsert).
 | Hero, FAQ, galeria CMS, opinie | Magazyn → CMS → Strona główna | `page_content` |
 | Cennik (karty, pozycje, nagłówki) | Magazyn → Cennik | `site_blobs.cennik` |
 | Zdjęcia galerii realizacji | Magazyn → Galeria | `site_blobs.galeria` |
+| Rezerwacje online (zgłoszenia) | Magazyn → Rezerwacje → Zgłoszenia | `reservations` (tabela) |
+| Dostępność terminów (dni, godziny, sloty, urlopy) | Magazyn → Rezerwacje → Dostępność | `site_blobs.dostepnosc` |
 | Telefon, adres, NIP, obszar dojazdu | Magazyn → Dane firmy | `site_blobs.kontakt` |
 | Definicje formularzy + skrzynka | Magazyn → Formularze | `form_definitions`, `contact_submissions` |
 | Maile transakcyjne | Magazyn → E-maile | `site_settings` |

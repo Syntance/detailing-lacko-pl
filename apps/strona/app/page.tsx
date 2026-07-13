@@ -8,6 +8,7 @@ import { Hero } from "@/components/sections/hero";
 import { Kontakt } from "@/components/sections/kontakt";
 import { Navbar } from "@/components/sections/navbar";
 import { Proces } from "@/components/sections/proces";
+import { RezerwacjaSekcja } from "@/components/sections/rezerwacja-sekcja";
 import { StickyCall } from "@/components/sections/sticky-call";
 import { Stopka } from "@/components/sections/stopka";
 import { UslugiCennik } from "@/components/sections/uslugi-cennik";
@@ -58,8 +59,9 @@ export default async function HomePage() {
         <Galeria galeria={galeria} />
         <Proces kontakt={kontakt} />
         <DlaczegoJa />
+        <RezerwacjaSekcja dostepnosc={dostepnosc} kontakt={kontakt} />
+        <Kontakt kontakt={kontakt} />
         <Faq items={faq} />
-        <Kontakt kontakt={kontakt} dostepnosc={dostepnosc} />
       </main>
 
       <Stopka kontakt={kontakt} />

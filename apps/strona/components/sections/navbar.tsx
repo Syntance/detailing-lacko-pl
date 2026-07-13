@@ -9,8 +9,9 @@ const NAV_ITEMS = [
   { href: "#cennik", id: "cennik", label: "Cennik" },
   { href: "#galeria", id: "galeria", label: "Galeria" },
   { href: "#proces", id: "proces", label: "Jak to działa" },
-  { href: "#faq", id: "faq", label: "FAQ" },
+  { href: "#rezerwacja", id: "rezerwacja", label: "Rezerwacja" },
   { href: "#kontakt", id: "kontakt", label: "Kontakt" },
+  { href: "#faq", id: "faq", label: "FAQ" },
 ] as const;
 
 /**

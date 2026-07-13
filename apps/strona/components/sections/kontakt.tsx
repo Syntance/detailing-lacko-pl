@@ -1,24 +1,16 @@
 import { ContactForm } from "@moduly/magazyn-forms";
 import { Clock, MapPin, MessageCircle, Phone } from "lucide-react";
 import type { KontaktData } from "@/lib/site";
-import type { DostepnoscData } from "@/lib/rezerwacje";
 import { Reveal } from "@/components/motion/reveal";
-import { Rezerwacja } from "./rezerwacja";
 import { MessengerLink, PhoneLink } from "./phone-link";
 
-/** Sekcja „Umów termin" — rezerwacja online na górze, formularz kontaktowy niżej. */
-export function Kontakt({
-  kontakt,
-  dostepnosc,
-}: {
-  kontakt: KontaktData;
-  dostepnosc: DostepnoscData;
-}) {
+/** Sekcja „Kontakt" — telefon/adres + formularz wiadomości (po sekcji Rezerwacja). */
+export function Kontakt({ kontakt }: { kontakt: KontaktData }) {
   return (
     <section
       id="kontakt"
       aria-labelledby="kontakt-heading"
-      className="scroll-mt-20 border-t border-border bg-card/40"
+      className="scroll-mt-20 border-y border-border bg-card/40"
     >
       <div className="mx-auto max-w-5xl px-6 py-20 md:py-28">
         <Reveal>
@@ -26,24 +18,11 @@ export function Kontakt({
             id="kontakt-heading"
             className="font-serif text-3xl leading-tight font-medium md:text-4xl"
           >
-            Umów termin
+            Kontakt
           </h2>
           <p className="mt-3 max-w-2xl text-pretty text-muted-foreground">
-            Zarezerwuj termin online w kilka sekund albo zadzwoń — jak Ci wygodniej.
+            Wolisz zadzwonić albo napisać? Odezwij się — odpowiem z ceną i wolnym terminem.
           </p>
-        </Reveal>
-
-        {dostepnosc.enabled ? (
-          <Reveal className="mt-8">
-            <Rezerwacja config={dostepnosc} />
-          </Reveal>
-        ) : null}
-
-        {/* Kontakt bezpośredni + wiadomość — osobno pod rezerwacją. */}
-        <Reveal className="mt-14">
-          <h3 className="font-serif text-2xl font-medium">
-            Wolisz zadzwonić albo napisać?
-          </h3>
         </Reveal>
 
         <div className="mt-8 grid gap-10 lg:grid-cols-[1fr_1.1fr]">

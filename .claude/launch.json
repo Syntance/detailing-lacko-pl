@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "strona (Next.js dev)",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@detailing-lacko/strona", "dev"],
+      "port": 3000
+    }
+  ]
+}

@@ -1,0 +1,92 @@
+@import "tailwindcss";
+@import "@moduly/ui/theme.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/**
+ * Paleta Detailing Łącko — jasny „studyjny" motyw: chłodna biel + żółty
+ * akcent marki #FFC800 (warsztatowy, energetyczny).
+ *
+ * Uwaga na kontrast: czysty żółty #FFC800 jest jasny, więc:
+ *   --primary            → tylko WYPEŁNIENIA (przyciski, tła-tinty) + CIEMNY tekst
+ *   --primary-strong     → czytelny złoty na TEKSTY / IKONY / RINGI na białym tle
+ * Nadpisuje tokeny @moduly/ui, więc panel Magazyn dziedziczy branding.
+ */
+:root {
+  --background: oklch(0.991 0.003 240);
+  --foreground: oklch(0.24 0.02 250);
+
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.24 0.02 250);
+
+  --muted: oklch(0.965 0.006 240);
+  --muted-foreground: oklch(0.47 0.02 250);
+
+  /* #FFC800 — żółty marki (wypełnienia). Ciemny tekst na żółtym = wysoki kontrast. */
+  --primary: #ffc800;
+  --primary-foreground: oklch(0.24 0.02 260);
+
+  --border: oklch(0.9 0.007 250);
+  --input: oklch(0.9 0.007 250);
+  /* Ciemny złoty — widoczny focus-ring na białym tle. */
+  --ring: oklch(0.55 0.115 82);
+
+  --destructive: oklch(0.58 0.21 27);
+
+  --radius-lg: 0.75rem;
+  --radius-md: calc(var(--radius-lg) - 2px);
+  --radius: var(--radius-lg);
+
+  /* Tokeny dodatkowe strony — czytelny złoty na teksty/ikony (≈5:1 na bieli). */
+  --surface-raised: oklch(0.975 0.005 240);
+  --primary-strong: oklch(0.55 0.115 82);
+}
+
+@theme inline {
+  --font-sans: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif;
+  --color-surface-raised: var(--surface-raised);
+  --color-primary-strong: var(--primary-strong);
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+
+  ::selection {
+    background: rgb(255 200 0 / 0.28);
+  }
+}
+
+/* Wejście hero — czysty CSS (zero JS przed LCP), tylko transform/opacity. */
+@keyframes hero-enter {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.hero-enter {
+  animation: hero-enter 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-enter {
+    animation: none;
+  }
+}

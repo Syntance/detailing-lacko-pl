@@ -3,14 +3,43 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { motion, useReducedMotion, AnimatePresence } from "motion/react";
-import { Switch } from "@moduly/ui";
-import { Cookie, Settings2 } from "lucide-react";
+import { Check, Cookie, Settings2 } from "lucide-react";
 import {
   useConsent,
   useConsentOpenListener,
 } from "@moduly/legal-consent";
 
 type Mode = "hidden" | "banner" | "preferences";
+
+/** Checkbox kategorii zgody — kwadrat z widocznym ptaszkiem, gdy zaznaczony. */
+function ConsentCheckbox({
+  checked,
+  onCheckedChange,
+  ariaLabel,
+}: {
+  checked: boolean;
+  onCheckedChange: (next: boolean) => void;
+  ariaLabel: string;
+}) {
+  return (
+    <button
+      type="button"
+      role="checkbox"
+      aria-checked={checked}
+      aria-label={ariaLabel}
+      onClick={() => onCheckedChange(!checked)}
+      className={`mt-0.5 inline-flex size-5 shrink-0 items-center justify-center rounded-md border transition-colors focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none ${
+        checked
+          ? "border-primary bg-primary"
+          : "border-input bg-background hover:border-primary-strong/60"
+      }`}
+    >
+      {checked ? (
+        <Check className="size-3.5 text-primary-foreground" strokeWidth={3} aria-hidden />
+      ) : null}
+    </button>
+  );
+}
 
 /**
  * Baner cookies przemalowany pod markę Detailing Łącko — ten sam hook
@@ -180,11 +209,10 @@ export function CookieConsent() {
                         {config.analyticsDescription}
                       </p>
                     </div>
-                    <Switch
+                    <ConsentCheckbox
                       checked={analytics}
                       onCheckedChange={setAnalytics}
-                      aria-label="Zgoda na analitykę"
-                      className="mt-1"
+                      ariaLabel="Zgoda na analitykę"
                     />
                   </li>
 
@@ -195,11 +223,10 @@ export function CookieConsent() {
                         {config.marketingDescription}
                       </p>
                     </div>
-                    <Switch
+                    <ConsentCheckbox
                       checked={marketing}
                       onCheckedChange={setMarketing}
-                      aria-label="Zgoda na marketing"
-                      className="mt-1"
+                      ariaLabel="Zgoda na marketing"
                     />
                   </li>
                 </ul>

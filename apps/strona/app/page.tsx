@@ -69,7 +69,13 @@ export default async function HomePage() {
         phoneE164={kontakt.phoneE164}
         phoneDisplay={kontakt.phoneDisplay}
       />
-      <JsonLd kontakt={kontakt} cennik={cennik} faq={faq} siteUrl={siteUrl} />
+      <JsonLd
+        kontakt={kontakt}
+        cennik={cennik}
+        faq={faq}
+        dostepnosc={dostepnosc}
+        siteUrl={siteUrl}
+      />
     </>
   );
 }

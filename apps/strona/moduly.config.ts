@@ -37,7 +37,9 @@ export const modulyConfig: ModulyConfig = {
         id: "home",
         label: "Strona główna",
         path: "/",
-        blocks: ["hero", "faq", "gallery", "testimonials"],
+        // Tylko bloki, które strona faktycznie renderuje (galeria realizacji ma
+        // własny edytor Magazyn → Galeria; opinie dodamy wraz z sekcją opinii).
+        blocks: ["hero", "faq"],
       },
     ],
     globalBlocks: ["socialLinks", "footerText"],
@@ -70,20 +72,21 @@ export const modulyConfig: ModulyConfig = {
     siteUrl: process.env.NEXT_PUBLIC_SITE_URL ?? "https://detailing-lacko.pl",
   },
 
+  // Barwy maili spójne z brandem strony: żółty #FFC800 + grafit (nie turkus startera).
   emailTheme: {
-    bg: "#f4f4f5",
+    bg: "#f7f7f5",
     contentBg: "#ffffff",
     text: "#3f3f46",
-    heading: "#0c1220",
-    accent: "#0e9db4",
+    heading: "#23272f",
+    accent: "#a16207",
     muted: "#71717a",
-    link: "#0e9db4",
+    link: "#a16207",
     fontKey: "sans",
     headerFontKey: "sans",
     contentWidth: 600,
     radius: 8,
-    headerBg: "#0c1220",
-    headerText: "#f4fbfd",
+    headerBg: "#ffc800",
+    headerText: "#23272f",
     headerEyebrow: "Detailing Łącko",
     brandName: "Detailing Łącko",
   },

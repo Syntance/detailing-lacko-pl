@@ -85,9 +85,26 @@ export function Hero({
           )}
         </div>
 
-        <p className="hero-enter mt-6 flex items-center gap-2 text-sm text-muted-foreground [animation-delay:360ms]">
+        {/* Tylko weryfikowalne obietnice — ocenę Google pokazujemy dopiero,
+            gdy w panelu jest link do wizytówki z opiniami. */}
+        <p className="hero-enter mt-6 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground [animation-delay:360ms]">
           <Star className="size-4 fill-primary-strong text-primary-strong" aria-hidden />
-          Opinie 5/5 na Google · zdjęcia przed/po każdej realizacji
+          <span>
+            Zdjęcia przed/po każdej realizacji · cenę znasz przed rozpoczęciem
+            {kontakt.googleReviewUrl ? (
+              <>
+                {" · "}
+                <a
+                  href={kontakt.googleReviewUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline underline-offset-4 hover:text-foreground"
+                >
+                  Opinie na Google
+                </a>
+              </>
+            ) : null}
+          </span>
         </p>
       </div>
     </section>

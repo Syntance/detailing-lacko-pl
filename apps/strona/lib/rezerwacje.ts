@@ -162,13 +162,22 @@ export function computeSlots(
   const from = toMinutes(window.from);
   const to = toMinutes(window.to);
   const takenSet = new Set(taken);
+
+  // Wyprzedzenie liczone w minutach absolutnych od „teraz" — inaczej leadHours
+  // działałby tylko w obrębie bieżącej doby (o 20:00 przy leadHours=12 dało się
+  // zarezerwować jutrzejsze 07:00, czyli 9h naprzód).
+  const MS_PER_DAY = 86_400_000;
+  const dayOffset = Math.round(
+    (Date.parse(`${dateStr}T12:00:00Z`) - Date.parse(`${todayStr}T12:00:00Z`)) /
+      MS_PER_DAY,
+  );
   const cutoff = nowMin + config.leadHours * 60;
 
   const slots: string[] = [];
   for (let m = from; m + config.slotMinutes <= to; m += config.slotMinutes) {
     const label = fromMinutes(m);
     if (takenSet.has(label)) continue;
-    if (dateStr === todayStr && m < cutoff) continue;
+    if (dayOffset * 1440 + m < cutoff) continue;
     slots.push(label);
   }
   return slots;

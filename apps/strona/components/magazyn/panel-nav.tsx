@@ -32,7 +32,10 @@ export function PanelNav({
   const pathname = usePathname();
   const panel = `${config.basePath}/panel`;
 
-  const base = buildNavItems(config);
+  // Strona usługowa, nie sklep — łagodniejsza etykieta niż domyślna z modułu.
+  const base = buildNavItems(config).map((item) =>
+    item.label === "Ustawienia sklepu" ? { ...item, label: "Ustawienia" } : item,
+  );
   const custom: NavItem[] = [
     {
       href: `${panel}/rezerwacje`,

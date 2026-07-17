@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { computeSlots, rezerwacjaInputSchema } from "@/lib/rezerwacje";
+import { enforceRateLimit, requestIp } from "@/lib/rate-limit";
 import {
   createRezerwacja,
   getDostepnosc,
@@ -8,8 +9,27 @@ import {
 
 export const dynamic = "force-dynamic";
 
-/** POST /api/rezerwacje — publiczne. Waliduje slot serwerowo + anty-dubel. */
+/** POST /api/rezerwacje — publiczne. Rate limit + walidacja slotu + anty-dubel. */
 export async function POST(request: Request) {
+  // Bez limitu bot zapełniłby cały kalendarz fałszywymi rezerwacjami.
+  const limit = await enforceRateLimit({
+    key: `rezerwacje:ip:${requestIp(request)}`,
+    limit: 5,
+    windowSeconds: 3_600,
+  });
+  if (!limit.success) {
+    return NextResponse.json(
+      {
+        error: "Za dużo prób z tego adresu. Spróbuj za godzinę albo zadzwoń.",
+        code: "rate_limited",
+      },
+      {
+        status: 429,
+        headers: { "Retry-After": String(limit.retryAfterSeconds) },
+      },
+    );
+  }
+
   let body: unknown;
   try {
     body = await request.json();

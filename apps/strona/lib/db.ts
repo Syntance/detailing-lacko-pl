@@ -13,7 +13,7 @@ function resolveDatabaseUrl(databaseUrl?: string): string {
   const url = databaseUrl ?? process.env.DATABASE_URL?.trim();
   if (!url) {
     throw new Error(
-      "[starter-strona] Brak DATABASE_URL — ustaw zmienną w .env.local.",
+      "[detailing-lacko] Brak DATABASE_URL — ustaw zmienną w .env.local.",
     );
   }
   return url;

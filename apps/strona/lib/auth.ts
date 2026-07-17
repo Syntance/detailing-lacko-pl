@@ -71,7 +71,7 @@ function resolveJwtSecret(): string {
   const secret = process.env.AUTH_JWT_SECRET?.trim();
   if (!secret) {
     throw new Error(
-      "[starter-strona] Brak AUTH_JWT_SECRET — ustaw zmienną w .env.local.",
+      "[detailing-lacko] Brak AUTH_JWT_SECRET — ustaw zmienną w .env.local.",
     );
   }
   return secret;
@@ -106,6 +106,19 @@ export async function nextCookieAdapter(): Promise<CookieAdapter> {
       store.delete(name);
     },
   };
+}
+
+/** E-mail zalogowanego admina (do audit logu) — null gdy brak/nieważna sesja. */
+export async function getAdminSessionEmail(): Promise<string | null> {
+  try {
+    const auth = getPostgresAuth();
+    const cookieAdapter = await nextCookieAdapter();
+    const token = await cookieAdapter.get(getModulyConfig().auth.cookieName);
+    if (!token) return null;
+    return await auth.getSessionEmail(token);
+  } catch {
+    return null;
+  }
 }
 
 /** Guard sesji admina — używaj w Server Actions panelu i module formularzy. */

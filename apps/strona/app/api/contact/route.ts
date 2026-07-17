@@ -1,7 +1,26 @@
 import { submitContact } from "@moduly/magazyn-forms";
 import { NextResponse } from "next/server";
+import { enforceRateLimit, requestIp } from "@/lib/rate-limit";
 
 export async function POST(request: Request): Promise<NextResponse> {
+  const limit = await enforceRateLimit({
+    key: `kontakt:ip:${requestIp(request)}`,
+    limit: 10,
+    windowSeconds: 3_600,
+  });
+  if (!limit.success) {
+    return NextResponse.json(
+      {
+        ok: false,
+        message: "Za dużo wiadomości z tego adresu. Spróbuj później.",
+      },
+      {
+        status: 429,
+        headers: { "Retry-After": String(limit.retryAfterSeconds) },
+      },
+    );
+  }
+
   try {
     const formData = await request.formData();
     const result = await submitContact({ status: "idle" }, formData);

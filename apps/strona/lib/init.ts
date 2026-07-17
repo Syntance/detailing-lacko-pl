@@ -29,7 +29,7 @@ export function initModuly(): void {
     setDataStore(createPostgresStore(databaseUrl));
   } else {
     console.warn(
-      "[starter-strona] DATABASE_URL nie ustawione — DataStore nieaktywny (OK przy build; przed startem uzupełnij .env.local).",
+      "[detailing-lacko] DATABASE_URL nie ustawione — DataStore nieaktywny (OK przy build; przed startem uzupełnij .env.local).",
     );
   }
 

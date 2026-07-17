@@ -3,7 +3,7 @@ import "server-only";
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import type { z } from "zod";
-import { requireAdminSessionForPanel } from "./auth";
+import { getAdminSessionEmail, requireAdminSessionForPanel } from "./auth";
 import { getPostgresClient } from "./db";
 
 /**
@@ -52,10 +52,11 @@ export async function handleMagazynPut<T>(
   await options.save(parsed.data);
 
   try {
+    const actor = (await getAdminSessionEmail()) ?? "panel";
     const { sql } = getPostgresClient();
     await sql`
       insert into audit_log (action, actor_email, resource_type, resource_id)
-      values ('update', 'panel', ${options.resource}, 'default')
+      values ('update', ${actor}, ${options.resource}, 'default')
     `;
   } catch (error) {
     console.error(`[audit] Zapis audytu ${options.resource}:`, error);

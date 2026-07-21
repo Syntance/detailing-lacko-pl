@@ -74,6 +74,14 @@ const nextConfig: NextConfig = {
   async headers() {
     return [{ source: "/(.*)", headers: [...SECURITY_HEADERS] }];
   },
+  // Panel żyje pod /magazyn (login) → /magazyn/panel. Wpisanie /panel(/…)
+  // kierujemy do wejścia panelu, żeby skrót z pamięci nie dawał 404.
+  async redirects() {
+    return [
+      { source: "/panel", destination: "/magazyn", permanent: false },
+      { source: "/panel/:path*", destination: "/magazyn", permanent: false },
+    ];
+  },
   experimental: {
     serverActions: {
       bodySizeLimit: "25mb",

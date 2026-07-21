@@ -195,7 +195,7 @@ async function og() {
   <rect width="${w}" height="${h}" fill="url(#bg)"/>
   ${carSilhouette(640, 340, 0.85, "#242f3d", "url(#rim)")}
   <text x="72" y="200" font-family="Arial, sans-serif" font-size="64" font-weight="700" fill="#101a26">Detailing Łącko</text>
-  <text x="72" y="270" font-family="Arial, sans-serif" font-size="30" fill="#41525f">Pranie tapicerki od 250 zł · Polerowanie od 600 zł</text>
+  <text x="72" y="270" font-family="Arial, sans-serif" font-size="30" fill="#41525f">Pranie tapicerki od 300 zł · Polerowanie od 600 zł</text>
   <text x="72" y="320" font-family="Arial, sans-serif" font-size="30" fill="#41525f">Detailing w Łącku — zapraszamy z okolicy Nowego Sącza</text>
   <rect x="72" y="370" width="240" height="6" rx="3" fill="#ffc800"/>
   <rect width="${w}" height="${h}" filter="url(#grain)" opacity="0.18"/>

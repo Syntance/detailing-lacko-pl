@@ -104,7 +104,7 @@ export function UslugiCennik({
             hidden={!expanded}
             className="mt-6 overflow-x-auto rounded-2xl border border-border"
           >
-            <table className="w-full min-w-[560px] border-collapse text-sm">
+            <table className="w-full min-w-[680px] border-collapse text-sm">
               <caption className="sr-only">
                 Pełny cennik usług detailingu
               </caption>
@@ -115,6 +115,9 @@ export function UslugiCennik({
                   </th>
                   <th scope="col" className="px-5 py-3.5 font-medium">
                     Zakres
+                  </th>
+                  <th scope="col" className="px-5 py-3.5 font-medium whitespace-nowrap">
+                    Czas
                   </th>
                   <th scope="col" className="px-5 py-3.5 text-right font-medium">
                     Cena
@@ -131,7 +134,7 @@ export function UslugiCennik({
                     <tr className="border-b border-border bg-muted/50">
                       <th
                         scope="rowgroup"
-                        colSpan={3}
+                        colSpan={4}
                         className="px-5 py-2.5 text-left text-xs font-semibold tracking-[0.18em] text-muted-foreground uppercase"
                       >
                         {category.name}
@@ -152,6 +155,9 @@ export function UslugiCennik({
                         </td>
                         <td className="px-5 py-3.5 text-muted-foreground">
                           {item.description}
+                        </td>
+                        <td className="px-5 py-3.5 whitespace-nowrap text-muted-foreground">
+                          {item.timeLabel}
                         </td>
                         <td className="px-5 py-3.5 text-right font-semibold whitespace-nowrap">
                           {formatItemPrice(item)}

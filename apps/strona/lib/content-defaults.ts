@@ -23,7 +23,7 @@ export const DEFAULT_FAQ: FaqItem[] = [
     id: "rysy",
     question: "Polerowanie usunie wszystkie rysy?",
     answer:
-      "One step usuwa 50–70% rys. Głębokie rysy (paznokieć się zahacza) wymagają korekty dwuetapowej albo lakiernika — ocenimy na miejscu.",
+      "One step usuwa 50–70% rys. Głębokie rysy (paznokieć się zahacza) wymagają korekty dwuetapowej (od 1200 zł, wycena po oględzinach) albo lakiernika — ocenimy na miejscu.",
     order: 2,
   },
   {

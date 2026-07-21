@@ -26,7 +26,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title:
       "Detailing Łącko — pranie tapicerki, polerowanie lakieru | Nowy Sącz i okolice",
-    description: `Pranie tapicerki od 250 zł, polerowanie lakieru od 600 zł. Detailing w ${kontakt.city}, zapraszamy z okolicy: Stary Sącz, Nowy Sącz. Zadzwoń: ${kontakt.phoneDisplay}.`,
+    description: `Pranie tapicerki od 300 zł, polerowanie lakieru od 600 zł. Detailing w ${kontakt.city}, zapraszamy z okolicy: Stary Sącz, Nowy Sącz. Zadzwoń: ${kontakt.phoneDisplay}.`,
     alternates: { canonical: "/" },
   };
 }

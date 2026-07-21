@@ -21,7 +21,7 @@ const HERO_FALLBACK = {
   headline: "Detailing Łącko — pranie tapicerki i polerowanie lakieru",
   subtitle: "",
   description:
-    "Fotele jak nowe od 250 zł. Lakier bez rys od 600 zł. Przyjmuję na miejscu w Łącku — zapraszam z okolicy: Stary Sącz, Podegrodzie, Nowy Sącz.",
+    "Fotele jak nowe od 300 zł. Lakier bez rys od 600 zł. Przyjmuję na miejscu w Łącku — zapraszam z okolicy: Stary Sącz, Podegrodzie, Nowy Sącz.",
   ctaLabel: "Zadzwoń",
   ctaHref: "#kontakt",
   desktopImageUrl: "/images/hero.jpg",

@@ -6,15 +6,19 @@ import { ArrowDown, ArrowUp, Redo2, Trash2, Undo2 } from "lucide-react";
 
 export function Fieldset({
   legend,
+  actions,
   children,
 }: {
   legend: string;
+  /** Przyciski wyrównane do prawej w nagłówku (np. przesuń/usuń). */
+  actions?: ReactNode;
   children: ReactNode;
 }) {
   return (
     <fieldset className="space-y-4 rounded-xl border border-border bg-card p-5">
-      <legend className="px-1 text-sm font-medium text-foreground">
-        {legend}
+      <legend className="flex w-full items-center justify-between gap-2 px-1 text-sm font-medium text-foreground">
+        <span>{legend}</span>
+        {actions}
       </legend>
       {children}
     </fieldset>

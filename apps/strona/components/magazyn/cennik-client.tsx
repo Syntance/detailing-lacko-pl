@@ -56,6 +56,19 @@ function move<T extends { order: number }>(
   return reorder(next);
 }
 
+function newCategory(order: number): CennikCategory {
+  return {
+    id: `karta-${Date.now()}`,
+    name: "",
+    description: "",
+    priceFrom: 0,
+    timeLabel: "",
+    highlight: "",
+    order,
+    disabled: false,
+  };
+}
+
 export function CennikClient({ initial }: { initial: CennikData }) {
   const router = useRouter();
   const [section, setSection] = useState<SectionId>("karty");
@@ -230,13 +243,27 @@ export function CennikClient({ initial }: { initial: CennikData }) {
                     <RowControls
                       onUp={() => setCategories(move(sortedCategories, index, -1))}
                       onDown={() => setCategories(move(sortedCategories, index, 1))}
-                      onRemove={() =>
+                      onRemove={() => {
+                        const itemCount = items.filter(
+                          (i) => i.categoryId === category.id,
+                        ).length;
+                        if (
+                          itemCount > 0 &&
+                          !window.confirm(
+                            `Usunąć kartę „${category.name || "bez nazwy"}" wraz z ${itemCount} pozycjami cennika?`,
+                          )
+                        ) {
+                          return;
+                        }
                         setCategories(
                           reorder(
                             sortedCategories.filter((c) => c.id !== category.id),
                           ),
-                        )
-                      }
+                        );
+                        setItems(
+                          items.filter((i) => i.categoryId !== category.id),
+                        );
+                      }}
                       upDisabled={index === 0}
                       downDisabled={index === sortedCategories.length - 1}
                       removeLabel={`Usuń kartę ${category.name}`}
@@ -252,16 +279,7 @@ export function CennikClient({ initial }: { initial: CennikData }) {
                   setCategories(
                     reorder([
                       ...sortedCategories,
-                      {
-                        id: `karta-${Date.now()}`,
-                        name: "",
-                        description: "",
-                        priceFrom: 0,
-                        timeLabel: "",
-                        highlight: "",
-                        order: sortedCategories.length,
-                        disabled: false,
-                      },
+                      newCategory(sortedCategories.length),
                     ]),
                   )
                 }
@@ -273,20 +291,81 @@ export function CennikClient({ initial }: { initial: CennikData }) {
 
           {section === "pozycje" ? (
             <div className="space-y-6">
-              {sortedCategories.map((category) => {
+              {sortedCategories.map((category, catIndex) => {
                 const rows = items
                   .filter((item) => item.categoryId === category.id)
                   .sort((a, b) => a.order - b.order);
+
+                const moveItemToCategory = (
+                  itemId: string,
+                  newCategoryId: string,
+                ) => {
+                  if (newCategoryId === category.id) return;
+                  const moving = items.find((i) => i.id === itemId);
+                  if (!moving) return;
+                  const remaining = reorder(rows.filter((i) => i.id !== itemId));
+                  const targetRows = items
+                    .filter((i) => i.categoryId === newCategoryId)
+                    .sort((a, b) => a.order - b.order);
+                  const movedItem = {
+                    ...moving,
+                    categoryId: newCategoryId,
+                    order: targetRows.length,
+                  };
+                  const untouched = items.filter(
+                    (i) =>
+                      i.categoryId !== category.id &&
+                      i.categoryId !== newCategoryId,
+                  );
+                  setItems([...untouched, ...remaining, ...targetRows, movedItem]);
+                };
+
                 return (
-                  <Fieldset key={category.id} legend={category.name}>
+                  <Fieldset
+                    key={category.id}
+                    legend={category.name || "Nowa karta"}
+                    actions={
+                      <RowControls
+                        onUp={() =>
+                          setCategories(move(sortedCategories, catIndex, -1))
+                        }
+                        onDown={() =>
+                          setCategories(move(sortedCategories, catIndex, 1))
+                        }
+                        onRemove={() => {
+                          if (
+                            rows.length > 0 &&
+                            !window.confirm(
+                              `Usunąć kategorię „${category.name || "bez nazwy"}" wraz z ${rows.length} pozycjami?`,
+                            )
+                          ) {
+                            return;
+                          }
+                          setCategories(
+                            reorder(
+                              sortedCategories.filter(
+                                (c) => c.id !== category.id,
+                              ),
+                            ),
+                          );
+                          setItems(
+                            items.filter((i) => i.categoryId !== category.id),
+                          );
+                        }}
+                        upDisabled={catIndex === 0}
+                        downDisabled={catIndex === sortedCategories.length - 1}
+                        removeLabel={`Usuń kategorię ${category.name}`}
+                      />
+                    }
+                  >
                     <div className="space-y-4">
                       {rows.map((item, index) => (
                         <div
                           key={item.id}
                           className="space-y-3 rounded-lg border border-border bg-background/50 p-4"
                         >
-                          <div className="grid gap-3 md:grid-cols-2">
-                            <Field label="Nazwa">
+                          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+                            <Field label="Nazwa" hint={`prefiks "• " = dodatek`}>
                               <Input
                                 value={item.name}
                                 onChange={(e) =>
@@ -314,8 +393,37 @@ export function CennikClient({ initial }: { initial: CennikData }) {
                                 }
                               />
                             </Field>
+                            <Field label="Czas" hint="np. 1,5 h">
+                              <Input
+                                value={item.timeLabel}
+                                onChange={(e) =>
+                                  setItems(
+                                    items.map((i) =>
+                                      i.id === item.id
+                                        ? { ...i, timeLabel: e.target.value }
+                                        : i,
+                                    ),
+                                  )
+                                }
+                              />
+                            </Field>
+                            <Field label="Kategoria" hint="przenosi pozycję">
+                              <select
+                                value={item.categoryId}
+                                onChange={(e) =>
+                                  moveItemToCategory(item.id, e.target.value)
+                                }
+                                className="h-11 rounded-xl border border-input bg-background px-3 text-sm focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+                              >
+                                {sortedCategories.map((c) => (
+                                  <option key={c.id} value={c.id}>
+                                    {c.name || "(bez nazwy)"}
+                                  </option>
+                                ))}
+                              </select>
+                            </Field>
                           </div>
-                          <div className="grid gap-3 md:grid-cols-3">
+                          <div className="grid gap-3 md:grid-cols-4">
                             <Field label="Cena od (zł)">
                               <Input
                                 type="number"
@@ -351,6 +459,23 @@ export function CennikClient({ initial }: { initial: CennikData }) {
                                             ...i,
                                             priceTo: Number(e.target.value) || 0,
                                           }
+                                        : i,
+                                    ),
+                                  )
+                                }
+                              />
+                            </Field>
+                            <Field
+                              label="Przedrostek ceny"
+                              hint={`np. "od " albo "+"`}
+                            >
+                              <Input
+                                value={item.pricePrefix}
+                                onChange={(e) =>
+                                  setItems(
+                                    items.map((i) =>
+                                      i.id === item.id
+                                        ? { ...i, pricePrefix: e.target.value }
                                         : i,
                                     ),
                                   )
@@ -449,8 +574,10 @@ export function CennikClient({ initial }: { initial: CennikData }) {
                               categoryId: category.id,
                               name: "",
                               description: "",
+                              timeLabel: "",
                               priceFrom: 0,
                               priceTo: 0,
+                              pricePrefix: "",
                               unit: "",
                               popular: false,
                               order: rows.length,
@@ -465,6 +592,21 @@ export function CennikClient({ initial }: { initial: CennikData }) {
                   </Fieldset>
                 );
               })}
+              <Button
+                type="button"
+                variant="outline"
+                className="gap-1.5"
+                onClick={() =>
+                  setCategories(
+                    reorder([
+                      ...sortedCategories,
+                      newCategory(sortedCategories.length),
+                    ]),
+                  )
+                }
+              >
+                <Plus className="size-4" aria-hidden /> Dodaj kategorię
+              </Button>
             </div>
           ) : null}
 

@@ -29,7 +29,7 @@ export const metadata: Metadata = {
     template: "%s | Detailing Łącko",
   },
   description:
-    "Pranie tapicerki od 250 zł, polerowanie lakieru od 600 zł. Detailing w Łącku, zapraszamy z okolicy: Stary Sącz, Nowy Sącz.",
+    "Pranie tapicerki od 300 zł, polerowanie lakieru od 600 zł. Detailing w Łącku, zapraszamy z okolicy: Stary Sącz, Nowy Sącz.",
   alternates: { canonical: "/" },
   openGraph: {
     type: "website",

@@ -80,6 +80,17 @@ const nextConfig: NextConfig = {
     return [
       { source: "/panel", destination: "/magazyn", permanent: false },
       { source: "/panel/:path*", destination: "/magazyn", permanent: false },
+      // Moduły sklepowe (Medusa) wyłączone — bezpośrednie URL-e nie mogą dać 500.
+      {
+        source: "/magazyn/panel/maile/:path*",
+        destination: "/magazyn/panel",
+        permanent: false,
+      },
+      {
+        source: "/magazyn/panel/ustawienia/:path*",
+        destination: "/magazyn/panel",
+        permanent: false,
+      },
     ];
   },
   experimental: {

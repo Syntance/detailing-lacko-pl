@@ -36,9 +36,13 @@ export async function readBlob<S extends z.ZodTypeAny>(
 
 export async function writeBlob(key: string, data: unknown): Promise<void> {
   const { sql } = getPostgresClient();
+  // JSON.stringify(...)::jsonb zamiast sql.json — sql.json rzuca
+  // ERR_INVALID_ARG_TYPE w kontekście route handlera (bundling Turbopack),
+  // mimo że działa standalone. Ten wariant jest jednoznaczny i przenośny.
+  const json = JSON.stringify(data);
   await sql`
     insert into site_blobs (key, data, updated_at)
-    values (${key}, ${sql.json(data as never)}, now())
+    values (${key}, ${json}::jsonb, now())
     on conflict (key) do update
       set data = excluded.data, updated_at = now()
   `;

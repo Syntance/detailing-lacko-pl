@@ -25,8 +25,11 @@ export const modulyConfig: ModulyConfig = {
     products: false,
     categories: false,
     content: true,
-    emails: true,
-    settings: true,
+    // emails/settings to moduły sklepowe oparte o Medusę (której tu nie ma) —
+    // wyłączone, żeby nie pokazywać kafelków/nawigacji prowadzących do 500.
+    // Dane firmy edytujemy we własnym module „Dane firmy".
+    emails: false,
+    settings: false,
     forms: true,
     returns: false,
   },

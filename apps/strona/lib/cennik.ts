@@ -70,7 +70,8 @@ export const HIDDEN_PRICE_LABEL = "Zapytaj o cenę";
 
 /** Format ceny pozycji: „250–350 zł", „600 zł", „80 zł za parę", „od 1200 zł", „+150 zł". */
 export function formatItemPrice(item: CennikItem): string {
-  if (item.priceHidden) return HIDDEN_PRICE_LABEL;
+  // Ukryta cena: własny dopisek ma pierwszeństwo nad domyślną etykietą.
+  if (item.priceHidden) return item.unit.trim() || HIDDEN_PRICE_LABEL;
   const range =
     item.priceTo > item.priceFrom
       ? `${item.priceFrom}–${item.priceTo} zł`

@@ -15,6 +15,7 @@ import {
   CalendarClock,
   CircleDollarSign,
   Images,
+  Search,
 } from "lucide-react";
 
 /**
@@ -59,6 +60,12 @@ export function PanelNav({
       href: `${panel}/dane-firmy`,
       label: "Dane firmy",
       icon: Building2,
+      exact: false,
+    },
+    {
+      href: `${panel}/seo`,
+      label: "SEO",
+      icon: Search,
       exact: false,
     },
   ];

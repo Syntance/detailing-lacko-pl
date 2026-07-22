@@ -11,12 +11,14 @@ import {
   DEFAULT_GALERIA,
   type GaleriaData,
 } from "./galeria";
+import { seoDataSchema, DEFAULT_SEO, type SeoData } from "./seo";
 import { kontaktSchema, DEFAULT_KONTAKT, type KontaktData } from "./site";
 
 export const BLOB_KEYS = {
   cennik: "cennik",
   galeria: "galeria",
   kontakt: "kontakt",
+  seo: "seo",
 } as const;
 
 export async function getCennik(): Promise<CennikData> {
@@ -41,4 +43,12 @@ export async function getKontakt(): Promise<KontaktData> {
 
 export async function saveKontakt(data: KontaktData): Promise<void> {
   await writeBlob(BLOB_KEYS.kontakt, data);
+}
+
+export async function getSeo(): Promise<SeoData> {
+  return readBlob(BLOB_KEYS.seo, seoDataSchema, DEFAULT_SEO);
+}
+
+export async function saveSeo(data: SeoData): Promise<void> {
+  await writeBlob(BLOB_KEYS.seo, data);
 }

@@ -1,11 +1,12 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Input, PageHeader } from "@moduly/ui";
-import { Plus, Save, Upload } from "lucide-react";
+import { Plus, Save } from "lucide-react";
 import type { GaleriaData, GaleriaPhoto } from "@/lib/galeria";
 import { useMagazynHistory } from "@/hooks/use-magazyn-history";
+import { ImageDropzone, ImageField } from "./image-dropzone";
 import {
   Field,
   Fieldset,
@@ -19,88 +20,11 @@ function reorder(list: GaleriaPhoto[]): GaleriaPhoto[] {
   return list.map((entry, index) => ({ ...entry, order: index }));
 }
 
-function ImageField({
-  label,
-  value,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  onChange: (url: string) => void;
-}) {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [uploading, setUploading] = useState(false);
-  const [uploadError, setUploadError] = useState<string | null>(null);
-
-  async function upload(file: File) {
-    setUploading(true);
-    setUploadError(null);
-    try {
-      const formData = new FormData();
-      formData.append("files", file);
-      const res = await fetch("/api/magazyn/cms-upload", {
-        method: "POST",
-        body: formData,
-      });
-      const body = (await res.json()) as { urls?: string[]; error?: string };
-      if (!res.ok || !body.urls?.[0]) {
-        setUploadError(body.error ?? "Upload nie powiódł się.");
-        return;
-      }
-      onChange(body.urls[0]);
-    } catch {
-      setUploadError("Brak połączenia — spróbuj ponownie.");
-    } finally {
-      setUploading(false);
-    }
-  }
-
-  return (
-    <div className="space-y-2">
-      <Field label={label} hint="URL albo wgraj plik (JPG/WebP)">
-        <div className="flex gap-2">
-          <Input
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            placeholder="/images/galeria/…"
-          />
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            disabled={uploading}
-            onClick={() => inputRef.current?.click()}
-            aria-label={`Wgraj plik: ${label}`}
-          >
-            <Upload className="size-4" aria-hidden />
-          </Button>
-          <input
-            ref={inputRef}
-            type="file"
-            accept="image/jpeg,image/png,image/webp,image/avif"
-            className="sr-only"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) void upload(file);
-              e.target.value = "";
-            }}
-          />
-        </div>
-      </Field>
-      {value ? (
-        // Podgląd w panelu — zwykły <img>, bez optymalizacji next/image.
-        <img
-          src={value}
-          alt=""
-          className="h-28 w-full max-w-xs rounded-md border border-border object-cover"
-        />
-      ) : null}
-      <StatusMessage message={uploadError} error />
-      {uploading ? (
-        <p className="text-xs text-muted-foreground">Wgrywanie…</p>
-      ) : null}
-    </div>
-  );
+/** Nazwa pliku z URL-a → wstępny podpis, żeby pole nie było puste. */
+function captionFromUrl(url: string): string {
+  const name = url.split("/").pop()?.replace(/\.[^.]+$/, "") ?? "";
+  const cleaned = name.replace(/^\d+-[a-z0-9]{4,8}-/i, "").replace(/[-_]+/g, " ");
+  return cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
 }
 
 export function GaleriaClient({ initial }: { initial: GaleriaData }) {
@@ -171,6 +95,29 @@ export function GaleriaClient({ initial }: { initial: GaleriaData }) {
         </Field>
       </Fieldset>
 
+      {/* Masowe wgrywanie — każdy plik tworzy nowy wpis galerii. */}
+      <Fieldset legend="Dodaj zdjęcia">
+        <ImageDropzone
+          multiple
+          label="Przeciągnij zdjęcia realizacji"
+          onUploaded={(urls) =>
+            setPhotos(
+              reorder([
+                ...sorted,
+                ...urls.map((url, i) => ({
+                  id: `zdjecie-${Date.now()}-${i}`,
+                  url,
+                  caption: captionFromUrl(url),
+                  alt: "",
+                  order: sorted.length + i,
+                  disabled: false,
+                })),
+              ]),
+            )
+          }
+        />
+      </Fieldset>
+
       {sorted.map((photo, index) => (
         <Fieldset key={photo.id} legend={photo.caption || `Zdjęcie ${index + 1}`}>
           <ImageField
@@ -179,6 +126,18 @@ export function GaleriaClient({ initial }: { initial: GaleriaData }) {
             onChange={(url) =>
               setPhotos(
                 sorted.map((p) => (p.id === photo.id ? { ...p, url } : p)),
+              )
+            }
+          />
+          <ImageField
+            label={'Zdjęcie „przed" (opcjonalne)'}
+            hint="Gdy ustawione, kafelek pokaże suwak przed/po zamiast zwykłego zdjęcia."
+            value={photo.beforeUrl ?? ""}
+            onChange={(url) =>
+              setPhotos(
+                sorted.map((p) =>
+                  p.id === photo.id ? { ...p, beforeUrl: url || undefined } : p,
+                ),
               )
             }
           />

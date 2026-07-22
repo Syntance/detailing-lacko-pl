@@ -28,3 +28,8 @@ export {
 	uploadCmsImageFromBrowser,
 	validateCmsBrowserUploadFile,
 } from "./client/cms-image-upload";
+export {
+	CMS_ACCEPT_ATTRIBUTE,
+	CMS_ALLOWED_FORMATS_LABEL,
+	inferCmsMimeType,
+} from "./storage/cms-mime";

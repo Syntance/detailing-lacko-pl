@@ -13,7 +13,7 @@ import { UslugiCennik } from "@/components/sections/uslugi-cennik";
 import { getHeroImageUrl } from "@/lib/cms-content";
 import { DEFAULT_FAQ } from "@/lib/content-defaults";
 import { buildPhotoContactHref } from "@/lib/photo-contact";
-import { getCennik, getGaleria, getKontakt } from "@/lib/site-data";
+import { getCennik, getGaleria, getKontakt, getSeo } from "@/lib/site-data";
 import { getDostepnosc } from "@/lib/rezerwacje-store";
 
 /** ISR — treść zmienia się z panelu (rewalidacja przy zapisie) albo co 10 min. */
@@ -21,13 +21,23 @@ export const revalidate = 600;
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://detailing-lacko.pl";
 
+/** Metadane z panelu Magazyn → SEO (blob `seo`), z fallbackiem z kodu. */
 export async function generateMetadata(): Promise<Metadata> {
-  const kontakt = await getKontakt();
+  const seo = await getSeo();
   return {
-    title:
-      "Detailing Łącko — pranie tapicerki, cennik z cenami z góry | Czerniec",
-    description: `Pełny cennik na stronie: komplet foteli z kanapą 300 zł, kompleksowe wnętrze 500 zł. Płacisz po obejrzeniu efektu. Czerniec, gmina Łącko. Tel. ${kontakt.phoneDisplay}`,
+    title: seo.title,
+    description: seo.description,
     alternates: { canonical: "/" },
+    robots: seo.indexable
+      ? { index: true, follow: true }
+      : { index: false, follow: false },
+    openGraph: {
+      title: seo.ogTitle || seo.title,
+      description: seo.ogDescription || seo.description,
+      ...(seo.ogImageUrl
+        ? { images: [{ url: seo.ogImageUrl, width: 1200, height: 630 }] }
+        : {}),
+    },
   };
 }
 

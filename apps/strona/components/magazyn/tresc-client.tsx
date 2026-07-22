@@ -2,12 +2,12 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button, Input, PageHeader } from "@moduly/ui";
+import { Button, PageHeader } from "@moduly/ui";
 import { Save } from "lucide-react";
 import type { HomeContentInput } from "@/lib/cms-schema";
 import { useMagazynHistory } from "@/hooks/use-magazyn-history";
+import { ImageField } from "./image-dropzone";
 import {
-  Field,
   Fieldset,
   StatusMessage,
   UndoRedoToolbar,
@@ -58,20 +58,17 @@ export function TrescClient({ initial }: { initial: HomeContentInput }) {
       />
 
       <Fieldset legend="Sekcja główna (hero)">
-        <Field
-          label="Zdjęcie hero (ścieżka)"
-          hint="np. /images/hero.jpg — podmianę pliku robisz w repo/uploadzie"
-        >
-          <Input
-            value={data.hero.desktopImageUrl}
-            onChange={(e) =>
-              history.setState((draft) => ({
-                ...draft,
-                hero: { desktopImageUrl: e.target.value },
-              }))
-            }
-          />
-        </Field>
+        <ImageField
+          label="Zdjęcie hero"
+          hint="Najlepiej najlepsza para przed/po tapicerki — to pierwsze, co widzi klient."
+          value={data.hero.desktopImageUrl}
+          onChange={(url) =>
+            history.setState((draft) => ({
+              ...draft,
+              hero: { desktopImageUrl: url },
+            }))
+          }
+        />
       </Fieldset>
 
       <div className="flex items-center gap-3">

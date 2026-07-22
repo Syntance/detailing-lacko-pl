@@ -10,7 +10,11 @@ import {
 	MAX_CMS_UPLOAD_MB,
 	VERCEL_SAFE_UPLOAD_MB,
 } from "./cms-image-config";
-import { inferCmsMimeFromMeta, inferCmsMimeType } from "./cms-mime";
+import {
+	CMS_ALLOWED_FORMATS_LABEL,
+	inferCmsMimeFromMeta,
+	inferCmsMimeType,
+} from "./cms-mime";
 import { prepareCmsUploadFile } from "./normalize-cms-image";
 
 export {
@@ -134,7 +138,7 @@ export function validateCmsUploadFile(file: File): string | null {
 		return `Plik jest za duży (maks. ${MAX_CMS_UPLOAD_MB} MB). Zapisz jako JPG/WebP lub zmniejsz rozdzielczość.`;
 	}
 	if (!inferCmsMimeType(file)) {
-		return "Dozwolone formaty: JPG, PNG, WEBP, GIF, AVIF.";
+		return `Dozwolone formaty: ${CMS_ALLOWED_FORMATS_LABEL}.`;
 	}
 	return null;
 }
@@ -149,7 +153,7 @@ export function validateCmsUploadMeta(
 	}
 	if (size <= 0) return "Nieprawidłowy rozmiar pliku.";
 	if (!inferCmsMimeFromMeta(filename, contentType)) {
-		return "Dozwolone formaty: JPG, PNG, WEBP, GIF, AVIF.";
+		return `Dozwolone formaty: ${CMS_ALLOWED_FORMATS_LABEL}.`;
 	}
 	return null;
 }
@@ -232,7 +236,7 @@ export async function createCmsPresignedUpload(params: {
 	if (!r2) throw new Error("R2_PRESIGN_UNAVAILABLE");
 
 	const resolvedType = inferCmsMimeFromMeta(params.filename, params.contentType);
-	if (!resolvedType) throw new Error("Dozwolone formaty: JPG, PNG, WEBP, GIF, AVIF.");
+	if (!resolvedType) throw new Error(`Dozwolone formaty: ${CMS_ALLOWED_FORMATS_LABEL}.`);
 
 	const key = buildCmsUploadKey(params.filename);
 	const client = getOrCreateR2Client(r2);

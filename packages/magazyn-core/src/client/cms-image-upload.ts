@@ -13,16 +13,14 @@ import {
 	compressCmsImageForUpload,
 	prepareCmsImageForUpload,
 } from "../storage/compress-cms-image";
+import { inferCmsMimeType } from "../storage/cms-mime";
 
+/**
+ * Typ MIME do presign/PUT. Zgadujemy z rozszerzenia, gdy przeglądarka nie
+ * poda `type` — częste przy HEIC z iPhone'a i TIFF na Windows.
+ */
 function resolveUploadContentType(file: File): string {
-	if (file.type) return file.type;
-	const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
-	if (ext === "jpg" || ext === "jpeg") return "image/jpeg";
-	if (ext === "png") return "image/png";
-	if (ext === "webp") return "image/webp";
-	if (ext === "gif") return "image/gif";
-	if (ext === "avif") return "image/avif";
-	return "application/octet-stream";
+	return inferCmsMimeType(file) ?? file.type ?? "application/octet-stream";
 }
 
 async function readJsonUploadResponse(

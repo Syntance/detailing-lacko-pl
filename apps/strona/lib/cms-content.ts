@@ -2,7 +2,6 @@ import "server-only";
 
 import type { PageContent } from "@moduly/types";
 import { getPostgresClient } from "./db";
-import { DEFAULT_FAQ } from "./content-defaults";
 import type { HomeContentInput } from "./cms-schema";
 
 /**
@@ -11,21 +10,16 @@ import type { HomeContentInput } from "./cms-schema";
  * w initModuly() z layoutu stron, a trasy /api/* przez layout nie przechodzą,
  * więc w route handlerze DataStore jest null (to powodowało 500 przy zapisie).
  * Storefront czyta tę samą tabelę, więc zmiany są widoczne od razu.
+ *
+ * Copy strony żyje w kodzie (decyzja 22.07.2026) — CMS trzyma tylko zdjęcie
+ * hero; ewentualne stare bloki treści w page_content są ignorowane.
  */
 
 function hasDb(): boolean {
   return Boolean(process.env.DATABASE_URL?.trim() || process.env.DATABASE_URL_UNPOOLED?.trim());
 }
 
-const HERO_FALLBACK = {
-  headline: "Detailing Łącko — pranie tapicerki i polerowanie lakieru",
-  subtitle: "",
-  description:
-    "Fotele jak nowe od 300 zł. Lakier bez rys od 600 zł. Przyjmuję na miejscu w Łącku — zapraszam z okolicy: Stary Sącz, Podegrodzie, Nowy Sącz.",
-  ctaLabel: "Zadzwoń",
-  ctaHref: "#kontakt",
-  desktopImageUrl: "/images/hero.jpg",
-};
+const HERO_IMAGE_FALLBACK = "/images/hero.jpg";
 
 async function readHomeContent(): Promise<PageContent> {
   if (!hasDb()) return {};
@@ -44,30 +38,33 @@ async function readHomeContent(): Promise<PageContent> {
   }
 }
 
-/** Surowa treść strony głównej do edycji w panelu (z fallbackami). */
-export async function getHomeContentRaw(): Promise<HomeContentInput> {
+/** Zdjęcie hero do renderu strony (z fallbackiem z repo). */
+export async function getHeroImageUrl(): Promise<string> {
   const content = await readHomeContent();
-  const hero = content.hero;
+  return content.hero?.desktopImageUrl ?? HERO_IMAGE_FALLBACK;
+}
+
+/** Surowa treść do edycji w panelu (z fallbackami). */
+export async function getHomeContentRaw(): Promise<HomeContentInput> {
   return {
-    hero: {
-      headline: hero?.headline ?? HERO_FALLBACK.headline,
-      subtitle: hero?.subtitle ?? "",
-      description: hero?.description ?? HERO_FALLBACK.description,
-      ctaLabel: hero?.ctaLabel ?? HERO_FALLBACK.ctaLabel,
-      ctaHref: hero?.ctaHref ?? HERO_FALLBACK.ctaHref,
-      desktopImageUrl: hero?.desktopImageUrl ?? HERO_FALLBACK.desktopImageUrl,
-    },
-    faq: content.faq?.length ? content.faq : DEFAULT_FAQ,
+    hero: { desktopImageUrl: await getHeroImageUrl() },
   };
 }
 
-/** Zapis treści — scala z istniejącą (nie gubi bloków spoza edytora). */
+/** Zapis — scala z istniejącą treścią (nie gubi bloków spoza edytora). */
 export async function saveHomeContent(input: HomeContentInput): Promise<void> {
   const existing = await readHomeContent();
+  // Typ HeroContent wymaga pól tekstowych — strona ich nie czyta (copy w kodzie),
+  // ale zachowujemy istniejące wartości albo dajemy puste.
+  const hero = existing.hero ?? {
+    headline: "",
+    description: "",
+    ctaLabel: "",
+    ctaHref: "",
+  };
   const next: PageContent = {
     ...existing,
-    hero: { ...existing.hero, ...input.hero },
-    faq: input.faq,
+    hero: { ...hero, desktopImageUrl: input.hero.desktopImageUrl },
   };
   const { sql } = getPostgresClient();
   const json = JSON.stringify(next);

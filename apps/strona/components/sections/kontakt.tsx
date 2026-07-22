@@ -1,11 +1,17 @@
-import { ContactForm } from "@moduly/magazyn-forms";
-import { Clock, MapPin, MessageCircle, Phone } from "lucide-react";
+import { Camera, Clock, MapPin, Phone } from "lucide-react";
+import { buildPhotoContactHref } from "@/lib/photo-contact";
 import type { KontaktData } from "@/lib/site";
 import { Reveal } from "@/components/motion/reveal";
-import { MessengerLink, PhoneLink } from "./phone-link";
+import { PhoneLink, PhotoLink } from "./phone-link";
 
-/** Sekcja „Kontakt" — telefon/adres + formularz wiadomości (po sekcji Rezerwacja). */
+/**
+ * „Umów termin" — sekcja konwersji (plan www v2 §7). Jedna strona, dwa
+ * działania: wiadomość ze zdjęciem albo telefon. Świadomie bez formularza
+ * (zero formularzy wieloetapowych) i bez fraz spoza doliny Dunajca.
+ */
 export function Kontakt({ kontakt }: { kontakt: KontaktData }) {
+  const photoHref = buildPhotoContactHref(kontakt);
+
   return (
     <section
       id="kontakt"
@@ -18,15 +24,32 @@ export function Kontakt({ kontakt }: { kontakt: KontaktData }) {
             id="kontakt-heading"
             className="font-serif text-3xl leading-tight font-medium md:text-4xl"
           >
-            Kontakt
+            Umów termin
           </h2>
           <p className="mt-3 max-w-2xl text-pretty text-muted-foreground">
-            Wolisz zadzwonić albo napisać? Odezwij się — odpowiem z ceną i wolnym terminem.
+            Wyślij zdjęcie plamy albo zadzwoń — do 2 godzin dostaniesz cenę
+            z cennika i najbliższy wolny termin.
           </p>
         </Reveal>
 
-        <div className="mt-8 grid gap-10 lg:grid-cols-[1fr_1.1fr]">
-          <Reveal className="space-y-6">
+        <div className="mt-8 grid gap-5 lg:grid-cols-2">
+          <Reveal className="space-y-5">
+            <PhotoLink
+              href={photoHref}
+              section="kontakt"
+              className="flex items-center gap-4 rounded-2xl bg-primary p-5 text-primary-foreground transition-transform hover:scale-[1.01] focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none motion-reduce:transition-none"
+            >
+              <Camera className="size-6 shrink-0" aria-hidden />
+              <span>
+                <span className="block text-lg font-semibold">
+                  Wyślij zdjęcie plamy lub wnętrza
+                </span>
+                <span className="text-sm opacity-85">
+                  odpiszemy do 2 h z ceną i terminem
+                </span>
+              </span>
+            </PhotoLink>
+
             <PhoneLink
               phoneE164={kontakt.phoneE164}
               section="kontakt"
@@ -42,29 +65,15 @@ export function Kontakt({ kontakt }: { kontakt: KontaktData }) {
                 </span>
               </span>
             </PhoneLink>
+          </Reveal>
 
-            {kontakt.messengerUrl ? (
-              <MessengerLink
-                url={kontakt.messengerUrl}
-                section="kontakt"
-                className="flex items-center gap-4 rounded-2xl border border-border bg-card p-5 transition-colors hover:border-primary/40 focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
-              >
-                <MessageCircle
-                  className="size-6 shrink-0 text-primary-strong"
+          <Reveal delay={0.1}>
+            <div className="h-full rounded-2xl border border-border bg-card p-5">
+              <p className="flex items-start gap-3">
+                <MapPin
+                  className="mt-0.5 size-5 shrink-0 text-primary-strong"
                   aria-hidden
                 />
-                <span>
-                  <span className="block font-medium">Messenger</span>
-                  <span className="text-sm text-muted-foreground">
-                    odpisuję zwykle w kilka godzin
-                  </span>
-                </span>
-              </MessengerLink>
-            ) : null}
-
-            <div className="rounded-2xl border border-border bg-card p-5">
-              <p className="flex items-start gap-3">
-                <MapPin className="mt-0.5 size-5 shrink-0 text-primary-strong" aria-hidden />
                 <span>
                   <span className="block font-medium">
                     {kontakt.addressLine}, {kontakt.postalCode} {kontakt.city}
@@ -82,30 +91,15 @@ export function Kontakt({ kontakt }: { kontakt: KontaktData }) {
                 </span>
               </p>
               <p className="mt-4 flex items-start gap-3 text-sm text-muted-foreground">
-                <Clock className="mt-0.5 size-5 shrink-0 text-primary-strong" aria-hidden />
+                <Clock
+                  className="mt-0.5 size-5 shrink-0 text-primary-strong"
+                  aria-hidden
+                />
                 <span>
-                  {kontakt.freeTravelKm > 0
-                    ? `Dojazd gratis do ${kontakt.freeTravelKm} km. `
-                    : "Usługa stacjonarna — "}
-                  Zapraszam klientów z: {kontakt.serviceAreas.join(" · ")}
+                  Usługa stacjonarna — obsługujemy dolinę Dunajca:{" "}
+                  {kontakt.serviceAreas.join(" · ")}
                 </span>
               </p>
-            </div>
-          </Reveal>
-
-          <Reveal delay={0.1}>
-            <div className="rounded-2xl border border-border bg-card p-6">
-              <h3 className="font-serif text-lg font-medium">
-                Napisz wiadomość — opisz auto i problem
-              </h3>
-              <p className="mt-1 mb-5 text-sm text-muted-foreground">
-                Odpowiem z ceną i wolnym terminem.
-              </p>
-              <ContactForm
-                variant="page"
-                topicPreset="kontakt"
-                privacyPolicyHref="/polityka-prywatnosci"
-              />
             </div>
           </Reveal>
         </div>

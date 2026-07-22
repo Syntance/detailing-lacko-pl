@@ -18,6 +18,11 @@ export function trackPhoneClick(section: string): void {
   track("contact_click", { channel: "phone", location: section });
 }
 
+/** Konwersja główna: klik „Wyślij zdjęcie" (WhatsApp/Messenger/SMS). */
+export function trackPhotoClick(section: string): void {
+  track("contact_click", { channel: "photo", location: section });
+}
+
 export function trackMessengerClick(section: string): void {
   track("contact_click", { channel: "messenger", location: section });
 }
@@ -26,6 +31,15 @@ export function trackPricingExpand(expanded: boolean): void {
   track("cta_click", {
     cta_id: "pricing_expand",
     cta_label: expanded ? "rozwiń" : "zwiń",
+    location: "cennik",
+  });
+}
+
+/** Filtr kategorii w pełnym cenniku — „wszystkie" albo nazwa kategorii. */
+export function trackPricingFilter(categoryName: string): void {
+  track("cta_click", {
+    cta_id: "pricing_filter",
+    cta_label: categoryName,
     location: "cennik",
   });
 }

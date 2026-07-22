@@ -1,31 +1,37 @@
-import { Camera, Droplets, HandCoins, Wrench } from "lucide-react";
+import { Banknote, Camera, Droplets, ListChecks, MapPin } from "lucide-react";
 import { Reveal, RevealItem, RevealStagger } from "@/components/motion/reveal";
 
 /**
- * „To nie myjnia — to detailing" — obiekcja: „czym się różnisz od myjni?"
- * (brief §5).
+ * „To nie myjnia — i nie „wycena indywidualna"" — lęk zaufania: „czym się
+ * różnisz od myjni i od reszty?" (plan www v2 §5). Pięć obietnic z dowodami
+ * + uczciwość o granicach jako wyróżnik, nie słabość.
  */
 export function DlaczegoJa() {
   const points = [
     {
-      icon: Droplets,
-      title: "Ręcznie, nie szczotką",
-      text: "Myjnia automatyczna rysuje lakier. U mnie każdy etap ręcznie: piana, dwa wiadra, mikrofibra.",
+      icon: ListChecks,
+      title: "Pełny cennik na stronie — jedyni w okolicy",
+      text: "Wiesz, ile zapłacisz, zanim napiszesz. Zero „wyceny indywidualnej\".",
     },
     {
-      icon: Wrench,
-      title: "Chemia ADBL i profesjonalny sprzęt",
-      text: "Ekstraktor do tapicerki, maszyna polerska, chemia dobrana do lakieru i materiału.",
-    },
-    {
-      icon: HandCoins,
-      title: "Cena z góry",
-      text: "Mówię ile zapłacisz, zanim zacznę. Żadnych niespodzianek przy odbiorze.",
+      icon: Banknote,
+      title: "Płacisz po obejrzeniu efektu",
+      text: "Całe ryzyko „nie wyszło\" jest po naszej stronie, nie po twojej. Gotówka lub BLIK przy odbiorze.",
     },
     {
       icon: Camera,
       title: "Zdjęcia przed/po każdego auta",
-      text: "Widzisz za co płacisz.",
+      text: "Widzisz, za co płacisz, zanim się zdecydujesz.",
+    },
+    {
+      icon: Droplets,
+      title: "Ręcznie, chemią ADBL i parą",
+      text: "Myjnia automatyczna rysuje lakier. My pracujemy ręcznie: piana, dwa wiadra, mikrofibra, parownica.",
+    },
+    {
+      icon: MapPin,
+      title: "Z Czerńca, nie z Sącza",
+      text: "10 minut od Łącka zamiast dwóch kursów po 25 km.",
     },
   ];
 
@@ -39,13 +45,13 @@ export function DlaczegoJa() {
         <Reveal>
           <h2
             id="dlaczego-heading"
-            className="font-serif text-3xl leading-tight font-medium md:text-4xl"
+            className="font-serif text-3xl leading-tight font-medium text-balance md:text-4xl"
           >
-            To nie myjnia — to detailing
+            To nie myjnia — i nie „wycena indywidualna"
           </h2>
         </Reveal>
 
-        <RevealStagger className="mt-10 grid gap-5 sm:grid-cols-2">
+        <RevealStagger className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {points.map((point) => (
             <RevealItem key={point.title} className="h-full">
               <div className="flex h-full gap-4 rounded-2xl border border-border bg-card p-6">
@@ -65,6 +71,15 @@ export function DlaczegoJa() {
             </RevealItem>
           ))}
         </RevealStagger>
+
+        {/* Uczciwość o granicach — celowo bez lukru (UVP: „czego nie obiecujemy"). */}
+        <Reveal className="mt-8">
+          <p className="max-w-3xl text-sm text-pretty text-muted-foreground">
+            Uczciwie o granicach: one step usuwa 50–70% rys, nie wszystkie.
+            „Każda plama zejdzie" to obietnica, której nie składamy — jeśli po
+            zdjęciu oceniamy, że nie zejdzie, mówimy to przed przyjazdem.
+          </p>
+        </Reveal>
       </div>
     </section>
   );

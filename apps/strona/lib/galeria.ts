@@ -8,7 +8,15 @@ import { z } from "zod";
 export const galeriaPhotoSchema = z.object({
   id: z.string().min(1),
   url: z.string().min(1),
-  /** Podpis pod zdjęciem, np. „Kanapa po kompleksowym czyszczeniu". */
+  /**
+   * Zdjęcie „przed" — gdy ustawione, kafelek renderuje suwak porównawczy
+   * przed/po (plan www v2 §3). Puste = zwykłe zdjęcie z lightboxem.
+   */
+  beforeUrl: z.string().optional(),
+  /**
+   * Podpis wg formuły: problem + wieś + cena + czas, np.
+   * „Kanapa po psie — Zabrzeż, 300 zł, 3 h pracy" (dowód efektu i lokalności).
+   */
   caption: z.string(),
   alt: z.string(),
   order: z.number().int(),
@@ -25,9 +33,9 @@ export type GaleriaPhoto = z.infer<typeof galeriaPhotoSchema>;
 export type GaleriaData = z.infer<typeof galeriaDataSchema>;
 
 export const DEFAULT_GALERIA: GaleriaData = {
-  heading: "Galeria realizacji",
+  heading: "Efekty — zobacz różnicę",
   subheading:
-    "Zdjęcia z naszych realizacji — pranie tapicerki, mycie i polerowanie.",
+    "Prawdziwe auta klientów — bez stocków i bez retuszu. Zdjęcia przed/po z każdej realizacji.",
   photos: [
     {
       id: "kanapa",
@@ -49,7 +57,7 @@ export const DEFAULT_GALERIA: GaleriaData = {
       id: "lakier",
       url: "/images/galeria/lakier.jpg",
       caption: "Maska po polerowaniu one step",
-      alt: "polerowanie lakieru Nowy Sącz — maska po polerowaniu",
+      alt: "polerowanie lakieru Łącko — maska po polerowaniu",
       order: 2,
       disabled: false,
     },
@@ -57,7 +65,7 @@ export const DEFAULT_GALERIA: GaleriaData = {
       id: "reflektor",
       url: "/images/galeria/reflektor.jpg",
       caption: "Reflektory po polerowaniu",
-      alt: "polerowanie reflektorów Nowy Sącz — po renowacji",
+      alt: "polerowanie reflektorów Łącko — po renowacji",
       order: 3,
       disabled: false,
     },

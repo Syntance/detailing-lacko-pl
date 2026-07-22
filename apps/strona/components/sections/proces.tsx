@@ -2,22 +2,22 @@ import type { KontaktData } from "@/lib/site";
 import { Reveal, RevealItem, RevealStagger } from "@/components/motion/reveal";
 
 /**
- * „Jak wygląda współpraca" — obiekcja: „nie wiem jak to działa,
- * boję się stracić czas" (brief §4).
+ * „Jak wygląda współpraca — 3 kroki" — lęk logistyczny: „nie wiem, jak to
+ * wygląda" (plan www v2 §4). Krok 1 = mechanizm wyceny ze zdjęcia.
  */
 export function Proces({ kontakt }: { kontakt: KontaktData }) {
   const steps = [
     {
-      title: "Dzwonisz lub piszesz",
-      text: "Mówisz co za auto i co mu dolega. Od razu podaję cenę i termin.",
+      title: "Wysyłasz zdjęcie albo dzwonisz",
+      text: "Do 2 godzin dostajesz cenę z cennika i najbliższy wolny termin. Jeśli oceniamy, że plama nie zejdzie — mówimy to teraz, nie przy odbiorze.",
     },
     {
-      title: `Przyjeżdżasz do mnie do ${kontakt.city === "Łącko" ? "Czerńca" : kontakt.city}`,
-      text: "Wszystko robię stacjonarnie, na miejscu — dojazd do klienta obecnie niedostępny.",
+      title: `Przywozisz auto — ${kontakt.addressLine}`,
+      text: "W umówionym terminie, po pracy (po 16:00) albo w weekend. Termin zwykle w 3–7 dni.",
     },
     {
-      title: "Odbierasz auto",
-      text: "Płacisz gotówką lub BLIK-iem po obejrzeniu efektu.",
+      title: "Odbierasz i płacisz po obejrzeniu efektu",
+      text: "Gotówka lub BLIK. Zero przedpłat.",
     },
   ];
 
@@ -33,7 +33,7 @@ export function Proces({ kontakt }: { kontakt: KontaktData }) {
             id="proces-heading"
             className="font-serif text-3xl leading-tight font-medium md:text-4xl"
           >
-            Jak wygląda współpraca
+            Jak wygląda współpraca — 3 kroki
           </h2>
         </Reveal>
 
@@ -58,9 +58,12 @@ export function Proces({ kontakt }: { kontakt: KontaktData }) {
           ))}
         </RevealStagger>
 
+        {/* Uczciwie o logistyce — schnięcie i brak dojazdów jako świadomy wybór. */}
         <Reveal className="mt-8">
-          <p className="text-sm text-muted-foreground">
-            Pracuję {kontakt.hoursNote}. Termin zwykle w 3–7 dni.
+          <p className="max-w-3xl text-sm text-pretty text-muted-foreground">
+            Pranie schnie 4–8 h (zimą do 24 h) — auto odbierasz używalne, ale
+            wilgotne. Nie robimy dojazdów — dzięki temu ceny są z góry, bez
+            doliczonych kilometrów.
           </p>
         </Reveal>
       </div>

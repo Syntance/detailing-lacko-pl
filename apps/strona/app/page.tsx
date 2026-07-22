@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { getPageContent } from "@moduly/cms";
 import { JsonLd } from "@/components/json-ld";
 import { DlaczegoJa } from "@/components/sections/dlaczego-ja";
 import { Faq } from "@/components/sections/faq";
@@ -8,11 +7,12 @@ import { Hero } from "@/components/sections/hero";
 import { Kontakt } from "@/components/sections/kontakt";
 import { Navbar } from "@/components/sections/navbar";
 import { Proces } from "@/components/sections/proces";
-import { RezerwacjaSekcja } from "@/components/sections/rezerwacja-sekcja";
 import { StickyCall } from "@/components/sections/sticky-call";
 import { Stopka } from "@/components/sections/stopka";
 import { UslugiCennik } from "@/components/sections/uslugi-cennik";
+import { getHeroImageUrl } from "@/lib/cms-content";
 import { DEFAULT_FAQ } from "@/lib/content-defaults";
+import { buildPhotoContactHref } from "@/lib/photo-contact";
 import { getCennik, getGaleria, getKontakt } from "@/lib/site-data";
 import { getDostepnosc } from "@/lib/rezerwacje-store";
 
@@ -25,22 +25,23 @@ export async function generateMetadata(): Promise<Metadata> {
   const kontakt = await getKontakt();
   return {
     title:
-      "Detailing Łącko — pranie tapicerki, polerowanie lakieru | Nowy Sącz i okolice",
-    description: `Pranie tapicerki od 300 zł, polerowanie lakieru od 600 zł. Detailing w ${kontakt.city}, zapraszamy z okolicy: Stary Sącz, Nowy Sącz. Zadzwoń: ${kontakt.phoneDisplay}.`,
+      "Detailing Łącko — pranie tapicerki, cennik z cenami z góry | Czerniec",
+    description: `Pełny cennik na stronie: komplet foteli z kanapą 300 zł, kompleksowe wnętrze 500 zł. Płacisz po obejrzeniu efektu. Czerniec, gmina Łącko. Tel. ${kontakt.phoneDisplay}`,
     alternates: { canonical: "/" },
   };
 }
 
 export default async function HomePage() {
-  const [content, cennik, galeria, kontakt, dostepnosc] = await Promise.all([
-    getPageContent("home"),
+  const [heroImageUrl, cennik, galeria, kontakt, dostepnosc] = await Promise.all([
+    getHeroImageUrl(),
     getCennik(),
     getGaleria(),
     getKontakt(),
     getDostepnosc(),
   ]);
 
-  const faq = content.faq?.length ? content.faq : DEFAULT_FAQ;
+  // Copy strony (w tym FAQ) żyje w kodzie — CMS trzyma tylko zasoby wymienne.
+  const faq = DEFAULT_FAQ;
 
   return (
     <>
@@ -53,13 +54,14 @@ export default async function HomePage() {
 
       <Navbar kontakt={kontakt} />
 
+      {/* Kolejność sekcji = kolejność lęków klienta (plan www v2):
+          cena → efekt → logistyka → zaufanie → FAQ → kontakt. */}
       <main>
-        <Hero hero={content.hero} kontakt={kontakt} />
+        <Hero imageUrl={heroImageUrl} kontakt={kontakt} />
         <UslugiCennik cennik={cennik} kontakt={kontakt} />
         <Galeria galeria={galeria} />
         <Proces kontakt={kontakt} />
         <DlaczegoJa />
-        <RezerwacjaSekcja dostepnosc={dostepnosc} kontakt={kontakt} />
         <Faq items={faq} />
         <Kontakt kontakt={kontakt} />
       </main>
@@ -68,6 +70,7 @@ export default async function HomePage() {
       <StickyCall
         phoneE164={kontakt.phoneE164}
         phoneDisplay={kontakt.phoneDisplay}
+        photoHref={buildPhotoContactHref(kontakt)}
       />
       <JsonLd
         kontakt={kontakt}

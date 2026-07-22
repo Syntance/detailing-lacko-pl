@@ -4,12 +4,15 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import type { GaleriaData } from "@/lib/galeria";
+import { trackCompareInteract } from "@/lib/track";
 import { Reveal, RevealItem, RevealStagger } from "@/components/motion/reveal";
+import { BeforeAfter } from "./before-after";
 
 /**
- * Sekcja „Galeria realizacji" — siatka zdjęć z lightboxem (klik → pełny ekran,
- * strzałki / Escape). Dane z panelu Magazyn → Galeria. Zastępuje wcześniejszy
- * suwak przed/po.
+ * Sekcja „Efekty — zobacz różnicę" (plan www v2 §3, lęk nr 2: „czy to w ogóle
+ * coś daje?"). Kafelki z beforeUrl renderują suwak przed/po; pozostałe —
+ * lightbox. Podpis wg formuły: problem + wieś + cena + czas.
+ * Dane z panelu Magazyn → Galeria.
  */
 export function Galeria({ galeria }: { galeria: GaleriaData }) {
   const photos = galeria.photos
@@ -76,25 +79,42 @@ export function Galeria({ galeria }: { galeria: GaleriaData }) {
         <RevealStagger className="mt-10 grid grid-cols-2 gap-4 md:grid-cols-3">
           {photos.map((photo, i) => (
             <RevealItem key={photo.id}>
-              <button
-                type="button"
-                onClick={() => setIndex(i)}
-                aria-label={`Powiększ: ${photo.caption || photo.alt || "zdjęcie"}`}
-                className="group relative block aspect-[4/3] w-full overflow-hidden rounded-2xl border border-border bg-card focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
-              >
-                <Image
-                  src={photo.url}
-                  alt={photo.alt || photo.caption}
-                  fill
-                  sizes="(max-width: 768px) 50vw, 340px"
-                  className="object-cover transition-transform duration-500 group-hover:scale-105 motion-reduce:transition-none"
-                />
-                {photo.caption ? (
-                  <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-4 pt-8 pb-3 text-left text-sm font-medium text-white">
-                    {photo.caption}
-                  </span>
-                ) : null}
-              </button>
+              {photo.beforeUrl ? (
+                <figure>
+                  <BeforeAfter
+                    beforeUrl={photo.beforeUrl}
+                    afterUrl={photo.url}
+                    alt={photo.alt || photo.caption}
+                    sizes="(max-width: 768px) 50vw, 340px"
+                    onFirstInteract={() => trackCompareInteract(photo.id)}
+                  />
+                  {photo.caption ? (
+                    <figcaption className="mt-2 text-sm font-medium text-pretty">
+                      {photo.caption}
+                    </figcaption>
+                  ) : null}
+                </figure>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setIndex(i)}
+                  aria-label={`Powiększ: ${photo.caption || photo.alt || "zdjęcie"}`}
+                  className="group relative block aspect-[4/3] w-full overflow-hidden rounded-2xl border border-border bg-card focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+                >
+                  <Image
+                    src={photo.url}
+                    alt={photo.alt || photo.caption}
+                    fill
+                    sizes="(max-width: 768px) 50vw, 340px"
+                    className="object-cover transition-transform duration-500 group-hover:scale-105 motion-reduce:transition-none"
+                  />
+                  {photo.caption ? (
+                    <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-4 pt-8 pb-3 text-left text-sm font-medium text-white">
+                      {photo.caption}
+                    </span>
+                  ) : null}
+                </button>
+              )}
             </RevealItem>
           ))}
         </RevealStagger>

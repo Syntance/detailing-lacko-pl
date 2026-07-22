@@ -25,11 +25,11 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
     default:
-      "Detailing Łącko — pranie tapicerki, polerowanie lakieru | Nowy Sącz i okolice",
+      "Detailing Łącko — pranie tapicerki, cennik z cenami z góry | Czerniec",
     template: "%s | Detailing Łącko",
   },
   description:
-    "Pranie tapicerki od 300 zł, polerowanie lakieru od 600 zł. Detailing w Łącku, zapraszamy z okolicy: Stary Sącz, Nowy Sącz.",
+    "Pełny cennik na stronie: komplet foteli z kanapą 300 zł, kompleksowe wnętrze 500 zł. Płacisz po obejrzeniu efektu. Czerniec, gmina Łącko.",
   alternates: { canonical: "/" },
   openGraph: {
     type: "website",

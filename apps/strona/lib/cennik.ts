@@ -76,24 +76,26 @@ export function formatItemPrice(item: CennikItem): string {
 /** Domyślny cennik — 1:1 z Notion „Cennik i zakres usług". */
 export const DEFAULT_CENNIK: CennikData = {
   settings: {
-    heading: "Usługi i ceny — bez wyceny po rozmowie, ceny z góry",
+    heading: "Cennik — ceny z góry, bez wyceny indywidualnej",
     subheading:
-      "Mówię ile zapłacisz, zanim zacznę. Duże auto (SUV / VAN / 7-os.) lub mocne zabrudzenie — dopłata +20–40%, ustalimy to na miejscu albo telefonicznie.",
+      "Jako jedyni w okolicy publikujemy pełny cennik i rozliczamy dokładnie według niego. Widełki tylko tam, gdzie cena zależy od rozmiaru auta.",
     noteTitle: "Sprzedajesz auto?",
     noteText:
-      "Czyste, wypolerowane auto sprzedaje się szybciej i drożej — zobacz pakiety przygotowania do sprzedaży wyżej.",
-    noteCtaLabel: "Zadzwoń, dobiorę pakiet",
+      "Kupujący zbije cenę o brudne wnętrze mocniej, niż kosztuje jego wyczyszczenie. Handlarze i komisy od 2 aut miesięcznie — stała stawka ok. 400 zł/auto, ten sam standard i termin za każdym razem.",
+    noteCtaLabel: "Wyślij zdjęcie",
     expandLabel: "Rozwiń pełny cennik",
     collapseLabel: "Zwiń cennik",
   },
   categories: [
     {
-      id: "pakiety-in-out",
-      name: "Pakiety całego auta (IN+OUT)",
-      description: "Kompleksowe mycie i czyszczenie całego auta w jednej wizycie.",
+      id: "pakiety",
+      name: "Pakiety",
+      description:
+        "Całe auto w jednej wizycie oraz przygotowanie pod sprzedaż, ze zdjęciami do ogłoszenia.",
       priceFrom: 200,
-      timeLabel: "3 h – 1 dzień",
-      highlight: "Najczęściej wybierane: Detailing kompletny IN+OUT — 650 zł",
+      timeLabel: "3 h – 2 dni",
+      highlight:
+        "Detailing kompletny IN+OUT — 650 zł, czyli 100 zł taniej niż suma składowych",
       order: 0,
       disabled: false,
     },
@@ -120,29 +122,19 @@ export const DEFAULT_CENNIK: CennikData = {
     {
       id: "polerowanie-korekta",
       name: "Polerowanie i korekta lakieru",
-      description: "Polerowanie jednoetapowe (one step) i korekta dwuetapowa.",
+      description: "Polerowanie jednoetapowe (one step) i reflektory.",
       priceFrom: 250,
-      timeLabel: "1,5 h – 2 dni",
-      highlight: "One step usuwa 50–70% rys — od 600 zł",
+      timeLabel: "1,5 h – 1 dzień",
+      highlight: "One step: 600 / 750 / 900 zł wg rozmiaru auta — usuwa 50–70% rys",
       order: 3,
-      disabled: false,
-    },
-    {
-      id: "pakiety-sprzedaz",
-      name: "Pakiety — przygotowanie do sprzedaży",
-      description: "Kompletne przygotowanie auta pod sprzedaż, ze zdjęciami do ogłoszenia.",
-      priceFrom: 650,
-      timeLabel: "1 – 2 dni",
-      highlight: "Ze zdjęciami do ogłoszenia w cenie",
-      order: 4,
       disabled: false,
     },
   ],
   items: [
-    // --- Pakiety całego auta (IN+OUT) ---
+    // --- Pakiety (całe auto IN+OUT + przygotowanie do sprzedaży) ---
     {
       id: "odswiezenie-in-out",
-      categoryId: "pakiety-in-out",
+      categoryId: "pakiety",
       name: "Odświeżenie IN+OUT",
       description:
         "Mycie z zewnątrz + wnętrze express: odkurzanie, kokpit, szyby, dywaniki. Bez dressingu opon i prania tapicerki.",
@@ -157,7 +149,7 @@ export const DEFAULT_CENNIK: CennikData = {
     },
     {
       id: "detailing-kompletny-in-out",
-      categoryId: "pakiety-in-out",
+      categoryId: "pakiety",
       name: "Detailing kompletny IN+OUT",
       description:
         "Mycie z dekontaminacją + wosk syntetyczny + kompleksowe czyszczenie wnętrza. 100 zł taniej niż suma składowych.",
@@ -440,6 +432,7 @@ export const DEFAULT_CENNIK: CennikData = {
       disabled: false,
     },
     {
+      // Poza ofertą standardową (Notion „Zasady") — nie renderujemy na stronie.
       id: "korekta-dwuetapowa",
       categoryId: "polerowanie-korekta",
       name: "Korekta dwuetapowa",
@@ -451,13 +444,12 @@ export const DEFAULT_CENNIK: CennikData = {
       unit: "",
       popular: false,
       order: 5,
-      disabled: false,
+      disabled: true,
     },
 
-    // --- Pakiety — przygotowanie do sprzedaży ---
     {
       id: "przygotowanie-do-sprzedazy",
-      categoryId: "pakiety-sprzedaz",
+      categoryId: "pakiety",
       name: "Przygotowanie auta do sprzedaży",
       description: "Detailing kompletny IN+OUT + zdjęcia do ogłoszenia.",
       timeLabel: "1 dzień",
@@ -466,22 +458,22 @@ export const DEFAULT_CENNIK: CennikData = {
       pricePrefix: "",
       unit: "",
       popular: false,
-      order: 0,
+      order: 2,
       disabled: false,
     },
     {
       id: "przygotowanie-do-sprzedazy-pro",
-      categoryId: "pakiety-sprzedaz",
+      categoryId: "pakiety",
       name: "Przygotowanie do sprzedaży PRO",
       description:
-        "Kompleksowe wnętrze + dekontaminacja + one step + wosk + zdjęcia do ogłoszenia.",
+        "Kompleksowe wnętrze + dekontaminacja + one step + wosk + zdjęcia do ogłoszenia. Hatchback 1000 / sedan-kombi 1150 / SUV-van 1300.",
       timeLabel: "1,5–2 dni",
       priceFrom: 1000,
-      priceTo: 0,
-      pricePrefix: "od ",
-      unit: "",
+      priceTo: 1300,
+      pricePrefix: "",
+      unit: "wg rozmiaru auta",
       popular: false,
-      order: 1,
+      order: 3,
       disabled: false,
     },
   ],

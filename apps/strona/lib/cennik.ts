@@ -36,6 +36,8 @@ export const cennikItemSchema = z.object({
   pricePrefix: z.string(),
   /** Dopisek za ceną, np. „za parę". */
   unit: z.string(),
+  /** Ukrycie kwoty — zamiast ceny pokazujemy „Zapytaj o cenę". */
+  priceHidden: z.boolean().optional(),
   popular: z.boolean(),
   order: z.number().int(),
   disabled: z.boolean(),
@@ -63,8 +65,12 @@ export type CennikItem = z.infer<typeof cennikItemSchema>;
 export type CennikSettings = z.infer<typeof cennikSettingsSchema>;
 export type CennikData = z.infer<typeof cennikDataSchema>;
 
+/** Etykieta pozycji z ukrytą kwotą. */
+export const HIDDEN_PRICE_LABEL = "Zapytaj o cenę";
+
 /** Format ceny pozycji: „250–350 zł", „600 zł", „80 zł za parę", „od 1200 zł", „+150 zł". */
 export function formatItemPrice(item: CennikItem): string {
+  if (item.priceHidden) return HIDDEN_PRICE_LABEL;
   const range =
     item.priceTo > item.priceFrom
       ? `${item.priceFrom}–${item.priceTo} zł`

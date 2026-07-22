@@ -674,6 +674,14 @@ function ItemRow({
             />
             Widoczna
           </label>
+          <label className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Checkbox
+              checked={item.priceHidden === true}
+              onCheckedChange={(checked) => onChange({ priceHidden: checked })}
+              ariaLabel={`Ukryj cenę pozycji ${item.name || "bez nazwy"}`}
+            />
+            Ukryj cenę
+          </label>
         </div>
       </div>
     </Reorder.Item>

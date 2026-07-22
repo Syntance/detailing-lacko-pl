@@ -2,15 +2,14 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button, Input, PageHeader, Switch } from "@moduly/ui";
-import { Plus, Save } from "lucide-react";
-import type {
-  CennikCategory,
-  CennikData,
-  CennikItem,
-} from "@/lib/cennik";
+import { Reorder, useDragControls } from "motion/react";
+import { Button, Input, PageHeader } from "@moduly/ui";
+import { Plus, Save, Trash2 } from "lucide-react";
+import type { CennikCategory, CennikData, CennikItem } from "@/lib/cennik";
 import { useMagazynHistory } from "@/hooks/use-magazyn-history";
 import {
+  Checkbox,
+  DragHandle,
   Field,
   Fieldset,
   RowControls,
@@ -43,19 +42,6 @@ function reorder<T extends { order: number }>(list: T[]): T[] {
   return list.map((entry, index) => ({ ...entry, order: index }));
 }
 
-function move<T extends { order: number }>(
-  list: T[],
-  index: number,
-  delta: -1 | 1,
-): T[] {
-  const target = index + delta;
-  if (target < 0 || target >= list.length) return list;
-  const next = [...list];
-  const [row] = next.splice(index, 1);
-  next.splice(target, 0, row as T);
-  return reorder(next);
-}
-
 function newCategory(order: number): CennikCategory {
   return {
     id: `karta-${Date.now()}`,
@@ -64,6 +50,23 @@ function newCategory(order: number): CennikCategory {
     priceFrom: 0,
     timeLabel: "",
     highlight: "",
+    order,
+    disabled: false,
+  };
+}
+
+function newItem(categoryId: string, order: number): CennikItem {
+  return {
+    id: slugify(`${categoryId}-${Date.now()}`),
+    categoryId,
+    name: "",
+    description: "",
+    timeLabel: "",
+    priceFrom: 0,
+    priceTo: 0,
+    pricePrefix: "",
+    unit: "",
+    popular: false,
     order,
     disabled: false,
   };
@@ -101,6 +104,23 @@ export function CennikClient({ initial }: { initial: CennikData }) {
     history.setState((draft) => ({ ...draft, items: next }));
 
   const sortedCategories = [...categories].sort((a, b) => a.order - b.order);
+
+  const removeCategory = (category: CennikCategory) => {
+    const count = items.filter((i) => i.categoryId === category.id).length;
+    if (
+      count > 0 &&
+      !window.confirm(
+        `Usunąć kategorię „${category.name || "bez nazwy"}" wraz z ${count} pozycjami?`,
+      )
+    ) {
+      return;
+    }
+    setCategories(reorder(sortedCategories.filter((c) => c.id !== category.id)));
+    setItems(items.filter((i) => i.categoryId !== category.id));
+  };
+
+  const addCategory = () =>
+    setCategories(reorder([...sortedCategories, newCategory(sortedCategories.length)]));
 
   return (
     <div className="space-y-6">
@@ -141,149 +161,29 @@ export function CennikClient({ initial }: { initial: CennikData }) {
         <div className="min-w-0 flex-1 space-y-4">
           {section === "karty" ? (
             <div className="space-y-4">
-              {sortedCategories.map((category, index) => (
-                <Fieldset key={category.id} legend={category.name || "Nowa karta"}>
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <Field label="Nazwa karty">
-                      <Input
-                        value={category.name}
-                        onChange={(e) =>
-                          setCategories(
-                            sortedCategories.map((c) =>
-                              c.id === category.id
-                                ? { ...c, name: e.target.value }
-                                : c,
-                            ),
-                          )
-                        }
-                      />
-                    </Field>
-                    <Field label="Czas trwania" hint="np. 3–5 godzin">
-                      <Input
-                        value={category.timeLabel}
-                        onChange={(e) =>
-                          setCategories(
-                            sortedCategories.map((c) =>
-                              c.id === category.id
-                                ? { ...c, timeLabel: e.target.value }
-                                : c,
-                            ),
-                          )
-                        }
-                      />
-                    </Field>
-                  </div>
-                  <Field label="Opis na karcie">
-                    <Input
-                      value={category.description}
-                      onChange={(e) =>
-                        setCategories(
-                          sortedCategories.map((c) =>
-                            c.id === category.id
-                              ? { ...c, description: e.target.value }
-                              : c,
-                          ),
-                        )
-                      }
-                    />
-                  </Field>
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <Field label="Cena od (zł)">
-                      <Input
-                        type="number"
-                        inputMode="numeric"
-                        min={0}
-                        value={category.priceFrom}
-                        onChange={(e) =>
-                          setCategories(
-                            sortedCategories.map((c) =>
-                              c.id === category.id
-                                ? { ...c, priceFrom: Number(e.target.value) || 0 }
-                                : c,
-                            ),
-                          )
-                        }
-                      />
-                    </Field>
-                    <Field
-                      label="Wyróżnik pod kartą"
-                      hint="np. Najczęściej wybierane: … — 400–500 zł"
-                    >
-                      <Input
-                        value={category.highlight}
-                        onChange={(e) =>
-                          setCategories(
-                            sortedCategories.map((c) =>
-                              c.id === category.id
-                                ? { ...c, highlight: e.target.value }
-                                : c,
-                            ),
-                          )
-                        }
-                      />
-                    </Field>
-                  </div>
-                  <div className="flex items-center justify-between gap-4">
-                    <label className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Switch
-                        checked={!category.disabled}
-                        onCheckedChange={(checked) =>
-                          setCategories(
-                            sortedCategories.map((c) =>
-                              c.id === category.id
-                                ? { ...c, disabled: !checked }
-                                : c,
-                            ),
-                          )
-                        }
-                        aria-label={`Widoczność karty ${category.name}`}
-                      />
-                      Widoczna na stronie
-                    </label>
-                    <RowControls
-                      onUp={() => setCategories(move(sortedCategories, index, -1))}
-                      onDown={() => setCategories(move(sortedCategories, index, 1))}
-                      onRemove={() => {
-                        const itemCount = items.filter(
-                          (i) => i.categoryId === category.id,
-                        ).length;
-                        if (
-                          itemCount > 0 &&
-                          !window.confirm(
-                            `Usunąć kartę „${category.name || "bez nazwy"}" wraz z ${itemCount} pozycjami cennika?`,
-                          )
-                        ) {
-                          return;
-                        }
-                        setCategories(
-                          reorder(
-                            sortedCategories.filter((c) => c.id !== category.id),
-                          ),
-                        );
-                        setItems(
-                          items.filter((i) => i.categoryId !== category.id),
-                        );
-                      }}
-                      upDisabled={index === 0}
-                      downDisabled={index === sortedCategories.length - 1}
-                      removeLabel={`Usuń kartę ${category.name}`}
-                    />
-                  </div>
-                </Fieldset>
-              ))}
-              <Button
-                type="button"
-                variant="outline"
-                className="gap-1.5"
-                onClick={() =>
-                  setCategories(
-                    reorder([
-                      ...sortedCategories,
-                      newCategory(sortedCategories.length),
-                    ]),
-                  )
-                }
+              <Reorder.Group
+                as="div"
+                axis="y"
+                values={sortedCategories}
+                onReorder={(next) => setCategories(reorder(next))}
+                className="space-y-4"
               >
+                {sortedCategories.map((category) => (
+                  <CategoryKartyCard
+                    key={category.id}
+                    category={category}
+                    onChange={(patch) =>
+                      setCategories(
+                        categories.map((c) =>
+                          c.id === category.id ? { ...c, ...patch } : c,
+                        ),
+                      )
+                    }
+                    onRemove={() => removeCategory(category)}
+                  />
+                ))}
+              </Reorder.Group>
+              <Button type="button" variant="outline" className="gap-1.5" onClick={addCategory}>
                 <Plus className="size-4" aria-hidden /> Dodaj kartę
               </Button>
             </div>
@@ -291,320 +191,79 @@ export function CennikClient({ initial }: { initial: CennikData }) {
 
           {section === "pozycje" ? (
             <div className="space-y-6">
-              {sortedCategories.map((category, catIndex) => {
-                const rows = items
-                  .filter((item) => item.categoryId === category.id)
-                  .sort((a, b) => a.order - b.order);
-
-                const moveItemToCategory = (
-                  itemId: string,
-                  newCategoryId: string,
-                ) => {
-                  if (newCategoryId === category.id) return;
-                  const moving = items.find((i) => i.id === itemId);
-                  if (!moving) return;
-                  const remaining = reorder(rows.filter((i) => i.id !== itemId));
-                  const targetRows = items
-                    .filter((i) => i.categoryId === newCategoryId)
-                    .sort((a, b) => a.order - b.order);
-                  const movedItem = {
-                    ...moving,
-                    categoryId: newCategoryId,
-                    order: targetRows.length,
-                  };
-                  const untouched = items.filter(
-                    (i) =>
-                      i.categoryId !== category.id &&
-                      i.categoryId !== newCategoryId,
-                  );
-                  setItems([...untouched, ...remaining, ...targetRows, movedItem]);
-                };
-
-                return (
-                  <Fieldset
-                    key={category.id}
-                    legend={category.name || "Nowa karta"}
-                    actions={
-                      <RowControls
-                        onUp={() =>
-                          setCategories(move(sortedCategories, catIndex, -1))
-                        }
-                        onDown={() =>
-                          setCategories(move(sortedCategories, catIndex, 1))
-                        }
-                        onRemove={() => {
-                          if (
-                            rows.length > 0 &&
-                            !window.confirm(
-                              `Usunąć kategorię „${category.name || "bez nazwy"}" wraz z ${rows.length} pozycjami?`,
-                            )
-                          ) {
-                            return;
-                          }
-                          setCategories(
-                            reorder(
-                              sortedCategories.filter(
-                                (c) => c.id !== category.id,
-                              ),
-                            ),
-                          );
-                          setItems(
-                            items.filter((i) => i.categoryId !== category.id),
-                          );
-                        }}
-                        upDisabled={catIndex === 0}
-                        downDisabled={catIndex === sortedCategories.length - 1}
-                        removeLabel={`Usuń kategorię ${category.name}`}
-                      />
-                    }
-                  >
-                    <div className="space-y-4">
-                      {rows.map((item, index) => (
-                        <div
-                          key={item.id}
-                          className="space-y-3 rounded-lg border border-border bg-background/50 p-4"
-                        >
-                          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
-                            <Field label="Nazwa" hint={`prefiks "• " = dodatek`}>
-                              <Input
-                                value={item.name}
-                                onChange={(e) =>
-                                  setItems(
-                                    items.map((i) =>
-                                      i.id === item.id
-                                        ? { ...i, name: e.target.value }
-                                        : i,
-                                    ),
-                                  )
-                                }
-                              />
-                            </Field>
-                            <Field label="Opis">
-                              <Input
-                                value={item.description}
-                                onChange={(e) =>
-                                  setItems(
-                                    items.map((i) =>
-                                      i.id === item.id
-                                        ? { ...i, description: e.target.value }
-                                        : i,
-                                    ),
-                                  )
-                                }
-                              />
-                            </Field>
-                            <Field label="Czas" hint="np. 1,5 h">
-                              <Input
-                                value={item.timeLabel}
-                                onChange={(e) =>
-                                  setItems(
-                                    items.map((i) =>
-                                      i.id === item.id
-                                        ? { ...i, timeLabel: e.target.value }
-                                        : i,
-                                    ),
-                                  )
-                                }
-                              />
-                            </Field>
-                            <Field label="Kategoria" hint="przenosi pozycję">
-                              <select
-                                value={item.categoryId}
-                                onChange={(e) =>
-                                  moveItemToCategory(item.id, e.target.value)
-                                }
-                                className="h-11 rounded-xl border border-input bg-background px-3 text-sm focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
-                              >
-                                {sortedCategories.map((c) => (
-                                  <option key={c.id} value={c.id}>
-                                    {c.name || "(bez nazwy)"}
-                                  </option>
-                                ))}
-                              </select>
-                            </Field>
-                          </div>
-                          <div className="grid gap-3 md:grid-cols-4">
-                            <Field label="Cena od (zł)">
-                              <Input
-                                type="number"
-                                inputMode="numeric"
-                                min={0}
-                                value={item.priceFrom}
-                                onChange={(e) =>
-                                  setItems(
-                                    items.map((i) =>
-                                      i.id === item.id
-                                        ? {
-                                            ...i,
-                                            priceFrom:
-                                              Number(e.target.value) || 0,
-                                          }
-                                        : i,
-                                    ),
-                                  )
-                                }
-                              />
-                            </Field>
-                            <Field label="Cena do (zł)" hint="0 = cena stała">
-                              <Input
-                                type="number"
-                                inputMode="numeric"
-                                min={0}
-                                value={item.priceTo}
-                                onChange={(e) =>
-                                  setItems(
-                                    items.map((i) =>
-                                      i.id === item.id
-                                        ? {
-                                            ...i,
-                                            priceTo: Number(e.target.value) || 0,
-                                          }
-                                        : i,
-                                    ),
-                                  )
-                                }
-                              />
-                            </Field>
-                            <Field
-                              label="Przedrostek ceny"
-                              hint={`np. "od " albo "+"`}
-                            >
-                              <Input
-                                value={item.pricePrefix}
-                                onChange={(e) =>
-                                  setItems(
-                                    items.map((i) =>
-                                      i.id === item.id
-                                        ? { ...i, pricePrefix: e.target.value }
-                                        : i,
-                                    ),
-                                  )
-                                }
-                              />
-                            </Field>
-                            <Field label="Dopisek" hint="np. za parę">
-                              <Input
-                                value={item.unit}
-                                onChange={(e) =>
-                                  setItems(
-                                    items.map((i) =>
-                                      i.id === item.id
-                                        ? { ...i, unit: e.target.value }
-                                        : i,
-                                    ),
-                                  )
-                                }
-                              />
-                            </Field>
-                          </div>
-                          <div className="flex flex-wrap items-center justify-between gap-3">
-                            <div className="flex items-center gap-5">
-                              <label className="flex items-center gap-2 text-sm text-muted-foreground">
-                                <Switch
-                                  checked={item.popular}
-                                  onCheckedChange={(checked) =>
-                                    setItems(
-                                      items.map((i) =>
-                                        i.id === item.id
-                                          ? { ...i, popular: checked }
-                                          : i,
-                                      ),
-                                    )
-                                  }
-                                  aria-label={`Oznacz ${item.name} jako popularne`}
-                                />
-                                Najczęściej wybierane
-                              </label>
-                              <label className="flex items-center gap-2 text-sm text-muted-foreground">
-                                <Switch
-                                  checked={!item.disabled}
-                                  onCheckedChange={(checked) =>
-                                    setItems(
-                                      items.map((i) =>
-                                        i.id === item.id
-                                          ? { ...i, disabled: !checked }
-                                          : i,
-                                      ),
-                                    )
-                                  }
-                                  aria-label={`Widoczność pozycji ${item.name}`}
-                                />
-                                Widoczna
-                              </label>
-                            </div>
-                            <RowControls
-                              onUp={() => {
-                                const moved = move(rows, index, -1);
-                                setItems([
-                                  ...items.filter(
-                                    (i) => i.categoryId !== category.id,
-                                  ),
-                                  ...moved,
-                                ]);
-                              }}
-                              onDown={() => {
-                                const moved = move(rows, index, 1);
-                                setItems([
-                                  ...items.filter(
-                                    (i) => i.categoryId !== category.id,
-                                  ),
-                                  ...moved,
-                                ]);
-                              }}
-                              onRemove={() =>
-                                setItems(items.filter((i) => i.id !== item.id))
-                              }
-                              upDisabled={index === 0}
-                              downDisabled={index === rows.length - 1}
-                              removeLabel={`Usuń pozycję ${item.name}`}
-                            />
-                          </div>
-                        </div>
-                      ))}
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="gap-1.5"
-                        onClick={() =>
-                          setItems([
-                            ...items,
-                            {
-                              id: slugify(`${category.id}-${Date.now()}`),
-                              categoryId: category.id,
-                              name: "",
-                              description: "",
-                              timeLabel: "",
-                              priceFrom: 0,
-                              priceTo: 0,
-                              pricePrefix: "",
-                              unit: "",
-                              popular: false,
-                              order: rows.length,
-                              disabled: false,
-                            },
-                          ])
-                        }
-                      >
-                        <Plus className="size-4" aria-hidden /> Dodaj pozycję
-                      </Button>
-                    </div>
-                  </Fieldset>
-                );
-              })}
-              <Button
-                type="button"
-                variant="outline"
-                className="gap-1.5"
-                onClick={() =>
-                  setCategories(
-                    reorder([
-                      ...sortedCategories,
-                      newCategory(sortedCategories.length),
-                    ]),
-                  )
-                }
+              <Reorder.Group
+                as="div"
+                axis="y"
+                values={sortedCategories}
+                onReorder={(next) => setCategories(reorder(next))}
+                className="space-y-6"
               >
+                {sortedCategories.map((category) => {
+                  const rows = items
+                    .filter((item) => item.categoryId === category.id)
+                    .sort((a, b) => a.order - b.order);
+
+                  const moveItemToCategory = (
+                    itemId: string,
+                    newCategoryId: string,
+                  ) => {
+                    if (newCategoryId === category.id) return;
+                    const moving = items.find((i) => i.id === itemId);
+                    if (!moving) return;
+                    const remaining = reorder(rows.filter((i) => i.id !== itemId));
+                    const targetRows = items
+                      .filter((i) => i.categoryId === newCategoryId)
+                      .sort((a, b) => a.order - b.order);
+                    const movedItem = {
+                      ...moving,
+                      categoryId: newCategoryId,
+                      order: targetRows.length,
+                    };
+                    const untouched = items.filter(
+                      (i) =>
+                        i.categoryId !== category.id &&
+                        i.categoryId !== newCategoryId,
+                    );
+                    setItems([...untouched, ...remaining, ...targetRows, movedItem]);
+                  };
+
+                  return (
+                    <CategoryPozycjeCard
+                      key={category.id}
+                      category={category}
+                      rows={rows}
+                      allCategories={sortedCategories}
+                      onChangeCategory={(patch) =>
+                        setCategories(
+                          categories.map((c) =>
+                            c.id === category.id ? { ...c, ...patch } : c,
+                          ),
+                        )
+                      }
+                      onRemoveCategory={() => removeCategory(category)}
+                      onReorderItems={(next) => {
+                        setItems([
+                          ...items.filter((i) => i.categoryId !== category.id),
+                          ...reorder(next),
+                        ]);
+                      }}
+                      onChangeItem={(itemId, patch) =>
+                        setItems(
+                          items.map((i) => (i.id === itemId ? { ...i, ...patch } : i)),
+                        )
+                      }
+                      onRemoveItem={(itemId) =>
+                        setItems(items.filter((i) => i.id !== itemId))
+                      }
+                      onMoveItemToCategory={moveItemToCategory}
+                      onAddItem={() =>
+                        setItems([...items, newItem(category.id, rows.length)])
+                      }
+                    />
+                  );
+                })}
+              </Reorder.Group>
+              <Button type="button" variant="outline" className="gap-1.5" onClick={addCategory}>
                 <Plus className="size-4" aria-hidden /> Dodaj kategorię
               </Button>
             </div>
@@ -721,5 +380,302 @@ export function CennikClient({ initial }: { initial: CennikData }) {
         </div>
       </div>
     </div>
+  );
+}
+
+/* ------------------------------ Karty usług ------------------------------ */
+
+function CategoryKartyCard({
+  category,
+  onChange,
+  onRemove,
+}: {
+  category: CennikCategory;
+  onChange: (patch: Partial<CennikCategory>) => void;
+  onRemove: () => void;
+}) {
+  const dragControls = useDragControls();
+
+  return (
+    <Reorder.Item
+      value={category}
+      dragListener={false}
+      dragControls={dragControls}
+      as="div"
+    >
+      <Fieldset
+        legend={category.name || "Nowa karta"}
+        actions={
+          <div className="flex items-center gap-1">
+            <DragHandle
+              onPointerDown={(e) => dragControls.start(e)}
+              label={`Przeciągnij kartę ${category.name || "bez nazwy"}`}
+            />
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={onRemove}
+              aria-label={`Usuń kartę ${category.name || "bez nazwy"}`}
+              className="text-destructive hover:text-destructive"
+            >
+              <Trash2 className="size-4" aria-hidden />
+            </Button>
+          </div>
+        }
+      >
+        <div className="grid gap-4 md:grid-cols-2">
+          <Field label="Nazwa karty">
+            <Input value={category.name} onChange={(e) => onChange({ name: e.target.value })} />
+          </Field>
+          <Field label="Czas trwania" hint="np. 3–5 godzin">
+            <Input
+              value={category.timeLabel}
+              onChange={(e) => onChange({ timeLabel: e.target.value })}
+            />
+          </Field>
+        </div>
+        <Field label="Opis na karcie">
+          <Input
+            value={category.description}
+            onChange={(e) => onChange({ description: e.target.value })}
+          />
+        </Field>
+        <div className="grid gap-4 md:grid-cols-2">
+          <Field label="Cena od (zł)">
+            <Input
+              type="number"
+              inputMode="numeric"
+              min={0}
+              value={category.priceFrom}
+              onChange={(e) => onChange({ priceFrom: Number(e.target.value) || 0 })}
+            />
+          </Field>
+          <Field label="Wyróżnik pod kartą" hint="np. Najczęściej wybierane: … — 400–500 zł">
+            <Input
+              value={category.highlight}
+              onChange={(e) => onChange({ highlight: e.target.value })}
+            />
+          </Field>
+        </div>
+        <label className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Checkbox
+            checked={!category.disabled}
+            onCheckedChange={(checked) => onChange({ disabled: !checked })}
+            ariaLabel={`Widoczność karty ${category.name || "bez nazwy"}`}
+          />
+          Widoczna na stronie
+        </label>
+      </Fieldset>
+    </Reorder.Item>
+  );
+}
+
+/* --------------------------- Pozycje cennika --------------------------- */
+
+function CategoryPozycjeCard({
+  category,
+  rows,
+  allCategories,
+  onChangeCategory,
+  onRemoveCategory,
+  onReorderItems,
+  onChangeItem,
+  onRemoveItem,
+  onMoveItemToCategory,
+  onAddItem,
+}: {
+  category: CennikCategory;
+  rows: CennikItem[];
+  allCategories: CennikCategory[];
+  onChangeCategory: (patch: Partial<CennikCategory>) => void;
+  onRemoveCategory: () => void;
+  onReorderItems: (next: CennikItem[]) => void;
+  onChangeItem: (itemId: string, patch: Partial<CennikItem>) => void;
+  onRemoveItem: (itemId: string) => void;
+  onMoveItemToCategory: (itemId: string, newCategoryId: string) => void;
+  onAddItem: () => void;
+}) {
+  const dragControls = useDragControls();
+
+  return (
+    <Reorder.Item
+      value={category}
+      dragListener={false}
+      dragControls={dragControls}
+      as="div"
+    >
+      <Fieldset
+        legend={category.name || "Nowa karta"}
+        actions={
+          <div className="flex items-center gap-1">
+            <DragHandle
+              onPointerDown={(e) => dragControls.start(e)}
+              label={`Przeciągnij kategorię ${category.name || "bez nazwy"}`}
+            />
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={onRemoveCategory}
+              aria-label={`Usuń kategorię ${category.name || "bez nazwy"}`}
+              className="text-destructive hover:text-destructive"
+            >
+              <Trash2 className="size-4" aria-hidden />
+            </Button>
+          </div>
+        }
+      >
+        <Field label="Nazwa kategorii">
+          <Input
+            value={category.name}
+            onChange={(e) => onChangeCategory({ name: e.target.value })}
+          />
+        </Field>
+
+        <Reorder.Group
+          as="div"
+          axis="y"
+          values={rows}
+          onReorder={onReorderItems}
+          className="space-y-4"
+        >
+          {rows.map((item) => (
+            <ItemRow
+              key={item.id}
+              item={item}
+              categories={allCategories}
+              onChange={(patch) => onChangeItem(item.id, patch)}
+              onRemove={() => onRemoveItem(item.id)}
+              onMoveToCategory={(newCategoryId) =>
+                onMoveItemToCategory(item.id, newCategoryId)
+              }
+            />
+          ))}
+        </Reorder.Group>
+
+        <Button type="button" variant="outline" size="sm" className="gap-1.5" onClick={onAddItem}>
+          <Plus className="size-4" aria-hidden /> Dodaj pozycję
+        </Button>
+      </Fieldset>
+    </Reorder.Item>
+  );
+}
+
+function ItemRow({
+  item,
+  categories,
+  onChange,
+  onRemove,
+  onMoveToCategory,
+}: {
+  item: CennikItem;
+  categories: CennikCategory[];
+  onChange: (patch: Partial<CennikItem>) => void;
+  onRemove: () => void;
+  onMoveToCategory: (newCategoryId: string) => void;
+}) {
+  const dragControls = useDragControls();
+
+  return (
+    <Reorder.Item
+      value={item}
+      dragListener={false}
+      dragControls={dragControls}
+      as="div"
+    >
+      <div className="space-y-3 rounded-lg border border-border bg-background/50 p-4">
+        <div className="flex items-center justify-between">
+          <DragHandle
+            onPointerDown={(e) => dragControls.start(e)}
+            label={`Przeciągnij pozycję ${item.name || "bez nazwy"}`}
+          />
+          <RowControls
+            onRemove={onRemove}
+            removeLabel={`Usuń pozycję ${item.name || "bez nazwy"}`}
+          />
+        </div>
+
+        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+          <Field label="Nazwa" hint={`prefiks "• " = dodatek`}>
+            <Input value={item.name} onChange={(e) => onChange({ name: e.target.value })} />
+          </Field>
+          <Field label="Opis">
+            <Input
+              value={item.description}
+              onChange={(e) => onChange({ description: e.target.value })}
+            />
+          </Field>
+          <Field label="Czas" hint="np. 1,5 h">
+            <Input
+              value={item.timeLabel}
+              onChange={(e) => onChange({ timeLabel: e.target.value })}
+            />
+          </Field>
+          <Field label="Kategoria" hint="przenosi pozycję">
+            <select
+              value={item.categoryId}
+              onChange={(e) => onMoveToCategory(e.target.value)}
+              className="h-11 rounded-xl border border-input bg-background px-3 text-sm focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+            >
+              {categories.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name || "(bez nazwy)"}
+                </option>
+              ))}
+            </select>
+          </Field>
+        </div>
+
+        <div className="grid gap-3 md:grid-cols-4">
+          <Field label="Cena od (zł)">
+            <Input
+              type="number"
+              inputMode="numeric"
+              min={0}
+              value={item.priceFrom}
+              onChange={(e) => onChange({ priceFrom: Number(e.target.value) || 0 })}
+            />
+          </Field>
+          <Field label="Cena do (zł)" hint="0 = cena stała">
+            <Input
+              type="number"
+              inputMode="numeric"
+              min={0}
+              value={item.priceTo}
+              onChange={(e) => onChange({ priceTo: Number(e.target.value) || 0 })}
+            />
+          </Field>
+          <Field label="Przedrostek ceny" hint={`np. "od " albo "+"`}>
+            <Input
+              value={item.pricePrefix}
+              onChange={(e) => onChange({ pricePrefix: e.target.value })}
+            />
+          </Field>
+          <Field label="Dopisek" hint="np. za parę">
+            <Input value={item.unit} onChange={(e) => onChange({ unit: e.target.value })} />
+          </Field>
+        </div>
+
+        <div className="flex items-center gap-5">
+          <label className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Checkbox
+              checked={item.popular}
+              onCheckedChange={(checked) => onChange({ popular: checked })}
+              ariaLabel={`Oznacz ${item.name || "pozycję"} jako popularne`}
+            />
+            Najczęściej wybierane
+          </label>
+          <label className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Checkbox
+              checked={!item.disabled}
+              onCheckedChange={(checked) => onChange({ disabled: !checked })}
+              ariaLabel={`Widoczność pozycji ${item.name || "bez nazwy"}`}
+            />
+            Widoczna
+          </label>
+        </div>
+      </div>
+    </Reorder.Item>
   );
 }

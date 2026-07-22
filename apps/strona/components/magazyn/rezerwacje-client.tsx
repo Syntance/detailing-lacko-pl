@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button, Input, PageHeader, Switch } from "@moduly/ui";
+import { Button, Input, PageHeader } from "@moduly/ui";
 import { Check, Plus, RotateCcw, Save, Trash2, X } from "lucide-react";
 import {
   REZERWACJA_STATUS_LABEL,
@@ -14,6 +14,7 @@ import {
 } from "@/lib/rezerwacje";
 import { useMagazynHistory } from "@/hooks/use-magazyn-history";
 import {
+  Checkbox,
   Field,
   Fieldset,
   StatusMessage,
@@ -305,10 +306,10 @@ function AvailabilityPanel({ initial }: { initial: DostepnoscData }) {
 
       <Fieldset legend="Rezerwacje online">
         <label className="flex items-center gap-3 text-sm">
-          <Switch
+          <Checkbox
             checked={cfg.enabled}
             onCheckedChange={(v) => patch({ enabled: v })}
-            aria-label="Rezerwacje online włączone"
+            ariaLabel="Rezerwacje online włączone"
           />
           <span>
             Rezerwacje online włączone
@@ -373,10 +374,10 @@ function AvailabilityPanel({ initial }: { initial: DostepnoscData }) {
               className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-background/50 p-3"
             >
               <label className="flex w-40 items-center gap-2.5 text-sm">
-                <Switch
+                <Checkbox
                   checked={w.enabled}
                   onCheckedChange={(v) => setDay(w.day, { enabled: v })}
-                  aria-label={`${WEEKDAY_LABEL[w.day]} — dostępny`}
+                  ariaLabel={`${WEEKDAY_LABEL[w.day]} — dostępny`}
                 />
                 <span className={w.enabled ? "font-medium" : "text-muted-foreground"}>
                   {WEEKDAY_LABEL[w.day]}

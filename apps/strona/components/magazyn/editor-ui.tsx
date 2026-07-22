@@ -1,8 +1,16 @@
 "use client";
 
-import type { ReactNode } from "react";
+import type { PointerEvent, ReactNode } from "react";
 import { Button } from "@moduly/ui";
-import { ArrowDown, ArrowUp, Redo2, Trash2, Undo2 } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowUp,
+  Check,
+  GripVertical,
+  Redo2,
+  Trash2,
+  Undo2,
+} from "lucide-react";
 
 export function Fieldset({
   legend,
@@ -40,6 +48,41 @@ export function Field({
       {children}
       {hint ? <span className="text-xs text-muted-foreground">{hint}</span> : null}
     </label>
+  );
+}
+
+/**
+ * Checkbox z wyraźnym ptaszkiem po zaznaczeniu (kwadrat + obramówka, gdy
+ * odznaczony) — zamiast Switch z @moduly/ui, który renderuje ledwo widoczny
+ * tor (bg-input zlewa się z tłem karty), zostawiając samą "pływającą" kropkę.
+ * Ten sam wzorzec co ConsentCheckbox w banerze cookie.
+ */
+export function Checkbox({
+  checked,
+  onCheckedChange,
+  ariaLabel,
+}: {
+  checked: boolean;
+  onCheckedChange: (next: boolean) => void;
+  ariaLabel: string;
+}) {
+  return (
+    <button
+      type="button"
+      role="checkbox"
+      aria-checked={checked}
+      aria-label={ariaLabel}
+      onClick={() => onCheckedChange(!checked)}
+      className={`inline-flex size-5 shrink-0 items-center justify-center rounded-md border transition-colors focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none ${
+        checked
+          ? "border-primary bg-primary"
+          : "border-input bg-background hover:border-primary-strong/60"
+      }`}
+    >
+      {checked ? (
+        <Check className="size-3.5 text-primary-foreground" strokeWidth={3} aria-hidden />
+      ) : null}
+    </button>
   );
 }
 
@@ -106,7 +149,10 @@ export function UndoRedoToolbar({
   );
 }
 
-/** Przyciski porządkowe wiersza listy: góra / dół / usuń. */
+/**
+ * Przyciski porządkowe wiersza listy: góra / dół / usuń. Gdy onUp/onDown nie
+ * podane (listy z przeciąganiem — patrz DragHandle), pokazuje tylko usuń.
+ */
 export function RowControls({
   onUp,
   onDown,
@@ -115,35 +161,39 @@ export function RowControls({
   downDisabled,
   removeLabel,
 }: {
-  onUp: () => void;
-  onDown: () => void;
+  onUp?: () => void;
+  onDown?: () => void;
   onRemove: () => void;
-  upDisabled: boolean;
-  downDisabled: boolean;
+  upDisabled?: boolean;
+  downDisabled?: boolean;
   removeLabel: string;
 }) {
   return (
     <div className="flex items-center gap-1">
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon"
-        onClick={onUp}
-        disabled={upDisabled}
-        aria-label="Przesuń wyżej"
-      >
-        <ArrowUp className="size-4" aria-hidden />
-      </Button>
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon"
-        onClick={onDown}
-        disabled={downDisabled}
-        aria-label="Przesuń niżej"
-      >
-        <ArrowDown className="size-4" aria-hidden />
-      </Button>
+      {onUp ? (
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          onClick={onUp}
+          disabled={upDisabled}
+          aria-label="Przesuń wyżej"
+        >
+          <ArrowUp className="size-4" aria-hidden />
+        </Button>
+      ) : null}
+      {onDown ? (
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          onClick={onDown}
+          disabled={downDisabled}
+          aria-label="Przesuń niżej"
+        >
+          <ArrowDown className="size-4" aria-hidden />
+        </Button>
+      ) : null}
       <Button
         type="button"
         variant="ghost"
@@ -155,6 +205,30 @@ export function RowControls({
         <Trash2 className="size-4" aria-hidden />
       </Button>
     </div>
+  );
+}
+
+/**
+ * Uchwyt przeciągania (grab handle) — jedyny obszar, z którego startuje drag
+ * na Reorder.Item. Bez tego kliknięcie w pole tekstowe wewnątrz karty
+ * mogłoby przypadkiem uruchomić przeciąganie całej karty.
+ */
+export function DragHandle({
+  onPointerDown,
+  label,
+}: {
+  onPointerDown: (event: PointerEvent) => void;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      onPointerDown={onPointerDown}
+      aria-label={label}
+      className="flex size-8 cursor-grab touch-none items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground active:cursor-grabbing"
+    >
+      <GripVertical className="size-4" aria-hidden />
+    </button>
   );
 }
 

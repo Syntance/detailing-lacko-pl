@@ -1,23 +1,22 @@
-import type { KontaktData } from "@/lib/site";
 import { Reveal, RevealItem, RevealStagger } from "@/components/motion/reveal";
 
 /**
- * „Jak wygląda współpraca — 3 kroki" — lęk logistyczny: „nie wiem, jak to
- * wygląda" (plan www v2 §4). Krok 1 = mechanizm wyceny ze zdjęcia.
+ * „Jak to działa — 3 kroki" — lęk logistyczny: „nie wiem, jak to wygląda".
+ * Krok 1 = mechanizm wyceny ze zdjęcia.
  */
-export function Proces({ kontakt }: { kontakt: KontaktData }) {
+export function Proces() {
   const steps = [
     {
       title: "Wysyłasz zdjęcie albo dzwonisz",
-      text: "Do 2 godzin dostajesz cenę z cennika i najbliższy wolny termin. Jeśli oceniamy, że plama nie zejdzie — mówimy to teraz, nie przy odbiorze.",
+      text: "Do 2 h odpisujemy z ceną i terminem. Jeśli plama nie zejdzie — mówimy od razu, nie przy odbiorze.",
     },
     {
-      title: `Przywozisz auto — ${kontakt.addressLine}`,
-      text: "W umówionym terminie, po pracy (po 16:00) albo w weekend. Termin zwykle w 3–7 dni.",
+      title: "Przywozisz auto do Czerńca",
+      text: "Po 16:00 albo w weekend. Termin zwykle w 3–7 dni.",
     },
     {
-      title: "Odbierasz i płacisz po obejrzeniu efektu",
-      text: "Gotówka lub BLIK. Zero przedpłat.",
+      title: "Odbierasz i płacisz",
+      text: "Gotówka lub BLIK, dopiero gdy zobaczysz efekt.",
     },
   ];
 
@@ -33,7 +32,7 @@ export function Proces({ kontakt }: { kontakt: KontaktData }) {
             id="proces-heading"
             className="font-serif text-3xl leading-tight font-medium md:text-4xl"
           >
-            Jak wygląda współpraca — 3 kroki
+            Jak to działa — 3 kroki
           </h2>
         </Reveal>
 
@@ -61,9 +60,9 @@ export function Proces({ kontakt }: { kontakt: KontaktData }) {
         {/* Uczciwie o logistyce — schnięcie i brak dojazdów jako świadomy wybór. */}
         <Reveal className="mt-8">
           <p className="max-w-3xl text-sm text-pretty text-muted-foreground">
-            Pranie schnie 4–8 h (zimą do 24 h) — auto odbierasz używalne, ale
-            wilgotne. Nie robimy dojazdów — dzięki temu ceny są z góry, bez
-            doliczonych kilometrów.
+            Tapicerka schnie 4–8 h (zimą do 24 h) — auto odbierasz używalne, ale
+            jeszcze wilgotne. Pracujemy stacjonarnie, bez dojazdów — dlatego
+            ceny są stałe.
           </p>
         </Reveal>
       </div>

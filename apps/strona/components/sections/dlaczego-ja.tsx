@@ -10,28 +10,28 @@ export function DlaczegoJa() {
   const points = [
     {
       icon: ListChecks,
-      title: "Pełny cennik na stronie — jedyni w okolicy",
-      text: "Wiesz, ile zapłacisz, zanim napiszesz. Zero „wyceny indywidualnej\".",
+      title: "Cennik na stronie",
+      text: "Znasz cenę, zanim napiszesz. Zero „wyceny indywidualnej\".",
     },
     {
       icon: Banknote,
-      title: "Płacisz po obejrzeniu efektu",
-      text: "Całe ryzyko „nie wyszło\" jest po naszej stronie, nie po twojej. Gotówka lub BLIK przy odbiorze.",
+      title: "Płatność po efekcie",
+      text: "Nie wyszło? Nie płacisz. Ryzyko jest po naszej stronie.",
     },
     {
       icon: Camera,
-      title: "Zdjęcia przed/po każdego auta",
-      text: "Widzisz, za co płacisz, zanim się zdecydujesz.",
+      title: "Zdjęcia przed/po",
+      text: "Widzisz, za co płacisz.",
     },
     {
       icon: Droplets,
-      title: "Ręcznie, chemią ADBL i parą",
-      text: "Myjnia automatyczna rysuje lakier. My pracujemy ręcznie: piana, dwa wiadra, mikrofibra, parownica.",
+      title: "Ręcznie, nie automatem",
+      text: "Piana, dwa wiadra, mikrofibra, parownica. Automat rysuje lakier — my nie.",
     },
     {
       icon: MapPin,
-      title: "Z Czerńca, nie z Sącza",
-      text: "10 minut od Łącka zamiast dwóch kursów po 25 km.",
+      title: "10 minut od Łącka",
+      text: "Czerniec 72 zamiast dwóch kursów do Sącza.",
     },
   ];
 
@@ -75,9 +75,9 @@ export function DlaczegoJa() {
         {/* Uczciwość o granicach — celowo bez lukru (UVP: „czego nie obiecujemy"). */}
         <Reveal className="mt-8">
           <p className="max-w-3xl text-sm text-pretty text-muted-foreground">
-            Uczciwie o granicach: one step usuwa 50–70% rys, nie wszystkie.
-            „Każda plama zejdzie" to obietnica, której nie składamy — jeśli po
-            zdjęciu oceniamy, że nie zejdzie, mówimy to przed przyjazdem.
+            Uczciwie: one step usuwa 50–70% rys, nie wszystkie. I nie
+            obiecujemy, że każda plama zejdzie — jeśli nie zejdzie, powiemy to
+            przed przyjazdem.
           </p>
         </Reveal>
       </div>

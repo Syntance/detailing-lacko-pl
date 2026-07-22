@@ -24,12 +24,11 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://detailing-lacko.pl"
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default:
-      "Detailing Łącko — pranie tapicerki, cennik z cenami z góry | Czerniec",
+    default: "Detailing Łącko — pranie tapicerki, polerowanie | ceny z góry",
     template: "%s | Detailing Łącko",
   },
   description:
-    "Pełny cennik na stronie: komplet foteli z kanapą 300 zł, kompleksowe wnętrze 500 zł. Płacisz po obejrzeniu efektu. Czerniec, gmina Łącko.",
+    "Pranie tapicerki od 300 zł, kompleksowe wnętrze 500 zł — pełny cennik na stronie, płacisz po obejrzeniu efektu. Czerniec 72, gmina Łącko.",
   alternates: { canonical: "/" },
   openGraph: {
     type: "website",

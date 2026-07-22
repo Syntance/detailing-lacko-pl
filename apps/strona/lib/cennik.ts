@@ -76,12 +76,12 @@ export function formatItemPrice(item: CennikItem): string {
 /** Domyślny cennik — 1:1 z Notion „Cennik i zakres usług". */
 export const DEFAULT_CENNIK: CennikData = {
   settings: {
-    heading: "Cennik — ceny z góry, bez wyceny indywidualnej",
+    heading: "Cennik",
     subheading:
-      "Jako jedyni w okolicy publikujemy pełny cennik i rozliczamy dokładnie według niego. Widełki tylko tam, gdzie cena zależy od rozmiaru auta.",
+      "Te ceny obowiązują — widełki tylko tam, gdzie liczy się rozmiar auta.",
     noteTitle: "Sprzedajesz auto?",
     noteText:
-      "Kupujący zbije cenę o brudne wnętrze mocniej, niż kosztuje jego wyczyszczenie. Handlarze i komisy od 2 aut miesięcznie — stała stawka ok. 400 zł/auto, ten sam standard i termin za każdym razem.",
+      "Kupujący zbije cenę o brudne wnętrze mocniej, niż kosztuje jego wyczyszczenie. Handlarze i komisy: od 2 aut miesięcznie stała stawka ok. 400 zł/auto.",
     noteCtaLabel: "Wyślij zdjęcie",
     expandLabel: "Rozwiń pełny cennik",
     collapseLabel: "Zwiń cennik",

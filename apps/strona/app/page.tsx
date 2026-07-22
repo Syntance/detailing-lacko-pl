@@ -70,7 +70,7 @@ export default async function HomePage() {
         <Hero imageUrl={heroImageUrl} kontakt={kontakt} />
         <UslugiCennik cennik={cennik} kontakt={kontakt} />
         <Galeria galeria={galeria} />
-        <Proces kontakt={kontakt} />
+        <Proces />
         <DlaczegoJa />
         <Faq items={faq} />
         <Kontakt kontakt={kontakt} />

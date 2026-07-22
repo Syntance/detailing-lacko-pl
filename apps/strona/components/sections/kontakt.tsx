@@ -27,8 +27,8 @@ export function Kontakt({ kontakt }: { kontakt: KontaktData }) {
             Umów termin
           </h2>
           <p className="mt-3 max-w-2xl text-pretty text-muted-foreground">
-            Wyślij zdjęcie plamy albo zadzwoń — do 2 godzin dostaniesz cenę
-            z cennika i najbliższy wolny termin.
+            Wyślij zdjęcie albo zadzwoń — do 2 h dostaniesz cenę i najbliższy
+            wolny termin. Płacisz przy odbiorze, po obejrzeniu efektu.
           </p>
         </Reveal>
 

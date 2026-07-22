@@ -38,9 +38,9 @@ export const SEO_LIMITS = {
 } as const;
 
 export const DEFAULT_SEO: SeoData = {
-  title: "Detailing Łącko — pranie tapicerki, cennik z cenami z góry | Czerniec",
+  title: "Detailing Łącko — pranie tapicerki, polerowanie | ceny z góry",
   description:
-    "Pełny cennik na stronie: komplet foteli z kanapą 300 zł, kompleksowe wnętrze 500 zł. Płacisz po obejrzeniu efektu. Czerniec, gmina Łącko.",
+    "Pranie tapicerki od 300 zł, kompleksowe wnętrze 500 zł — pełny cennik na stronie, płacisz po obejrzeniu efektu. Czerniec 72, gmina Łącko.",
   focusKeyword: "pranie tapicerki Łącko",
   ogImageUrl: "/og.jpg",
   ogTitle: "",

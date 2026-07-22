@@ -35,7 +35,7 @@ export type GaleriaData = z.infer<typeof galeriaDataSchema>;
 export const DEFAULT_GALERIA: GaleriaData = {
   heading: "Efekty — zobacz różnicę",
   subheading:
-    "Prawdziwe auta klientów — bez stocków i bez retuszu. Zdjęcia przed/po z każdej realizacji.",
+    "Auta naszych klientów, bez retuszu. Każda realizacja dostaje zdjęcia przed i po.",
   photos: [
     {
       id: "kanapa",

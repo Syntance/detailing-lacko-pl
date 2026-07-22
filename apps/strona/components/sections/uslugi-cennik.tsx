@@ -388,8 +388,8 @@ export function UslugiCennik({
         {/* Zasada dopłat wprost pod cennikiem — zero niespodzianek przy odbiorze. */}
         <Reveal className="mt-6">
           <p className="text-sm text-pretty text-muted-foreground">
-            Busy, auta 7-osobowe i mocne zabrudzenie: +20–40% — zawsze ustalone
-            z góry, zanim zaczniemy. Rozliczamy dokładnie według cennika.
+            Busy, 7-osobowe i mocne zabrudzenia: +20–40% — zawsze ustalone,
+            zanim zaczniemy.
           </p>
         </Reveal>
 
@@ -399,7 +399,7 @@ export function UslugiCennik({
             <p className="text-pretty">
               <span className="font-medium">Nie wiesz, która usługa?</span>{" "}
               <span className="text-muted-foreground">
-                Wyślij zdjęcie — doradzimy i podamy cenę z cennika.
+                Wyślij zdjęcie — doradzimy i podamy cenę.
               </span>
             </p>
             <PhotoLink

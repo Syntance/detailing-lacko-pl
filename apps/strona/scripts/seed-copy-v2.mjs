@@ -57,7 +57,7 @@ const KONTAKT_V2 = {
 };
 
 const CENNIK_SETTINGS_V2 = {
-  heading: "Cennik — ceny z góry, bez wyceny indywidualnej",
+  heading: "Cennik",
   subheading:
     "Jako jedyni w okolicy publikujemy pełny cennik i rozliczamy dokładnie według niego. Widełki tylko tam, gdzie cena zależy od rozmiaru auta.",
   noteTitle: "Sprzedajesz auto?",

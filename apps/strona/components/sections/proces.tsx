@@ -1,7 +1,7 @@
 import { Reveal, RevealItem, RevealStagger } from "@/components/motion/reveal";
 
 /**
- * „Jak to działa — 3 kroki" — lęk logistyczny: „nie wiem, jak to wygląda".
+ * „Jak pracujemy — 3 kroki" — lęk logistyczny: „nie wiem, jak to wygląda".
  * Krok 1 = mechanizm wyceny ze zdjęcia.
  */
 export function Proces() {
@@ -32,7 +32,7 @@ export function Proces() {
             id="proces-heading"
             className="font-serif text-3xl leading-tight font-medium md:text-4xl"
           >
-            Jak to działa — 3 kroki
+            Jak pracujemy — 3 kroki
           </h2>
         </Reveal>
 

@@ -23,6 +23,13 @@ DOSTEPY.local.md
 graphify-out/
 .graphify/
 
+# GitNexus — lokalny indeks kodu (41 MB) i konfiguracja narzędzi.
+# Regenerowane przez `gitnexus analyze`, nie trzymamy ich w repo.
+.gitnexus/
+CLAUDE.md
+AGENTS.md
+.claude/
+
 # Logs
 npm-debug.log*
 pnpm-debug.log*

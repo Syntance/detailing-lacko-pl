@@ -40,6 +40,14 @@
   /* Tokeny dodatkowe strony — czytelny złoty na teksty/ikony (≈5:1 na bieli). */
   --surface-raised: oklch(0.975 0.005 240);
   --primary-strong: oklch(0.55 0.115 82);
+
+  /* Hero full-bleed — copy leży na zdjęciu z panelu, które może być dowolnie
+     jasne. Scrim jest więc ciemny i mocno kryjący w strefie tekstu: biel na
+     nim trzyma ≈11:1, a nawet przy 70% krycia nad jasnym kadrem ≈6:1 (WCAG AA
+     wymaga 4.5:1). Nie czysta biel/czerń — tonowany OKLCH pod paletę marki. */
+  --hero-scrim: oklch(0.18 0.015 250);
+  --hero-foreground: oklch(0.98 0.004 250);
+  --hero-muted: oklch(0.86 0.008 250);
 }
 
 @theme inline {
@@ -47,6 +55,9 @@
   --font-serif: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif;
   --color-surface-raised: var(--surface-raised);
   --color-primary-strong: var(--primary-strong);
+  --color-hero-scrim: var(--hero-scrim);
+  --color-hero-foreground: var(--hero-foreground);
+  --color-hero-muted: var(--hero-muted);
 }
 
 @layer base {

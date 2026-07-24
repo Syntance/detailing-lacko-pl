@@ -66,6 +66,10 @@ const SECURITY_HEADERS = [
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   transpilePackages: [...MODULY_PACKAGES],
+  // Next dopuszcza tylko jawnie zadeklarowane wartości `quality` — bez tego
+  // <Image quality={70}> po cichu wraca do 75. Hero leży pod scrimem, więc
+  // q70 mieści LCP w budżecie 120 KB bez widocznej straty jakości.
+  images: { qualities: [70, 75] },
   // @moduly/data-store czyta pliki .sql (readFileSync) przy imporcie —
   // muszą trafić do bundla funkcji serverless na Vercelu.
   outputFileTracingIncludes: {

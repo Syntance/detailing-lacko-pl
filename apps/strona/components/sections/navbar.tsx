@@ -57,10 +57,15 @@ export function Navbar({ kontakt }: { kontakt: KontaktData }) {
     return () => document.removeEventListener("keydown", onKey);
   }, [open]);
 
+  // Przezroczysty navbar leży na full-bleed hero, który ma ciemny scrim —
+  // wtedy tekst musi być jasny. Po scrollu (i przy otwartym menu) tło robi się
+  // jasne, więc wraca ciemna typografia. Jeden warunek steruje obiema warstwami.
+  const solid = scrolled || open;
+
   return (
     <header
       className={`fixed inset-x-0 top-0 z-50 transition-colors duration-300 motion-reduce:transition-none ${
-        scrolled || open
+        solid
           ? "border-b border-border bg-background/85 backdrop-blur-md"
           : "border-b border-transparent bg-transparent"
       }`}
@@ -69,10 +74,16 @@ export function Navbar({ kontakt }: { kontakt: KontaktData }) {
         <a
           href="#hero"
           onClick={() => setOpen(false)}
-          className="flex items-center rounded-lg focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+          className={`flex items-center rounded-lg focus-visible:ring-3 focus-visible:outline-none ${
+            solid ? "focus-visible:ring-ring/50" : "focus-visible:ring-hero-foreground/60"
+          }`}
           aria-label="Detailing Łącko — początek strony"
         >
-          <span className="font-serif text-lg leading-none font-medium">
+          <span
+            className={`font-serif text-lg leading-none font-medium ${
+              solid ? "text-foreground" : "text-hero-foreground"
+            }`}
+          >
             Detailing Łącko
           </span>
         </a>
@@ -88,10 +99,18 @@ export function Navbar({ kontakt }: { kontakt: KontaktData }) {
                 key={item.id}
                 href={item.href}
                 aria-current={isActive ? "true" : undefined}
-                className={`relative rounded-lg px-3 py-2 text-sm font-medium transition-colors focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none ${
-                  isActive
-                    ? "text-foreground"
-                    : "text-muted-foreground hover:text-foreground"
+                className={`relative rounded-lg px-3 py-2 text-sm font-medium transition-colors focus-visible:ring-3 focus-visible:outline-none ${
+                  solid
+                    ? `focus-visible:ring-ring/50 ${
+                        isActive
+                          ? "text-foreground"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`
+                    : `focus-visible:ring-hero-foreground/60 ${
+                        isActive
+                          ? "text-hero-foreground"
+                          : "text-hero-muted hover:text-hero-foreground"
+                      }`
                 }`}
               >
                 {item.label}
@@ -123,7 +142,11 @@ export function Navbar({ kontakt }: { kontakt: KontaktData }) {
             aria-expanded={open}
             aria-controls="mobile-menu"
             aria-label={open ? "Zamknij menu" : "Otwórz menu"}
-            className="inline-flex size-10 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none md:hidden"
+            className={`inline-flex size-10 items-center justify-center rounded-lg transition-colors focus-visible:ring-3 focus-visible:outline-none md:hidden ${
+              solid
+                ? "text-foreground hover:bg-muted focus-visible:ring-ring/50"
+                : "text-hero-foreground hover:bg-hero-foreground/15 focus-visible:ring-hero-foreground/60"
+            }`}
           >
             {open ? (
               <X className="size-5" aria-hidden />

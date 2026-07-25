@@ -2,17 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button, PageHeader } from "@moduly/ui";
-import { Save } from "lucide-react";
+import { PageHeader } from "@moduly/ui";
 import type { HomeContentInput } from "@/lib/cms-schema";
 import { useMagazynHistory } from "@/hooks/use-magazyn-history";
 import { ImageField } from "./image-dropzone";
-import {
-  Fieldset,
-  StatusMessage,
-  UndoRedoToolbar,
-  putEditorData,
-} from "./editor-ui";
+import { Fieldset, UndoRedoToolbar, putEditorData } from "./editor-ui";
 
 /**
  * Edytor „Treść" przycięty do zasobów wymiennych bez developera: zdjęcia.
@@ -55,6 +49,11 @@ export function TrescClient({ initial }: { initial: HomeContentInput }) {
         isDirty={history.isDirty}
         onUndo={history.undo}
         onRedo={history.redo}
+        onSave={save}
+        saveLabel="Zapisz"
+        pending={pending}
+        status={status}
+        error={error}
       />
 
       <Fieldset legend="Desktop (komputery i tablety)">
@@ -84,19 +83,6 @@ export function TrescClient({ initial }: { initial: HomeContentInput }) {
           }
         />
       </Fieldset>
-
-      <div className="flex items-center gap-3">
-        <Button
-          type="button"
-          onClick={save}
-          disabled={pending || !history.isDirty}
-          className="gap-1.5"
-        >
-          <Save className="size-4" aria-hidden />
-          {pending ? "Zapisywanie…" : "Zapisz"}
-        </Button>
-        <StatusMessage message={status} error={error} />
-      </div>
     </div>
   );
 }

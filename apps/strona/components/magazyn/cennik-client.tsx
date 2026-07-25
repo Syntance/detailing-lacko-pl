@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Reorder, useDragControls } from "motion/react";
 import { Button, Input, PageHeader } from "@moduly/ui";
-import { Plus, Save, Trash2 } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import type { CennikCategory, CennikData, CennikItem } from "@/lib/cennik";
 import { useMagazynHistory } from "@/hooks/use-magazyn-history";
 import {
@@ -13,7 +13,6 @@ import {
   Field,
   Fieldset,
   RowControls,
-  StatusMessage,
   UndoRedoToolbar,
   putEditorData,
 } from "./editor-ui";
@@ -134,6 +133,11 @@ export function CennikClient({ initial }: { initial: CennikData }) {
         isDirty={history.isDirty}
         onUndo={history.undo}
         onRedo={history.redo}
+        onSave={save}
+        saveLabel="Zapisz cennik"
+        pending={pending}
+        status={status}
+        error={error}
       />
 
       <div className="flex flex-col gap-6 lg:flex-row">
@@ -364,19 +368,6 @@ export function CennikClient({ initial }: { initial: CennikData }) {
               </div>
             </Fieldset>
           ) : null}
-
-          <div className="flex items-center gap-3">
-            <Button
-              type="button"
-              onClick={save}
-              disabled={pending || !history.isDirty}
-              className="gap-1.5"
-            >
-              <Save className="size-4" aria-hidden />
-              {pending ? "Zapisywanie…" : "Zapisz cennik"}
-            </Button>
-            <StatusMessage message={status} error={error} />
-          </div>
         </div>
       </div>
     </div>

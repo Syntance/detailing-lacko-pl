@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button, Input, PageHeader } from "@moduly/ui";
-import { Save } from "lucide-react";
+import { Input, PageHeader } from "@moduly/ui";
 import { SEO_LIMITS, type SeoData } from "@/lib/seo";
 import { useMagazynHistory } from "@/hooks/use-magazyn-history";
 import { ImageField } from "./image-dropzone";
@@ -11,7 +10,6 @@ import {
   Checkbox,
   Field,
   Fieldset,
-  StatusMessage,
   UndoRedoToolbar,
   putEditorData,
 } from "./editor-ui";
@@ -93,6 +91,11 @@ export function SeoClient({ initial }: { initial: SeoData }) {
         isDirty={history.isDirty}
         onUndo={history.undo}
         onRedo={history.redo}
+        onSave={save}
+        saveLabel="Zapisz SEO"
+        pending={pending}
+        status={status}
+        error={error}
       />
 
       <GooglePreview seo={seo} />
@@ -210,19 +213,6 @@ export function SeoClient({ initial }: { initial: SeoData }) {
           </p>
         ) : null}
       </Fieldset>
-
-      <div className="flex items-center gap-3">
-        <Button
-          type="button"
-          onClick={save}
-          disabled={pending || !history.isDirty}
-          className="gap-1.5"
-        >
-          <Save className="size-4" aria-hidden />
-          {pending ? "Zapisywanie…" : "Zapisz SEO"}
-        </Button>
-        <StatusMessage message={status} error={error} />
-      </div>
     </div>
   );
 }

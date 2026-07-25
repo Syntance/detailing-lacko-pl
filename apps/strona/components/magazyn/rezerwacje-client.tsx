@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Input, PageHeader } from "@moduly/ui";
-import { Check, Plus, RotateCcw, Save, Trash2, X } from "lucide-react";
+import { Check, Plus, RotateCcw, Trash2, X } from "lucide-react";
 import {
   REZERWACJA_STATUS_LABEL,
   WEEKDAY_LABEL,
@@ -302,6 +302,11 @@ function AvailabilityPanel({ initial }: { initial: DostepnoscData }) {
         isDirty={history.isDirty}
         onUndo={history.undo}
         onRedo={history.redo}
+        onSave={save}
+        saveLabel="Zapisz dostępność"
+        pending={pending}
+        status={status}
+        error={error}
       />
 
       <Fieldset legend="Rezerwacje online">
@@ -478,19 +483,6 @@ function AvailabilityPanel({ initial }: { initial: DostepnoscData }) {
           />
         </Field>
       </Fieldset>
-
-      <div className="flex items-center gap-3">
-        <Button
-          type="button"
-          onClick={save}
-          disabled={pending || !history.isDirty}
-          className="gap-1.5"
-        >
-          <Save className="size-4" aria-hidden />
-          {pending ? "Zapisywanie…" : "Zapisz dostępność"}
-        </Button>
-        <StatusMessage message={status} error={error} />
-      </div>
     </div>
   );
 }

@@ -8,6 +8,7 @@ import {
   Check,
   GripVertical,
   Redo2,
+  Save,
   Trash2,
   Undo2,
 } from "lucide-react";
@@ -105,45 +106,78 @@ export function StatusMessage({
   );
 }
 
+/**
+ * Pasek Cofnij/Ponów + (opcjonalnie) Zapisz — na GÓRZE strony edytora, nad
+ * fieldsetami, żeby zapis nie wymagał scrolla do samego dołu przy długich
+ * formularzach (wiele pozycji/kafelków). `onSave` opcjonalny: część ekranów
+ * panelu (np. lista rezerwacji) używa samego Cofnij/Ponów bez zapisu.
+ */
 export function UndoRedoToolbar({
   canUndo,
   canRedo,
   isDirty,
   onUndo,
   onRedo,
+  onSave,
+  saveLabel,
+  pending,
+  status,
+  error,
 }: {
   canUndo: boolean;
   canRedo: boolean;
   isDirty: boolean;
   onUndo: () => void;
   onRedo: () => void;
+  /** Podaj razem z `saveLabel`, żeby dołączyć przycisk zapisu do paska. */
+  onSave?: () => void;
+  saveLabel?: string;
+  pending?: boolean;
+  status?: string | null;
+  error?: boolean;
 }) {
   return (
-    <div className="flex items-center gap-2">
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        onClick={onUndo}
-        disabled={!canUndo}
-        className="gap-1.5"
-      >
-        <Undo2 className="size-4" aria-hidden /> Cofnij
-      </Button>
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        onClick={onRedo}
-        disabled={!canRedo}
-        className="gap-1.5"
-      >
-        <Redo2 className="size-4" aria-hidden /> Ponów
-      </Button>
-      {isDirty ? (
-        <span className="text-xs text-muted-foreground">
-          Niezapisane zmiany
-        </span>
+    <div className="flex flex-wrap items-center gap-3">
+      <div className="flex items-center gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={onUndo}
+          disabled={!canUndo}
+          className="gap-1.5"
+        >
+          <Undo2 className="size-4" aria-hidden /> Cofnij
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={onRedo}
+          disabled={!canRedo}
+          className="gap-1.5"
+        >
+          <Redo2 className="size-4" aria-hidden /> Ponów
+        </Button>
+        {isDirty ? (
+          <span className="text-xs text-muted-foreground">
+            Niezapisane zmiany
+          </span>
+        ) : null}
+      </div>
+      {onSave ? (
+        <>
+          <Button
+            type="button"
+            onClick={onSave}
+            disabled={pending || !isDirty}
+            className="gap-1.5"
+          >
+            <Save className="size-4" aria-hidden />
+            {pending ? "Zapisywanie…" : saveLabel}
+          </Button>
+          <StatusMessage message={status ?? null} error={error} />
+        </>
       ) : null}
     </div>
   );

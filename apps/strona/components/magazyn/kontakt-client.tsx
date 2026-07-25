@@ -2,17 +2,10 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button, Input, PageHeader } from "@moduly/ui";
-import { Save } from "lucide-react";
+import { Input, PageHeader } from "@moduly/ui";
 import type { KontaktData } from "@/lib/site";
 import { useMagazynHistory } from "@/hooks/use-magazyn-history";
-import {
-  Field,
-  Fieldset,
-  StatusMessage,
-  UndoRedoToolbar,
-  putEditorData,
-} from "./editor-ui";
+import { Field, Fieldset, UndoRedoToolbar, putEditorData } from "./editor-ui";
 
 export function KontaktClient({ initial }: { initial: KontaktData }) {
   const router = useRouter();
@@ -54,6 +47,11 @@ export function KontaktClient({ initial }: { initial: KontaktData }) {
         isDirty={history.isDirty}
         onUndo={history.undo}
         onRedo={history.redo}
+        onSave={save}
+        saveLabel="Zapisz dane"
+        pending={pending}
+        status={status}
+        error={error}
       />
 
       <Fieldset legend="Kontakt">
@@ -185,19 +183,6 @@ export function KontaktClient({ initial }: { initial: KontaktData }) {
           />
         </Field>
       </Fieldset>
-
-      <div className="flex items-center gap-3">
-        <Button
-          type="button"
-          onClick={save}
-          disabled={pending || !history.isDirty}
-          className="gap-1.5"
-        >
-          <Save className="size-4" aria-hidden />
-          {pending ? "Zapisywanie…" : "Zapisz dane"}
-        </Button>
-        <StatusMessage message={status} error={error} />
-      </div>
     </div>
   );
 }

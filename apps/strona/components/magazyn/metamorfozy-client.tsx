@@ -21,7 +21,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Button, Input, PageHeader, cn } from "@moduly/ui";
-import { GripVertical, Plus, Save, Trash2 } from "lucide-react";
+import { GripVertical, Plus, Trash2 } from "lucide-react";
 import type {
   MetamorfozyData,
   MetamorfozyPara,
@@ -30,10 +30,10 @@ import type {
 import { useMagazynHistory } from "@/hooks/use-magazyn-history";
 import { ImageField } from "./image-dropzone";
 import {
+  Checkbox,
   Field,
   Fieldset,
   RowControls,
-  StatusMessage,
   UndoRedoToolbar,
   putEditorData,
 } from "./editor-ui";
@@ -217,6 +217,11 @@ export function MetamorfozyClient({ initial }: { initial: MetamorfozyData }) {
         isDirty={history.isDirty}
         onUndo={history.undo}
         onRedo={history.redo}
+        onSave={save}
+        saveLabel="Zapisz metamorfozy"
+        pending={pending}
+        status={status}
+        error={error}
       />
 
       <Fieldset legend="Nagłówek sekcji">
@@ -279,6 +284,19 @@ export function MetamorfozyClient({ initial }: { initial: MetamorfozyData }) {
                 />
               </Field>
             </div>
+
+            {/* Ukrycie kafelka bez usuwania — np. temat w przygotowaniu,
+                jeszcze bez kompletu zdjęć. */}
+            <label className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Checkbox
+                checked={!temat.disabled}
+                onCheckedChange={(checked) =>
+                  patchTemat(temat.id, { disabled: !checked })
+                }
+                ariaLabel={`Widoczność kafelka ${temat.title || `Temat ${tematIndex + 1}`}`}
+              />
+              Widoczny na stronie
+            </label>
 
             <p className="text-xs text-muted-foreground">
               Przeciągnij uchwyt, aby zmienić kolejność par. Pierwsza para to
@@ -386,16 +404,6 @@ export function MetamorfozyClient({ initial }: { initial: MetamorfozyData }) {
         >
           <Plus className="size-4" aria-hidden /> Dodaj temat
         </Button>
-        <Button
-          type="button"
-          onClick={save}
-          disabled={pending || !history.isDirty}
-          className="gap-1.5"
-        >
-          <Save className="size-4" aria-hidden />
-          {pending ? "Zapisywanie…" : "Zapisz metamorfozy"}
-        </Button>
-        <StatusMessage message={status} error={error} />
       </div>
     </div>
   );

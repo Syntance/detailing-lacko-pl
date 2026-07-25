@@ -3,14 +3,13 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Input, PageHeader } from "@moduly/ui";
-import { Plus, Save } from "lucide-react";
+import { Plus } from "lucide-react";
 import type { FaqData, FaqItemInput } from "@/lib/faq";
 import { useMagazynHistory } from "@/hooks/use-magazyn-history";
 import {
   Field,
   Fieldset,
   RowControls,
-  StatusMessage,
   UndoRedoToolbar,
   putEditorData,
 } from "./editor-ui";
@@ -63,6 +62,11 @@ export function FaqClient({ initial }: { initial: FaqData }) {
         isDirty={history.isDirty}
         onUndo={history.undo}
         onRedo={history.redo}
+        onSave={save}
+        saveLabel="Zapisz FAQ"
+        pending={pending}
+        status={status}
+        error={error}
       />
 
       {sorted.map((item, index) => (
@@ -142,16 +146,6 @@ export function FaqClient({ initial }: { initial: FaqData }) {
         >
           <Plus className="size-4" aria-hidden /> Dodaj pytanie
         </Button>
-        <Button
-          type="button"
-          onClick={save}
-          disabled={pending || !history.isDirty}
-          className="gap-1.5"
-        >
-          <Save className="size-4" aria-hidden />
-          {pending ? "Zapisywanie…" : "Zapisz FAQ"}
-        </Button>
-        <StatusMessage message={status} error={error} />
       </div>
     </div>
   );

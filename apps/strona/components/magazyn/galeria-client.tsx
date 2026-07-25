@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Input, PageHeader } from "@moduly/ui";
-import { Plus, Save } from "lucide-react";
+import { Plus } from "lucide-react";
 import type { GaleriaData, GaleriaPhoto } from "@/lib/galeria";
 import { useMagazynHistory } from "@/hooks/use-magazyn-history";
 import { ImageDropzone, ImageField } from "./image-dropzone";
@@ -11,7 +11,6 @@ import {
   Field,
   Fieldset,
   RowControls,
-  StatusMessage,
   UndoRedoToolbar,
   putEditorData,
 } from "./editor-ui";
@@ -68,6 +67,11 @@ export function GaleriaClient({ initial }: { initial: GaleriaData }) {
         isDirty={history.isDirty}
         onUndo={history.undo}
         onRedo={history.redo}
+        onSave={save}
+        saveLabel="Zapisz galerię"
+        pending={pending}
+        status={status}
+        error={error}
       />
 
       <Fieldset legend="Nagłówek sekcji">
@@ -221,16 +225,6 @@ export function GaleriaClient({ initial }: { initial: GaleriaData }) {
         >
           <Plus className="size-4" aria-hidden /> Dodaj zdjęcie
         </Button>
-        <Button
-          type="button"
-          onClick={save}
-          disabled={pending || !history.isDirty}
-          className="gap-1.5"
-        >
-          <Save className="size-4" aria-hidden />
-          {pending ? "Zapisywanie…" : "Zapisz galerię"}
-        </Button>
-        <StatusMessage message={status} error={error} />
       </div>
     </div>
   );

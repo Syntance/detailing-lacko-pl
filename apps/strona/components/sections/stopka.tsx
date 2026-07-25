@@ -57,9 +57,20 @@ export function Stopka({ kontakt }: { kontakt: KontaktData }) {
           </nav>
         </div>
 
-        <p className="mt-10 text-xs text-muted-foreground">
-          © {year} Detailing Łącko. Wszystkie prawa zastrzeżone.
-        </p>
+        <div className="mt-10 flex flex-col gap-2 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+          <p>© {year} Detailing Łącko. Wszystkie prawa zastrzeżone.</p>
+          <p className="sm:text-right">
+            Projekt i wdrożenie:{" "}
+            <a
+              href="https://syntance.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline-offset-4 hover:text-foreground hover:underline"
+            >
+              Syntance
+            </a>
+          </p>
+        </div>
       </div>
     </footer>
   );

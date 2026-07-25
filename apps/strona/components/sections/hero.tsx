@@ -34,15 +34,30 @@ export function Hero({
     <section
       id="hero"
       aria-label="Detailing Łącko"
-      className="relative isolate flex min-h-[42rem] items-end overflow-hidden bg-hero-scrim lg:max-h-[46rem] lg:min-h-[67.8svh] lg:items-center"
+      className="relative isolate flex min-h-[42rem] overflow-hidden bg-hero-scrim lg:max-h-[46rem] lg:min-h-[67.8svh]"
     >
+      {/* Stage — wspólna klatka dla zdjęcia I tekstu. Do 120rem szerokości jest
+          po prostu całą sekcją, więc na typowych ekranach NIC nie zmienia.
+          Powyżej: ogranicza się do 120rem i centruje, a zdjęcie z tekstem
+          pozycjonują się względem NIEJ, nie względem viewportu — bez tego na
+          ultraszerokim monitorze tekst ucieka do lewej krawędzi, zdjęcie do
+          prawej i pośrodku rośnie pusta dziura. Odstępy między nimi zostają
+          takie jak teraz, bo skalują się z klatką, nie z oknem.
+          Stage MUSI zostać w flow (nie absolute) — inaczej sekcja przestaje
+          rosnąć od treści i copy wyższe niż min-h zostaje ucięte przez
+          overflow-hidden. Wysokość bierze ze stretcha flexa sekcji. */}
+      <div className="relative flex w-full flex-col justify-end lg:mx-auto lg:max-w-[120rem] lg:justify-center">
       {/* Kontener zdjęcia. Mobile: pełny bleed (docelowo osobne zdjęcie).
           Desktop: przypięty do prawej, wysokość = wysokość hero. Szerokość =
           proporcja kadru (3:2) powiększona o 30% (→ 39:20), więc panel rośnie
           w stronę tekstu zamiast się przycinać. Maska siedzi TU, a nie na
-          <Image>, więc 30% (opacity) liczy się od szerokości TEGO panelu i
-          wygaszanie trzyma się jego krawędzi niezależnie od proporcji okna. */}
-      <div className="absolute inset-0 -z-10 lg:left-auto lg:aspect-[351/200] lg:h-full lg:w-auto lg:translate-x-[20%] lg:[-webkit-mask-image:linear-gradient(to_right,transparent_0%,black_30%)] lg:[mask-image:linear-gradient(to_right,transparent_0%,black_30%)]">
+          <Image>, więc procenty liczą się od szerokości TEGO panelu i
+          wygaszanie trzyma się jego krawędzi niezależnie od proporcji okna.
+          Maska jest SYMETRYCZNA: 0→30% wygasza lewą krawędź (pod tekstem),
+          70→100% prawą — tak samo szeroko. Na typowych ekranach prawa krawędź
+          panelu jest wypchnięta za viewport, więc ten fade jest niewidoczny;
+          ujawnia się dopiero na szerokich, gdzie panel kończy się w kadrze. */}
+      <div className="absolute inset-0 -z-10 lg:left-auto lg:aspect-[351/200] lg:h-full lg:w-auto lg:translate-x-[25%] lg:[-webkit-mask-image:linear-gradient(to_right,transparent_0%,black_30%,black_70%,transparent_100%)] lg:[mask-image:linear-gradient(to_right,transparent_0%,black_30%,black_70%,transparent_100%)]">
         {/* LCP strony — priority + fetchPriority, bez lazy. Ciemne tło sekcji
             trzyma kontrast copy także zanim zdjęcie się dociągnie (zero CLS). */}
         <Image
@@ -57,18 +72,23 @@ export function Hero({
           quality={70}
           className="object-cover object-[62%_center] lg:object-center"
         />
+        {/* Przyciemnienie desktopowe siedzi TUTAJ, wewnątrz panelu — nie jako
+            osobna warstwa na sekcji. Panel jest przesunięty (translate-x) i
+            wystaje poza prawą krawędź stage; warstwa o inset-0 względem stage
+            nie pokrywała tego wystającego fragmentu, więc prawa część zdjęcia
+            zostawała nieprzyciemniona (widoczny jaśniejszy pas). Wewnątrz
+            panelu inset-0 = dokładnie obszar zdjęcia, zawsze i w całości. */}
+        <div aria-hidden className="absolute inset-0 hidden bg-hero-scrim/50 lg:block" />
       </div>
-      {/* Scrim: na mobile ciemnieje ku dołowi (copy przy dole), na desktopie
-          ku lewej (copy w lewej kolumnie) — zdjęcie zostaje odsłonięte tam,
-          gdzie nie ma tekstu.
-          Punkty gradientu są dobrane pod KONTRAST, nie pod estetykę: zdjęcie
-          jest podmienialne z panelu, więc scrim musi udźwignąć też kadr jasny
-          (białe auto). Przy ~88–100% krycia w strefie copy biel trzyma 4.5:1
-          nawet nad prawie białym pikselem; górne 55% zostawia zdjęcie widoczne
-          tam, gdzie tekstu nie ma. Zmieniasz stopnie → przemierz kontrast. */}
+      {/* Przyciemnienie zdjęcia.
+          Mobile: gradient ku dołowi — copy siedzi na dole, góra zostaje jaśniejsza.
+          Desktop: zwykłe, jednolite przyciemnienie całego kadru (bez gradientu).
+          Krycie dobrane pod KONTRAST: zdjęcie jest podmienialne z panelu, więc
+          warstwa musi udźwignąć też kadr jasny (białe auto w pianie) i utrzymać
+          4.5:1 dla białego tekstu. Zmieniasz wartość → przemierz kontrast. */}
       <div
         aria-hidden
-        className="absolute inset-0 -z-10 bg-gradient-to-t from-hero-scrim from-30% via-hero-scrim/88 via-75% to-hero-scrim/55 lg:bg-gradient-to-r lg:from-hero-scrim lg:from-0% lg:via-hero-scrim/80 lg:via-50% lg:to-hero-scrim/25"
+        className="absolute inset-0 -z-10 bg-gradient-to-t from-hero-scrim from-30% via-hero-scrim/88 via-75% to-hero-scrim/55 lg:hidden"
       />
 
       {/* Na desktopie copy nie jest wyśrodkowane w kontenerze, tylko dociągnięte
@@ -127,6 +147,7 @@ export function Hero({
             cennik bez „od" · zdjęcia przed/po · płatność przy odbiorze
           </p>
         </div>
+      </div>
       </div>
     </section>
   );

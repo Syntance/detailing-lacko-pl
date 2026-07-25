@@ -27,8 +27,9 @@ export function Kontakt({ kontakt }: { kontakt: KontaktData }) {
             Umów termin
           </h2>
           <p className="mt-3 max-w-2xl text-pretty text-muted-foreground">
-            Wyślij zdjęcie albo zadzwoń — do 2 h dostaniesz cenę i najbliższy
-            wolny termin. Płacisz przy odbiorze, po obejrzeniu efektu.
+            Wyślij zdjęcie albo zadzwoń — do 2 h po 16:00 dostaniesz cenę
+            z cennika, wolny termin i szczerą ocenę, czy plama zejdzie. Płacisz
+            dopiero, gdy zobaczysz efekt.
           </p>
         </Reveal>
 
@@ -42,10 +43,10 @@ export function Kontakt({ kontakt }: { kontakt: KontaktData }) {
               <Camera className="size-6 shrink-0" aria-hidden />
               <span>
                 <span className="block text-lg font-semibold">
-                  Wyślij zdjęcie plamy lub wnętrza
+                  Wyślij zdjęcie — dostaniesz cenę
                 </span>
                 <span className="text-sm opacity-85">
-                  odpiszemy do 2 h z ceną i terminem
+                  odpisujemy do 2 h po 16:00
                 </span>
               </span>
             </PhotoLink>

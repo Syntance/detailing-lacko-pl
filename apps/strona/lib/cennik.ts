@@ -85,7 +85,7 @@ export const DEFAULT_CENNIK: CennikData = {
   settings: {
     heading: "Cennik",
     subheading:
-      "Te ceny obowiązują — widełki tylko tam, gdzie liczy się rozmiar auta.",
+      "Tyle zapłacisz. Bez „od”, bez wyceny indywidualnej, bez dopłat wymyślonych przy odbiorze. Widełki tylko tam, gdzie naprawdę liczy się rozmiar auta.",
     noteTitle: "Sprzedajesz auto?",
     noteText:
       "Kupujący zbije cenę o brudne wnętrze mocniej, niż kosztuje jego wyczyszczenie. Handlarze i komisy: od 2 aut miesięcznie stała stawka ok. 400 zł/auto.",

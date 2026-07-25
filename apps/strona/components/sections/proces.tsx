@@ -8,15 +8,17 @@ export function Proces() {
   const steps = [
     {
       title: "Wysyłasz zdjęcie albo dzwonisz",
-      text: "Do 2 h odpisujemy z ceną i terminem. Jeśli plama nie zejdzie — mówimy od razu, nie przy odbiorze.",
+      // „do 2 h po 16:00" zamiast płaskiego „do 2 h": przedpołudnia blokuje
+      // etat, więc obietnica bez kwalifikatora pękłaby przy pierwszym kliencie.
+      text: "Do 2 h po 16:00 odpisujemy: cena z cennika, wolny termin i szczera ocena, czy plama zejdzie. Jeśli nie zejdzie — dowiesz się teraz, nie przy odbiorze.",
     },
     {
       title: "Przywozisz auto do Czerńca",
-      text: "Po 16:00 albo w weekend. Termin zwykle w 3–7 dni.",
+      text: "Po 16:00 albo w weekend, zwykle w 3–7 dni. Auto zostaje u nas na kilka godzin.",
     },
     {
-      title: "Odbierasz i płacisz",
-      text: "Gotówka lub BLIK, dopiero gdy zobaczysz efekt.",
+      title: "Oglądasz efekt i płacisz",
+      text: "Najpierw pokazujemy, co się zmieniło. Płacisz dopiero wtedy — gotówka lub BLIK, zero przedpłat.",
     },
   ];
 

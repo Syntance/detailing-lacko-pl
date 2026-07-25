@@ -1,4 +1,12 @@
-import { Banknote, Camera, Droplets, ListChecks, MapPin } from "lucide-react";
+import {
+  Banknote,
+  Camera,
+  Droplets,
+  ListChecks,
+  MapPin,
+  MessageSquare,
+  MinusCircle,
+} from "lucide-react";
 import { Reveal, RevealItem, RevealStagger } from "@/components/motion/reveal";
 
 /**
@@ -7,32 +15,51 @@ import { Reveal, RevealItem, RevealStagger } from "@/components/motion/reveal";
  * + uczciwość o granicach jako wyróżnik, nie słabość.
  */
 export function DlaczegoJa() {
+  // Kolejność wg tego, jak trudno to skopiować konkurencji. Cennik na stronie
+  // KZ Garage może opublikować w tydzień — realne przyjęcie ryzyka („nie
+  // wyszło, nie płacisz") i uczciwa dyskwalifikacja zlecenia przed przyjazdem
+  // wymagają zmiany modelu, nie tekstu. Dlatego one idą pierwsze.
   const points = [
+    {
+      icon: Banknote,
+      title: "Nie wyszło — nie płacisz",
+      text: "Najpierw oglądasz efekt, potem płacisz. Gotówka lub BLIK, zero przedpłat. Ryzyko jest po naszej stronie.",
+    },
+    {
+      icon: MessageSquare,
+      title: "Ocena, zanim przyjedziesz",
+      text: "Ze zdjęcia mówimy, czy plama zejdzie. Jeśli oceniamy, że nie — mówimy to od razu, zamiast brać auto i tłumaczyć się przy odbiorze.",
+    },
     {
       icon: ListChecks,
       title: "Cennik na stronie",
-      text: "Znasz cenę, zanim napiszesz. Zero „wyceny indywidualnej\".",
-    },
-    {
-      icon: Banknote,
-      title: "Płatność po efekcie",
-      text: "Nie wyszło? Nie płacisz. Ryzyko jest po naszej stronie.",
+      text: "Cała lista z cenami. Bez „od”, bez widełek, bez „wyceny indywidualnej”.",
     },
     {
       icon: Camera,
       title: "Zdjęcia przed/po",
-      text: "Widzisz, za co płacisz.",
+      text: "Z każdej roboty. Widzisz, za co płacisz — zanim się zdecydujesz.",
     },
     {
       icon: Droplets,
-      title: "Ręcznie, nie automatem",
+      title: "Ręcznie, parą i chemią",
       text: "Piana, dwa wiadra, mikrofibra, parownica. Automat rysuje lakier — my nie.",
     },
     {
       icon: MapPin,
       title: "10 minut od Łącka",
-      text: "Czerniec 72 zamiast dwóch kursów do Sącza.",
+      text: "Czerniec 72 zamiast dwóch kursów po 25 km do Sącza.",
     },
+  ];
+
+  // Jawne zawężenie oferty. Powiedzenie wprost, czego NIE robimy (i kto robi to
+  // lepiej), kosztuje zlecenia, których i tak byśmy nie obsłużyli, a kupuje
+  // wiarygodność wszystkiego powyżej. Bez tego lista zalet czyta się jak
+  // samochwalstwo — z tym czyta się jak rozmowa z fachowcem.
+  const czegoNieRobimy = [
+    "Powłok ceramicznych i PPF — to teren studiów z akredytacjami i portfolio. My robimy wnętrza.",
+    "Dojazdu do klienta. Pracujemy stacjonarnie w Czerńcu 72 — dlatego cena z cennika jest ostateczna, bez doliczonych kilometrów.",
+    "Obietnicy, że każda plama zejdzie. Stary barwnik potrafi zostawić ślad i mówimy to przed przyjazdem, nie po zapłacie.",
   ];
 
   return (
@@ -73,12 +100,33 @@ export function DlaczegoJa() {
         </RevealStagger>
 
         {/* Uczciwość o granicach — celowo bez lukru (UVP: „czego nie obiecujemy"). */}
-        <Reveal className="mt-8">
-          <p className="max-w-3xl text-sm text-pretty text-muted-foreground">
-            Uczciwie: one step usuwa 50–70% rys, nie wszystkie. I nie
-            obiecujemy, że każda plama zejdzie — jeśli nie zejdzie, powiemy to
-            przed przyjazdem.
-          </p>
+        <Reveal className="mt-10">
+          <div className="rounded-2xl border border-border bg-background p-6 md:p-8">
+            <h3 className="font-serif text-xl font-medium">
+              Czego nie robimy
+            </h3>
+            <p className="mt-2 max-w-3xl text-sm text-pretty text-muted-foreground">
+              Wolimy powiedzieć to teraz niż tłumaczyć się przy odbiorze.
+            </p>
+            <ul className="mt-5 grid gap-3 md:grid-cols-3">
+              {czegoNieRobimy.map((pozycja) => (
+                <li key={pozycja} className="flex gap-3">
+                  <MinusCircle
+                    className="mt-0.5 size-5 shrink-0 text-muted-foreground"
+                    aria-hidden
+                  />
+                  <span className="text-sm text-pretty text-muted-foreground">
+                    {pozycja}
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <p className="mt-5 max-w-3xl text-sm text-pretty text-muted-foreground">
+              I jeszcze jedno: polerowanie one step usuwa 50–70% rys, nie
+              wszystkie. Głębokie — takie, w których paznokieć się zahacza —
+              wymagają korekty wieloetapowej albo lakiernika.
+            </p>
+          </div>
         </Reveal>
       </div>
     </section>

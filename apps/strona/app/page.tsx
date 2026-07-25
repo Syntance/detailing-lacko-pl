@@ -6,6 +6,7 @@ import { Hero } from "@/components/sections/hero";
 import { Kontakt } from "@/components/sections/kontakt";
 import { Metamorfozy } from "@/components/sections/metamorfozy";
 import { Navbar } from "@/components/sections/navbar";
+import { Problem } from "@/components/sections/problem";
 import { Proces } from "@/components/sections/proces";
 import { BottomBar } from "@/components/sections/bottom-bar";
 import { Stopka } from "@/components/sections/stopka";
@@ -70,11 +71,16 @@ export default async function HomePage() {
 
       <Navbar kontakt={kontakt} />
 
-      {/* Kolejność sekcji = kolejność lęków klienta (plan www v2):
-          cena → efekt → logistyka → zaufanie → FAQ → kontakt. */}
+      {/* Kolejność sekcji: PROBLEM → cena → efekt → logistyka → zaufanie →
+          FAQ → kontakt. Zmiana względem planu v2 (który zaczynał od ceny):
+          główną alternatywą klienta jest „nic nie robię / myjnia za 30 zł",
+          a nie inny detailer — więc najpierw trzeba pokazać, że problemu nie
+          da się rozwiązać odkurzaczem, a dopiero potem podać kwotę. Cennik po
+          sekcji Problem czyta się jako uzasadniony, przed nią — jako drogi. */}
       {/* pb kompensuje stały dolny pasek akcji na mobile (BottomBar). */}
       <main className="pb-[calc(4.25rem+env(safe-area-inset-bottom))] lg:pb-0">
         <Hero images={heroImages} kontakt={kontakt} />
+        <Problem />
         <UslugiCennik cennik={cennik} kontakt={kontakt} />
         {/* Sekcja Efekty = kuratorowane pary przed/po (panel → Metamorfozy).
             CMS-owa Galeria z suwakami czeka w components/sections/galeria.tsx —

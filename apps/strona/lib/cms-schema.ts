@@ -9,6 +9,8 @@ import { z } from "zod";
 
 export const heroContentSchema = z.object({
   desktopImageUrl: z.string().min(1, "Ścieżka zdjęcia jest wymagana"),
+  /** Osobny kadr pod telefony (pion). Puste = strona użyje desktopowego. */
+  mobileImageUrl: z.string(),
 });
 
 export const homeContentSchema = z.object({

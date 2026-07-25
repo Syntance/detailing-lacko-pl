@@ -20,6 +20,8 @@ function hasDb(): boolean {
 }
 
 const HERO_IMAGE_FALLBACK = "/images/hero.jpg";
+/** Pionowy kadr pod telefon — używany, dopóki panel nie ustawi własnego. */
+const HERO_MOBILE_FALLBACK = "/images/hero-mobile.jpg";
 
 async function readHomeContent(): Promise<PageContent> {
   if (!hasDb()) return {};
@@ -38,16 +40,40 @@ async function readHomeContent(): Promise<PageContent> {
   }
 }
 
-/** Zdjęcie hero do renderu strony (z fallbackiem z repo). */
-export async function getHeroImageUrl(): Promise<string> {
+export type HeroImages = {
+  /** Kadr desktopowy (poziomy). */
+  desktop: string;
+  /** Kadr mobilny (pionowy); gdy panel go nie ustawił — desktopowy. */
+  mobile: string;
+  /** Czy mobile ma własny plik (do pola w panelu, nie do renderu). */
+  hasMobile: boolean;
+};
+
+/** Zdjęcia hero do renderu strony (z fallbackiem z repo). */
+export async function getHeroImages(): Promise<HeroImages> {
   const content = await readHomeContent();
-  return content.hero?.desktopImageUrl ?? HERO_IMAGE_FALLBACK;
+  const desktop = content.hero?.desktopImageUrl ?? HERO_IMAGE_FALLBACK;
+  const mobileCms = content.hero?.mobileImageUrl;
+  // Priorytet: mobile z panelu → desktop z panelu, o ile klient REALNIE go
+  // podmienił (wartość równa domyślce repo to stary zapis panelu, nie wybór)
+  // → pionowy kadr z repo.
+  const desktopPodmieniony =
+    Boolean(content.hero?.desktopImageUrl) &&
+    content.hero?.desktopImageUrl !== HERO_IMAGE_FALLBACK;
+  const mobile =
+    mobileCms || (desktopPodmieniony ? desktop : HERO_MOBILE_FALLBACK);
+  return { desktop, mobile, hasMobile: Boolean(mobileCms) };
 }
 
 /** Surowa treść do edycji w panelu (z fallbackami). */
 export async function getHomeContentRaw(): Promise<HomeContentInput> {
+  const images = await getHeroImages();
   return {
-    hero: { desktopImageUrl: await getHeroImageUrl() },
+    hero: {
+      desktopImageUrl: images.desktop,
+      // W panelu puste pole = „dziedziczy z desktopu" — nie pokazujemy fallbacku.
+      mobileImageUrl: images.hasMobile ? images.mobile : "",
+    },
   };
 }
 
@@ -64,7 +90,11 @@ export async function saveHomeContent(input: HomeContentInput): Promise<void> {
   };
   const next: PageContent = {
     ...existing,
-    hero: { ...hero, desktopImageUrl: input.hero.desktopImageUrl },
+    hero: {
+      ...hero,
+      desktopImageUrl: input.hero.desktopImageUrl,
+      mobileImageUrl: input.hero.mobileImageUrl || undefined,
+    },
   };
   const { sql } = getPostgresClient();
   const json = JSON.stringify(next);

@@ -46,7 +46,7 @@ export function TrescClient({ initial }: { initial: HomeContentInput }) {
     <div className="space-y-6">
       <PageHeader
         title="Zdjęcia strony"
-        description="Zdjęcie hero na stronie głównej. Teksty strony są utrzymywane w kodzie."
+        description="Zdjęcia hero — osobno komputer i telefon. Teksty strony są utrzymywane w kodzie."
       />
 
       <UndoRedoToolbar
@@ -57,15 +57,29 @@ export function TrescClient({ initial }: { initial: HomeContentInput }) {
         onRedo={history.redo}
       />
 
-      <Fieldset legend="Sekcja główna (hero)">
+      <Fieldset legend="Desktop (komputery i tablety)">
         <ImageField
-          label="Zdjęcie hero"
-          hint="Najlepiej najlepsza para przed/po tapicerki — to pierwsze, co widzi klient."
+          label="Zdjęcie hero — desktop"
+          hint="Kadr poziomy. To pierwsze, co widzi klient na komputerze."
           value={data.hero.desktopImageUrl}
           onChange={(url) =>
             history.setState((draft) => ({
               ...draft,
-              hero: { desktopImageUrl: url },
+              hero: { ...draft.hero, desktopImageUrl: url },
+            }))
+          }
+        />
+      </Fieldset>
+
+      <Fieldset legend="Mobile (telefony)">
+        <ImageField
+          label="Zdjęcie hero — telefon"
+          hint="Kadr pionowy pod pierwszy ekran telefonu. Puste pole = telefon użyje zdjęcia desktopowego."
+          value={data.hero.mobileImageUrl}
+          onChange={(url) =>
+            history.setState((draft) => ({
+              ...draft,
+              hero: { ...draft.hero, mobileImageUrl: url },
             }))
           }
         />

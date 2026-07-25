@@ -7,10 +7,10 @@ import { Kontakt } from "@/components/sections/kontakt";
 import { Metamorfozy } from "@/components/sections/metamorfozy";
 import { Navbar } from "@/components/sections/navbar";
 import { Proces } from "@/components/sections/proces";
-import { StickyCall } from "@/components/sections/sticky-call";
+import { BottomBar } from "@/components/sections/bottom-bar";
 import { Stopka } from "@/components/sections/stopka";
 import { UslugiCennik } from "@/components/sections/uslugi-cennik";
-import { getHeroImageUrl } from "@/lib/cms-content";
+import { getHeroImages } from "@/lib/cms-content";
 import { buildPhotoContactHref } from "@/lib/photo-contact";
 import {
   getCennik,
@@ -47,9 +47,9 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function HomePage() {
-  const [heroImageUrl, cennik, kontakt, dostepnosc, faqData, metamorfozy] =
+  const [heroImages, cennik, kontakt, dostepnosc, faqData, metamorfozy] =
     await Promise.all([
-      getHeroImageUrl(),
+      getHeroImages(),
       getCennik(),
       getKontakt(),
       getDostepnosc(),
@@ -72,8 +72,9 @@ export default async function HomePage() {
 
       {/* Kolejność sekcji = kolejność lęków klienta (plan www v2):
           cena → efekt → logistyka → zaufanie → FAQ → kontakt. */}
-      <main>
-        <Hero imageUrl={heroImageUrl} kontakt={kontakt} />
+      {/* pb kompensuje stały dolny pasek akcji na mobile (BottomBar). */}
+      <main className="pb-[calc(4.25rem+env(safe-area-inset-bottom))] lg:pb-0">
+        <Hero images={heroImages} kontakt={kontakt} />
         <UslugiCennik cennik={cennik} kontakt={kontakt} />
         {/* Sekcja Efekty = kuratorowane pary przed/po (panel → Metamorfozy).
             CMS-owa Galeria z suwakami czeka w components/sections/galeria.tsx —
@@ -86,9 +87,8 @@ export default async function HomePage() {
       </main>
 
       <Stopka kontakt={kontakt} />
-      <StickyCall
+      <BottomBar
         phoneE164={kontakt.phoneE164}
-        phoneDisplay={kontakt.phoneDisplay}
         photoHref={buildPhotoContactHref(kontakt)}
       />
       <JsonLd

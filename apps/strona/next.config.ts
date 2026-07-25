@@ -39,7 +39,9 @@ const CSP = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
-  "connect-src 'self' https://eu.i.posthog.com https://eu-assets.i.posthog.com https://vitals.vercel-insights.com https://va.vercel-scripts.com",
+  // R2 S3 API — przeglądarka PUTuje duże zdjęcia presignem prosto na bucket
+  // (omija limit body Vercel ~4,5 MB). Bez tego hosta CSP blokuje upload.
+  "connect-src 'self' https://08414a969e8107b01088ca1ced57dd94.r2.cloudflarestorage.com https://eu.i.posthog.com https://eu-assets.i.posthog.com https://vitals.vercel-insights.com https://va.vercel-scripts.com",
   "frame-ancestors 'none'",
   "base-uri 'none'",
   "object-src 'none'",
@@ -69,7 +71,14 @@ const nextConfig: NextConfig = {
   // Next dopuszcza tylko jawnie zadeklarowane wartości `quality` — bez tego
   // <Image quality={70}> po cichu wraca do 75. Hero leży pod scrimem, więc
   // q70 mieści LCP w budżecie 120 KB bez widocznej straty jakości.
-  images: { qualities: [70, 75] },
+  images: {
+    qualities: [70, 75],
+    // Zdjęcia wgrane przez panel (Metamorfozy itp.) trafiają na R2 — bez
+    // jawnego hosta next/image odrzuca render z „hostname not configured".
+    remotePatterns: [
+      { protocol: "https", hostname: "pub-44ef6d6523b942e5b4074911f7e5a7f0.r2.dev" },
+    ],
+  },
   // @moduly/data-store czyta pliki .sql (readFileSync) przy imporcie —
   // muszą trafić do bundla funkcji serverless na Vercelu.
   outputFileTracingIncludes: {

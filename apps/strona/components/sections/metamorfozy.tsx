@@ -19,45 +19,70 @@ function ParaZdjec({
   para,
   sizes,
   hover,
+  compact,
 }: {
   para: MetamorfozyPara;
   sizes: string;
   hover?: boolean;
+  /**
+   * Pełnoekranowy podgląd: na szerokim ekranie grid-cols-2 rozciąga każde
+   * zdjęcie na ~44vw, a przy proporcji 3:4 to i tak za wysoko, żeby się
+   * zmieścić. Flex + h-[min(60vh,70vw)] daje pudełku KONKRETNĄ wysokość
+   * (nie max-h — `fill` jest position:absolute i nie ma własnego rozmiaru,
+   * więc "auto" wysokość liczona z aspect-ratio kolabsuje do 0), z której
+   * dopiero liczy się szerokość. Bazowa granica to połowa wysokości ekranu
+   * (50vh/44vw), +20% na czytelność (60vh/~53vw → 70vw w proporcji 3:4);
+   * wąskie/wysokie ekrany (mobile) nadal rosną w dół, nie w bok.
+   */
+  compact?: boolean;
 }) {
+  // Tło `bg-border` maluje się na całym pudełku — w trybie compact pudełko
+  // MUSI się skurczyć do szerokości pary (inline-flex), inaczej "obramowanie"
+  // ciągnie się na całą szerokość modala. Centrowanie idzie więc na osobnym,
+  // przezroczystym wrapperze na zewnątrz.
   return (
-    <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl bg-border">
-      {(
-        [
-          ["PRZED", para.beforeUrl, para.beforeAlt],
-          ["PO", para.afterUrl, para.afterAlt],
-        ] as const
-      ).map(([label, url, alt]) => (
-        // aspect 3:4 = proporcja źródłowych zdjęć — kadr widać W CAŁOŚCI,
-        // object-cover niczego tu nie przycina.
-        <div key={label} className="relative aspect-[3/4] bg-card">
-          <Image
-            src={url}
-            alt={alt}
-            fill
-            sizes={sizes}
-            className={`object-cover ${
-              hover
-                ? "transition-transform duration-500 group-hover:scale-[1.03] motion-reduce:transition-none"
-                : ""
-            }`}
-          />
-          <span
-            aria-hidden
-            className={`absolute top-3 left-3 rounded-full px-3 py-1 text-xs font-semibold tracking-wide ${
-              label === "PO"
-                ? "bg-primary text-primary-foreground"
-                : "bg-black/60 text-white"
-            }`}
+    <div className={compact ? "flex justify-center" : ""}>
+      <div
+        className={`overflow-hidden rounded-xl bg-border ${
+          compact ? "inline-flex items-start gap-px" : "grid grid-cols-2 gap-px"
+        }`}
+      >
+        {(
+          [
+            ["PRZED", para.beforeUrl, para.beforeAlt],
+            ["PO", para.afterUrl, para.afterAlt],
+          ] as const
+        ).map(([label, url, alt]) => (
+          // aspect 3:4 = proporcja źródłowych zdjęć — kadr widać W CAŁOŚCI,
+          // object-cover niczego tu nie przycina.
+          <div
+            key={label}
+            className={`relative aspect-[3/4] bg-card ${compact ? "h-[min(60vh,70vw)] max-w-full" : ""}`}
           >
-            {label}
-          </span>
-        </div>
-      ))}
+            <Image
+              src={url}
+              alt={alt}
+              fill
+              sizes={sizes}
+              className={`object-cover ${
+                hover
+                  ? "transition-transform duration-500 group-hover:scale-[1.03] motion-reduce:transition-none"
+                  : ""
+              }`}
+            />
+            <span
+              aria-hidden
+              className={`absolute top-3 left-3 rounded-full px-3 py-1 text-xs font-semibold tracking-wide ${
+                label === "PO"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-black/60 text-white"
+              }`}
+            >
+              {label}
+            </span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -185,7 +210,7 @@ export function Metamorfozy({ data }: { data: MetamorfozyData }) {
             <div className="flex flex-col gap-8 px-5 py-6 md:px-8 md:py-8">
               {temat.pary.map((para) => (
                 <figure key={para.id}>
-                  <ParaZdjec para={para} sizes="(max-width: 768px) 50vw, 44vw" />
+                  <ParaZdjec para={para} sizes="(max-width: 768px) 45vw, 400px" compact />
                   {para.podpis ? (
                     <figcaption className="mt-2 text-sm font-medium text-pretty text-muted-foreground">
                       {para.podpis}

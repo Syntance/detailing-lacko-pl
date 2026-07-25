@@ -11,9 +11,8 @@ import { StickyCall } from "@/components/sections/sticky-call";
 import { Stopka } from "@/components/sections/stopka";
 import { UslugiCennik } from "@/components/sections/uslugi-cennik";
 import { getHeroImageUrl } from "@/lib/cms-content";
-import { DEFAULT_FAQ } from "@/lib/content-defaults";
 import { buildPhotoContactHref } from "@/lib/photo-contact";
-import { getCennik, getGaleria, getKontakt, getSeo } from "@/lib/site-data";
+import { getCennik, getFaq, getGaleria, getKontakt, getSeo } from "@/lib/site-data";
 import { getDostepnosc } from "@/lib/rezerwacje-store";
 
 /** ISR — treść zmienia się z panelu (rewalidacja przy zapisie) albo co 10 min. */
@@ -42,16 +41,17 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function HomePage() {
-  const [heroImageUrl, cennik, galeria, kontakt, dostepnosc] = await Promise.all([
-    getHeroImageUrl(),
-    getCennik(),
-    getGaleria(),
-    getKontakt(),
-    getDostepnosc(),
-  ]);
+  const [heroImageUrl, cennik, galeria, kontakt, dostepnosc, faqData] =
+    await Promise.all([
+      getHeroImageUrl(),
+      getCennik(),
+      getGaleria(),
+      getKontakt(),
+      getDostepnosc(),
+      getFaq(),
+    ]);
 
-  // Copy strony (w tym FAQ) żyje w kodzie — CMS trzyma tylko zasoby wymienne.
-  const faq = DEFAULT_FAQ;
+  const faq = faqData.items;
 
   return (
     <>

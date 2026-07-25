@@ -14,6 +14,7 @@ import {
   Building2,
   CalendarClock,
   CircleDollarSign,
+  HelpCircle,
   Images,
   Search,
 } from "lucide-react";
@@ -54,6 +55,12 @@ export function PanelNav({
       href: `${panel}/galeria`,
       label: "Galeria",
       icon: Images,
+      exact: false,
+    },
+    {
+      href: `${panel}/faq`,
+      label: "FAQ",
+      icon: HelpCircle,
       exact: false,
     },
     {

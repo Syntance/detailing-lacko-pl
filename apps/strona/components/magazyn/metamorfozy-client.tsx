@@ -109,7 +109,9 @@ function SortableParaCard({
         </button>
       </div>
 
-      {/* Miniatury pary — szybki podgląd tego, co wybrano. */}
+      {/* Miniatury pary — szybki podgląd tego, co wybrano. Proporcja 3:4
+          jak na stronie (components/sections/metamorfozy.tsx) — inna
+          proporcja + object-cover przycinałaby prawdziwe zdjęcia. */}
       {para.beforeUrl || para.afterUrl ? (
         <div className="mb-3 grid grid-cols-2 gap-1 overflow-hidden rounded-lg">
           {(
@@ -118,7 +120,7 @@ function SortableParaCard({
               ["PO", para.afterUrl],
             ] as const
           ).map(([label, url]) => (
-            <div key={label} className="relative aspect-[3/2] bg-muted">
+            <div key={label} className="relative aspect-[3/4] bg-muted">
               {url ? (
                 <Image src={url} alt="" fill sizes="200px" className="object-cover" />
               ) : null}

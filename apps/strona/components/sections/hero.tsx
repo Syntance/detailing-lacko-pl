@@ -72,16 +72,18 @@ export function Hero({
   images: HeroImages;
   kontakt: KontaktData;
 }) {
-  // Copy wg podejścia Negacza: H1 to obietnica efektu zawężona do
-  // SPECJALIZACJI („wnętrze auta", nie „auto" — strona przestaje brzmieć jak
-  // generalista), lead nazywa kategorię, miejsce i zabija dwa lęki naraz
-  // (cena + „czy to w ogóle zejdzie"), opis mówi problem językiem klienta.
-  // Uczciwości nie deklarujemy („jesteśmy uczciwi") — demonstrujemy ją treścią.
-  const headline = "Wnętrze auta jak z salonu";
+  // Copy wg podejścia Negacza: H1 to KONKRETNY efekt, nie hasło-metafora
+  // („jak z salonu" nic nie mówi o problemie klienta) — te same słowa co
+  // w sekcji Problem poniżej (plamy/sierść/zapach), więc hero zapowiada,
+  // a Problem tłumaczy dlaczego odkurzacz tego nie robi. Lead to rzeczowy
+  // opis: kategoria usługi, miejsce, cena bez dzwonienia — zero ozdobników.
+  // Opis usuwa lęk nr 3 („czy w ogóle zejdzie") + logistykę. Uczciwości nie
+  // deklarujemy („jesteśmy uczciwi") — demonstrujemy ją treścią.
+  const headline = "Wnętrze bez plam, sierści i zapachu";
   const lead =
-    "Pranie tapicerki i czyszczenie wnętrz w Czerńcu pod Łąckiem. Zanim przywieziesz auto, wiesz ile zapłacisz i czy plama zejdzie.";
+    "Pranie tapicerki i czyszczenie wnętrz — Czerniec pod Łąckiem. Cena z cennika, nie z telefonu.";
   const description =
-    "Plamy po dzieciach, sierść psa, zapach, którego odkurzacz nie ruszy. Odbiór po 16:00 i w weekendy.";
+    "Ze zdjęcia mówimy, czy plama zejdzie — zanim przyjedziesz. Odbiór po 16:00 i w weekendy.";
   const photoHref = buildPhotoContactHref(kontakt);
 
   return (

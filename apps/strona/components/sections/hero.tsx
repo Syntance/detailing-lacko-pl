@@ -75,13 +75,11 @@ export function Hero({
   // H1 mówi WPROST, co to za miejsce (kategoria + lokalizacja, zero metafory
   // i zero listy usług — to rola linii pod spodem). Lead to rzeczowa lista:
   // co robimy, w tej kolejności co w cenniku (wnętrze jako pierwsze, bo to
-  // filar przychodu). Opis (tylko desktop) usuwa lęk nr 3 i podaje godziny.
-  // Uczciwości nie deklarujemy („jesteśmy uczciwi") — demonstrujemy ją treścią.
-  const headline = "Detailing samochodowy w Łącku";
+  // filar przychodu). Uczciwości nie deklarujemy („jesteśmy uczciwi") —
+  // demonstrujemy ją treścią (pasek zaufania, kafel ceny, CTA).
+  const headline = "Detailing samochodowy";
   const lead =
-    "Pranie tapicerki, czyszczenie wnętrza, polerowanie lakieru i reflektorów — Czerniec pod Łąckiem.";
-  const description =
-    "Ze zdjęcia mówimy, czy plama zejdzie — zanim przyjedziesz. Odbiór po 16:00 i w weekendy.";
+    "Pranie tapicerki, czyszczenie wnętrza, polerowanie lakieru i reflektorów";
   const photoHref = buildPhotoContactHref(kontakt);
 
   return (
@@ -133,7 +131,7 @@ export function Hero({
             <span className="text-left leading-snug">
               Wyślij zdjęcie — dostaniesz cenę
               <span className="block text-xs font-medium opacity-85">
-                odpisujemy do 2 h po 16:00
+                odpisujemy do 2 h
               </span>
             </span>
           </PhotoLink>
@@ -177,20 +175,14 @@ export function Hero({
                 {lead}
               </h2>
 
-              <p className="hero-enter mt-4 max-w-lg text-lg text-pretty text-hero-muted [animation-delay:180ms]">
-                {description}
-              </p>
-
-              {/* Cena kotwiczna — jasny kafel na ciemnym tle, celowo przed CTA.
-                  Dopisek o braku ryzyka w tym samym kaflu: kwota bez niego
-                  konkuruje z „umyję sam za 30 zł" i przegrywa. */}
+              {/* Cena kotwiczna — jasny kafel na ciemnym tle, celowo przed CTA. */}
               <div className="hero-enter mt-7 self-start rounded-xl bg-background px-4 py-2.5 shadow-lg [animation-delay:270ms]">
                 <p className="flex flex-wrap items-baseline gap-x-2 gap-y-1 text-sm font-semibold text-foreground">
                   Komplet foteli z kanapą —{" "}
                   <span className="text-lg text-primary-strong">300 zł</span>
                 </p>
                 <p className="mt-0.5 text-xs font-medium text-muted-foreground">
-                  Nie wyszło — nie płacisz. Oglądasz efekt, potem płacisz.
+                  1 dzień
                 </p>
               </div>
 
@@ -204,7 +196,7 @@ export function Hero({
                   <span className="text-left leading-snug">
                     Wyślij zdjęcie — dostaniesz cenę
                     <span className="block text-xs font-medium opacity-85">
-                      odpisujemy do 2 h po 16:00
+                      odpisujemy do 2 h
                     </span>
                   </span>
                 </PhotoLink>
@@ -219,12 +211,6 @@ export function Hero({
                   Zadzwoń: {kontakt.phoneDisplay}
                 </PhoneLink>
               </div>
-
-              {/* Pasek zaufania — trzy dowody, bez ocen „na słowo". */}
-              <p className="hero-enter mt-6 max-w-lg text-sm text-pretty text-hero-muted [animation-delay:450ms]">
-                cennik bez „od" · ocena plamy przed przyjazdem · nie wyszło = nie
-            płacisz
-              </p>
             </div>
           </div>
         </div>

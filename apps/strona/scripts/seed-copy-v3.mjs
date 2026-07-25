@@ -44,8 +44,7 @@ const sql = postgres(databaseUrl, { max: 1, connect_timeout: 15 });
 
 const CENNIK_SETTINGS_V3 = {
   heading: "Cennik",
-  subheading:
-    "Te ceny obowiązują — widełki tylko tam, gdzie liczy się rozmiar auta.",
+  subheading: "",
   noteText:
     "Kupujący zbije cenę o brudne wnętrze mocniej, niż kosztuje jego wyczyszczenie. Handlarze i komisy: od 2 aut miesięcznie stała stawka ok. 400 zł/auto.",
 };

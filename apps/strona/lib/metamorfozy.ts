@@ -42,9 +42,9 @@ export type MetamorfozyTemat = z.infer<typeof metamorfozyTematSchema>;
 export type MetamorfozyData = z.infer<typeof metamorfozyDataSchema>;
 
 export const DEFAULT_METAMORFOZY: MetamorfozyData = {
-  heading: "Efekty — zobacz różnicę",
+  heading: "Zakres usług",
   subheading:
-    "Auta naszych klientów, bez retuszu i bez zdjęć z internetu — po lewej przyjechało, po prawej wyjechało.",
+    "Zobacz różnicę przed i po",
   tematy: [
     {
       id: "felgi",

@@ -58,8 +58,7 @@ const KONTAKT_V2 = {
 
 const CENNIK_SETTINGS_V2 = {
   heading: "Cennik",
-  subheading:
-    "Jako jedyni w okolicy publikujemy pełny cennik i rozliczamy dokładnie według niego. Widełki tylko tam, gdzie cena zależy od rozmiaru auta.",
+  subheading: "",
   noteTitle: "Sprzedajesz auto?",
   noteText:
     "Kupujący zbije cenę o brudne wnętrze mocniej, niż kosztuje jego wyczyszczenie. Handlarze i komisy od 2 aut miesięcznie — stała stawka ok. 400 zł/auto, ten sam standard i termin za każdym razem.",

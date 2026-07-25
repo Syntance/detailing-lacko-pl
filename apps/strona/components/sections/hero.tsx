@@ -85,18 +85,21 @@ export function Hero({
   return (
     <section id="hero" aria-label="Detailing Łącko" className="relative isolate">
       {/* ============ MOBILE (< lg) — projekt pod telefon ============ */}
+      {/* Zdjęcie jest kafelkiem NAD treścią (nie pełnoekranowym tłem pod nią):
+          plik ma natywną proporcję 3:4 (1200×1600, hero-mobile.jpg) — box
+          o aspect-[3/4] pokazuje go w CAŁOŚCI, bez przycinania. Szerokość
+          celowo ograniczona do 50% (max 200px), nie pełny ekran — mniejsze,
+          wyraźnie „oprawione" zdjęcie zamiast dominującego tła. Bez photo
+          pod spodem nie trzeba scrimu pod kontrast: treść leży na zwykłym
+          bg-hero-scrim. Całość (kafelek + treść) trzyma się jednego bloku
+          z mt-auto, więc siedzi przy dole ekranu, tak jak poprzednio. */}
       <div className="relative flex min-h-svh flex-col overflow-hidden bg-hero-scrim lg:hidden">
-        <HeroPicture images={images} imgClassName="object-cover object-[62%_center]" />
-        {/* Scrim ku dołowi — copy siedzi na dole, góra zdjęcia zostaje żywa.
-            Krycie pod KONTRAST (zdjęcie podmienialne z panelu, może być jasne). */}
-        <div
-          aria-hidden
-          className="absolute inset-0 bg-gradient-to-t from-hero-scrim from-32% via-hero-scrim/85 via-62% to-hero-scrim/35"
-        />
+        <div className="relative mt-auto flex flex-col px-5 pt-6 pb-[calc(5.5rem+env(safe-area-inset-bottom))]">
+          <div className="relative aspect-[3/4] w-[50%] max-w-[190px] shrink-0 overflow-hidden rounded-2xl shadow-xl">
+            <HeroPicture images={images} imgClassName="object-cover object-center" />
+          </div>
 
-        {/* Treść przy dole, nad dolnym paskiem akcji (pb pod jego wysokość). */}
-        <div className="relative mt-auto flex flex-col px-5 pt-32 pb-[calc(5.5rem+env(safe-area-inset-bottom))]">
-          <h1 className="hero-enter font-serif text-[2.6rem] leading-[1.05] font-medium text-balance text-hero-foreground">
+          <h1 className="hero-enter mt-5 font-serif text-[2.6rem] leading-[1.05] font-medium text-balance text-hero-foreground">
             {headline}
           </h1>
           <p className="hero-enter mt-3 text-base text-pretty text-hero-muted [animation-delay:90ms]">
@@ -107,7 +110,7 @@ export function Hero({
               alternatywie klienta („umyję sam na myjni za 30 zł") goła kwota
               odpycha, dopóki nie ma powodu jej chcieć. Dopisek o braku ryzyka
               siedzi w tym samym kaflu, bo to on neutralizuje cenę. */}
-          <div className="hero-enter mt-6 rounded-2xl bg-background px-5 py-4 shadow-xl [animation-delay:180ms]">
+          <div className="hero-enter mt-4 rounded-2xl bg-background px-5 py-4 shadow-xl [animation-delay:180ms]">
             <p className="flex items-baseline justify-between gap-3">
               <span className="text-sm font-semibold text-foreground">
                 Komplet foteli z kanapą
@@ -136,7 +139,7 @@ export function Hero({
             </span>
           </PhotoLink>
 
-          <p className="hero-enter mt-5 text-xs text-pretty text-hero-muted [animation-delay:360ms]">
+          <p className="hero-enter mt-4 text-xs text-pretty text-hero-muted [animation-delay:360ms]">
             cennik bez „od" · ocena plamy przed przyjazdem · nie wyszło = nie
             płacisz
           </p>

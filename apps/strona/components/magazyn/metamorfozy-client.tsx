@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import {
@@ -168,6 +168,61 @@ function SortableParaCard({
   );
 }
 
+/**
+ * Lista par jednego tematu z drag-and-drop. Osobny komponent = `useId()`
+ * per DndContext (oficjalny fix hydration mismatch dnd-kit / Next.js).
+ */
+function TemaParySortable({
+  pary,
+  sensors,
+  onChangePary,
+}: {
+  pary: MetamorfozyPara[];
+  sensors: ReturnType<typeof useSensors>;
+  onChangePary: (next: MetamorfozyPara[]) => void;
+}) {
+  const dndId = useId();
+
+  function onDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = pary.findIndex((p) => p.id === active.id);
+    const newIndex = pary.findIndex((p) => p.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+    onChangePary(reorderPary(arrayMove(pary, oldIndex, newIndex)));
+  }
+
+  return (
+    <DndContext
+      id={dndId}
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragEnd={onDragEnd}
+    >
+      <SortableContext
+        items={pary.map((p) => p.id)}
+        strategy={verticalListSortingStrategy}
+      >
+        <div className="flex flex-col gap-4">
+          {pary.map((para, i) => (
+            <SortableParaCard
+              key={para.id}
+              para={para}
+              index={i}
+              onChange={(next) =>
+                onChangePary(pary.map((p) => (p.id === next.id ? next : p)))
+              }
+              onRemove={() =>
+                onChangePary(reorderPary(pary.filter((p) => p.id !== para.id)))
+              }
+            />
+          ))}
+        </div>
+      </SortableContext>
+    </DndContext>
+  );
+}
+
 export function MetamorfozyClient({ initial }: { initial: MetamorfozyData }) {
   const router = useRouter();
   const history = useMagazynHistory<MetamorfozyData>(initial);
@@ -251,15 +306,6 @@ export function MetamorfozyClient({ initial }: { initial: MetamorfozyData }) {
         const setPary = (next: MetamorfozyPara[]) =>
           patchTemat(temat.id, { pary: next });
 
-        function onDragEnd(event: DragEndEvent) {
-          const { active, over } = event;
-          if (!over || active.id === over.id) return;
-          const oldIndex = sortedPary.findIndex((p) => p.id === active.id);
-          const newIndex = sortedPary.findIndex((p) => p.id === over.id);
-          if (oldIndex === -1 || newIndex === -1) return;
-          setPary(reorderPary(arrayMove(sortedPary, oldIndex, newIndex)));
-        }
-
         return (
           <Fieldset
             key={temat.id}
@@ -303,32 +349,11 @@ export function MetamorfozyClient({ initial }: { initial: MetamorfozyData }) {
               okładka kafelka na stronie; wszystkie pary widać w podglądzie.
             </p>
 
-            <DndContext
+            <TemaParySortable
+              pary={sortedPary}
               sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragEnd={onDragEnd}
-            >
-              <SortableContext
-                items={sortedPary.map((p) => p.id)}
-                strategy={verticalListSortingStrategy}
-              >
-                <div className="flex flex-col gap-4">
-                  {sortedPary.map((para, i) => (
-                    <SortableParaCard
-                      key={para.id}
-                      para={para}
-                      index={i}
-                      onChange={(next) =>
-                        setPary(sortedPary.map((p) => (p.id === next.id ? next : p)))
-                      }
-                      onRemove={() =>
-                        setPary(reorderPary(sortedPary.filter((p) => p.id !== para.id)))
-                      }
-                    />
-                  ))}
-                </div>
-              </SortableContext>
-            </DndContext>
+              onChangePary={setPary}
+            />
 
             <div className="flex items-center justify-between gap-3">
               <Button

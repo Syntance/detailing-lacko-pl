@@ -85,23 +85,25 @@ export function Hero({
   return (
     <section id="hero" aria-label="Detailing Łącko" className="relative isolate">
       {/* ============ MOBILE (< lg) — projekt pod telefon ============ */}
-      {/* Zdjęcie jest kafelkiem NAD treścią (nie pełnoekranowym tłem pod nią):
-          plik ma natywną proporcję 3:4 (1200×1600, hero-mobile.jpg) — box
-          o aspect-[3/4] pokazuje go w CAŁOŚCI, bez przycinania. Szerokość
-          celowo ograniczona do 50% (max 200px), nie pełny ekran — mniejsze,
-          wyraźnie „oprawione" zdjęcie zamiast dominującego tła. Bez photo
-          pod spodem nie trzeba scrimu pod kontrast: treść leży na zwykłym
-          bg-hero-scrim. Całość (kafelek + treść) trzyma się jednego bloku
-          z mt-auto, więc siedzi przy dole ekranu, tak jak poprzednio. */}
+      {/* Zdjęcie na PEŁNĄ szerokość hero (nie mały kafelek — to psuło kadr,
+          wciskając szeroki podmiot/auto w wąski pionowy pasek i wyglądało
+          na spłaszczone). Plik ma natywną proporcję 3:4 (1200×1600,
+          hero-mobile.jpg) — box aspect-[3/4] o pełnej szerokości ekranu
+          pokazuje go w CAŁOŚCI, bez przycinania i bez zniekształcenia.
+          Konsekwencja: przy pełnej szerokości i natywnym 3:4 zdjęcie ma
+          ~520px wysokości, więc hero NIE mieści się już w jednym ekranie
+          (świadomy kompromis — priorytetem jest niezniekształcone zdjęcie,
+          nie zero-scroll). Zdjęcie leży POZA px-5 (pełny bleed), treść
+          poniżej zostaje w swoim padded bloku. */}
       <div className="relative flex min-h-svh flex-col overflow-hidden bg-hero-scrim lg:hidden">
-        <div className="relative mt-auto flex flex-col px-5 pt-6 pb-[calc(5.5rem+env(safe-area-inset-bottom))]">
-          <div className="relative aspect-[3/4] w-[50%] max-w-[190px] shrink-0 overflow-hidden rounded-2xl shadow-xl">
+        <div className="relative mt-auto flex flex-col pb-[calc(5.5rem+env(safe-area-inset-bottom))]">
+          <div className="relative aspect-[3/4] w-full shrink-0 overflow-hidden">
             <HeroPicture images={images} imgClassName="object-cover object-center" />
           </div>
-
-          <h1 className="hero-enter mt-5 font-serif text-[2.6rem] leading-[1.05] font-medium text-balance text-hero-foreground">
-            {headline}
-          </h1>
+          <div className="flex flex-col px-5 pt-6">
+            <h1 className="hero-enter font-serif text-[2.6rem] leading-[1.05] font-medium text-balance text-hero-foreground">
+              {headline}
+            </h1>
           <p className="hero-enter mt-3 text-base text-pretty text-hero-muted [animation-delay:90ms]">
             {lead}
           </p>
@@ -143,6 +145,7 @@ export function Hero({
             cennik bez „od" · ocena plamy przed przyjazdem · nie wyszło = nie
             płacisz
           </p>
+          </div>
         </div>
       </div>
 

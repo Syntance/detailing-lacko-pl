@@ -122,7 +122,7 @@ export function StatisticsView() {
 									dataKey="value"
 									paddingAngle={2}
 								>
-									{dostawyStat.map((d, i) => (
+									{dostawyStat.map((d) => (
 										<Cell key={d.name} fill={d.color} />
 									))}
 								</Pie>

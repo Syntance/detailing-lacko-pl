@@ -45,6 +45,24 @@ export function isCmsR2UploadConfigured(): boolean {
 	return serverEnv.r2Config !== null;
 }
 
+/**
+ * Medusa ma sens jako fallback tylko z kontem serwisowym. Bez niego jej błędy
+ * ("Backend Medusa nie odpowiada") przykrywają prawdziwą przyczynę — brak albo
+ * awarię R2 — w projektach, które Medusy w ogóle nie używają.
+ */
+function isMedusaUploadConfigured(): boolean {
+	return Boolean(serverEnv.adminEmail && serverEnv.adminPassword);
+}
+
+function toR2UploadError(error: unknown): Error {
+	if (error instanceof Error && error.message === "R2_UPLOAD_TIMEOUT") {
+		return new Error(
+			"Upload do R2 trwa zbyt długo. Sprawdź połączenie lub spróbuj mniejszego pliku (WebP/JPG).",
+		);
+	}
+	return error instanceof Error ? error : new Error("R2_UPLOAD_FAILED");
+}
+
 async function withUploadTimeout<T>(
 	promise: Promise<T>,
 	label: string,
@@ -177,6 +195,9 @@ export function formatCmsUploadError(error: unknown): string {
 	if (msg === "R2_UPLOAD_FAILED" || msg.endsWith("_TIMEOUT")) {
 		return "Upload do magazynu plików nie powiódł się. Spróbuj ponownie.";
 	}
+	if (msg === "CMS_STORAGE_UNCONFIGURED") {
+		return "Magazyn plików nieskonfigurowany — ustaw S3_* (Cloudflare R2) w środowisku aplikacji.";
+	}
 	if (msg === "R2_PRESIGN_UNAVAILABLE") {
 		return `Pliki powyżej ${VERCEL_SAFE_UPLOAD_MB} MB wymagają R2 (S3_* na Vercel). Zmniejsz plik lub skonfiguruj magazyn.`;
 	}
@@ -189,7 +210,7 @@ export function formatCmsUploadError(error: unknown): string {
 	return msg;
 }
 
-/** Assety CMS (hero, galeria, OG) — R2 z timeoutem; fallback Medusa gdy R2 niedostępne. */
+/** Assety CMS (hero, galeria, OG) — R2 z timeoutem; fallback Medusa tylko gdy skonfigurowana. */
 export async function uploadCmsAssetFile(file: File): Promise<CmsUploadResult> {
 	const validationError = validateCmsUploadFile(file);
 	if (validationError) throw new Error(validationError);
@@ -203,18 +224,16 @@ export async function uploadCmsAssetFile(file: File): Promise<CmsUploadResult> {
 		try {
 			return await uploadViaR2(prepared, r2, LARGE_R2_UPLOAD_TIMEOUT_MS);
 		} catch (error) {
+			if (!isMedusaUploadConfigured()) throw toR2UploadError(error);
 			try {
 				return await uploadViaMedusa(prepared);
 			} catch {
-				if (error instanceof Error && error.message === "R2_UPLOAD_TIMEOUT") {
-					throw new Error(
-						"Upload do R2 trwa zbyt długo. Sprawdź połączenie lub spróbuj mniejszego pliku (WebP/JPG).",
-					);
-				}
-				throw error instanceof Error ? error : new Error("R2_UPLOAD_FAILED");
+				throw toR2UploadError(error);
 			}
 		}
 	}
+
+	if (!isMedusaUploadConfigured()) throw new Error("CMS_STORAGE_UNCONFIGURED");
 
 	return uploadViaMedusa(prepared);
 }

@@ -7,7 +7,7 @@ import { PhoneLink } from "./phone-link";
 
 const NAV_ITEMS = [
   { href: "#cennik", id: "cennik", label: "Cennik" },
-  { href: "#galeria", id: "galeria", label: "Efekty" },
+  { href: "#metamorfozy", id: "metamorfozy", label: "Efekty" },
   { href: "#proces", id: "proces", label: "Jak pracujemy" },
   { href: "#faq", id: "faq", label: "FAQ" },
   { href: "#kontakt", id: "kontakt", label: "Kontakt" },

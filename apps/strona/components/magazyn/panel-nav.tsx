@@ -11,6 +11,7 @@ import {
   type PanelConfig,
 } from "@moduly/ui";
 import {
+  ArrowLeftRight,
   Building2,
   CalendarClock,
   CircleDollarSign,
@@ -49,6 +50,12 @@ export function PanelNav({
       href: `${panel}/cennik`,
       label: "Cennik",
       icon: CircleDollarSign,
+      exact: false,
+    },
+    {
+      href: `${panel}/metamorfozy`,
+      label: "Metamorfozy",
+      icon: ArrowLeftRight,
       exact: false,
     },
     {

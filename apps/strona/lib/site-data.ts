@@ -14,11 +14,17 @@ import {
 import { seoDataSchema, DEFAULT_SEO, type SeoData } from "./seo";
 import { kontaktSchema, DEFAULT_KONTAKT, type KontaktData } from "./site";
 import { faqDataSchema, DEFAULT_FAQ, type FaqData } from "./faq";
+import {
+  metamorfozyDataSchema,
+  DEFAULT_METAMORFOZY,
+  type MetamorfozyData,
+} from "./metamorfozy";
 
 export const BLOB_KEYS = {
   cennik: "cennik",
   galeria: "galeria",
   kontakt: "kontakt",
+  metamorfozy: "metamorfozy",
   seo: "seo",
   faq: "faq",
 } as const;
@@ -53,6 +59,18 @@ export async function getSeo(): Promise<SeoData> {
 
 export async function saveSeo(data: SeoData): Promise<void> {
   await writeBlob(BLOB_KEYS.seo, data);
+}
+
+export async function getMetamorfozy(): Promise<MetamorfozyData> {
+  return readBlob(
+    BLOB_KEYS.metamorfozy,
+    metamorfozyDataSchema,
+    DEFAULT_METAMORFOZY,
+  );
+}
+
+export async function saveMetamorfozy(data: MetamorfozyData): Promise<void> {
+  await writeBlob(BLOB_KEYS.metamorfozy, data);
 }
 
 export async function getFaq(): Promise<FaqData> {

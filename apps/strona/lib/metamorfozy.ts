@@ -22,7 +22,7 @@ export const metamorfozyParaSchema = z.object({
 
 export const metamorfozyTematSchema = z.object({
   id: z.string().min(1),
-  /** Nagłówek kafelka, np. „Felgi — dekontaminacja". */
+  /** Nagłówek kafelka, np. „FDekontaminacja". */
   title: z.string(),
   /** 1–2 zdania: co było i co zrobiliśmy (język korzyści, nie procedury). */
   text: z.string(),
@@ -48,7 +48,7 @@ export const DEFAULT_METAMORFOZY: MetamorfozyData = {
   tematy: [
     {
       id: "felgi",
-      title: "Felgi — dekontaminacja",
+      title: "Dekontaminacja",
       text: "Brązowy nalot to wtopione opiłki z klocków hamulcowych — samo mycie ich nie rusza. Schodzą dopiero po chemicznej dekontaminacji.",
       order: 0,
       disabled: false,
@@ -89,7 +89,7 @@ export const DEFAULT_METAMORFOZY: MetamorfozyData = {
     },
     {
       id: "lakier",
-      title: "Lakier — polerowanie",
+      title: "Polerowanie lakieru",
       text: "Po zdjęciu naklejek zostały duchy i siatka rys. Korekta lakieru przywraca głębię koloru — bez lakierowania.",
       order: 1,
       disabled: false,

@@ -86,16 +86,30 @@ export function Hero({
     <section id="hero" aria-label="Detailing Łącko" className="relative isolate">
       {/* ============ MOBILE (< lg) — projekt pod telefon ============ */}
       <div className="relative flex min-h-svh flex-col overflow-hidden bg-hero-scrim lg:hidden">
-        <HeroPicture images={images} imgClassName="object-cover object-[62%_center]" />
-        {/* Scrim ku dołowi — copy siedzi na dole, góra zdjęcia zostaje żywa.
-            Krycie pod KONTRAST (zdjęcie podmienialne z panelu, może być jasne). */}
-        <div
-          aria-hidden
-          className="absolute inset-0 bg-gradient-to-t from-hero-scrim from-32% via-hero-scrim/85 via-62% to-hero-scrim/35"
-        />
+        {/* Zdjęcie DOPASOWANE DO SZEROKOŚCI (aspect-ratio), nie rozciągnięte
+            na całą wysokość ekranu. Plik źródłowy ma proporcję 3:4 (1200×1600);
+            pełna wysokość min-h-svh (wcześniejszy układ) zmuszała object-cover
+            do przycinania BOKÓW (wąski, mocno przybliżony pionowy pasek —
+            stąd „rozciągnięte"/zoomed zdjęcie). 16:9 przycina górę/dół zamiast
+            boków — dla auta (podmiot szerszy niż wyższy) to naturalniejszy
+            kadr — i mieści się z resztą treści bez scrolla na jednym ekranie
+            (zmierzone: 390×844 → margines ~100 px, patrz commit). */}
+        <div className="relative aspect-video w-full shrink-0 overflow-hidden">
+          <HeroPicture images={images} imgClassName="object-cover object-center" />
+          {/* Scrim TYLKO w obrębie zdjęcia — gaśnie do dokładnie tego samego
+              koloru co tło sekcji (bg-hero-scrim), więc przejście zdjęcie →
+              jednolite tło pod treścią jest bezszwowe. */}
+          <div
+            aria-hidden
+            className="absolute inset-0 bg-gradient-to-t from-hero-scrim from-0% to-hero-scrim/0 to-55%"
+          />
+        </div>
 
-        {/* Treść przy dole, nad dolnym paskiem akcji (pb pod jego wysokość). */}
-        <div className="relative mt-auto flex flex-col px-5 pt-32 pb-[calc(5.5rem+env(safe-area-inset-bottom))]">
+        {/* Treść przy dole, nad dolnym paskiem akcji (pb pod jego wysokość).
+            Bez zdjęcia pod spodem — siedzi na jednolitym bg-hero-scrim, więc
+            duży pt sprzed tej zmiany (kompensował overlay na pełnoekranowym
+            zdjęciu) był zbędny; zredukowany do minimalnego oddechu. */}
+        <div className="relative mt-auto flex flex-col px-5 pt-6 pb-[calc(5.5rem+env(safe-area-inset-bottom))]">
           <h1 className="hero-enter font-serif text-[2.6rem] leading-[1.05] font-medium text-balance text-hero-foreground">
             {headline}
           </h1>

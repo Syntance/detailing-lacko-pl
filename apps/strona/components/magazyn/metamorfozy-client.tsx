@@ -261,7 +261,7 @@ export function MetamorfozyClient({ initial }: { initial: MetamorfozyData }) {
             legend={temat.title || `Temat ${tematIndex + 1}`}
           >
             <div className="grid gap-4 md:grid-cols-2">
-              <Field label="Tytuł kafelka" hint="np. „Felgi — dekontaminacja”">
+              <Field label="Tytuł kafelka" hint="np. „Dekontaminacja”">
                 <Input
                   value={temat.title}
                   onChange={(e) =>

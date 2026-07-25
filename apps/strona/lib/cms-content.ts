@@ -20,8 +20,6 @@ function hasDb(): boolean {
 }
 
 const HERO_IMAGE_FALLBACK = "/images/hero.jpg";
-/** Pionowy kadr pod telefon — używany, dopóki panel nie ustawi własnego. */
-const HERO_MOBILE_FALLBACK = "/images/hero-mobile.jpg";
 
 async function readHomeContent(): Promise<PageContent> {
   if (!hasDb()) return {};
@@ -43,26 +41,25 @@ async function readHomeContent(): Promise<PageContent> {
 export type HeroImages = {
   /** Kadr desktopowy (poziomy). */
   desktop: string;
-  /** Kadr mobilny (pionowy); gdy panel go nie ustawił — desktopowy. */
+  /** Kadr mobilny; gdy panel go nie ustawił — desktopowy. */
   mobile: string;
   /** Czy mobile ma własny plik (do pola w panelu, nie do renderu). */
   hasMobile: boolean;
 };
 
-/** Zdjęcia hero do renderu strony (z fallbackiem z repo). */
+/**
+ * Zdjęcia hero do renderu strony (z fallbackiem z repo).
+ *
+ * Bez osobnej domyślki pionowej: repo miało `hero-mobile.jpg` (inny, pionowy
+ * kadr tego samego auta), ale auto tonęło tam w pustej posadzce i suficie,
+ * a rozmycie było na logo zamiast na tablicy. Domyślnie mobile dostaje więc
+ * ten sam, poprawny kadr poziomy; własny kadr pod telefon wgrywa się z panelu.
+ */
 export async function getHeroImages(): Promise<HeroImages> {
   const content = await readHomeContent();
   const desktop = content.hero?.desktopImageUrl ?? HERO_IMAGE_FALLBACK;
   const mobileCms = content.hero?.mobileImageUrl;
-  // Priorytet: mobile z panelu → desktop z panelu, o ile klient REALNIE go
-  // podmienił (wartość równa domyślce repo to stary zapis panelu, nie wybór)
-  // → pionowy kadr z repo.
-  const desktopPodmieniony =
-    Boolean(content.hero?.desktopImageUrl) &&
-    content.hero?.desktopImageUrl !== HERO_IMAGE_FALLBACK;
-  const mobile =
-    mobileCms || (desktopPodmieniony ? desktop : HERO_MOBILE_FALLBACK);
-  return { desktop, mobile, hasMobile: Boolean(mobileCms) };
+  return { desktop, mobile: mobileCms || desktop, hasMobile: Boolean(mobileCms) };
 }
 
 /** Surowa treść do edycji w panelu (z fallbackami). */

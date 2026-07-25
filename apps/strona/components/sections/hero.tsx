@@ -85,22 +85,30 @@ export function Hero({
   return (
     <section id="hero" aria-label="Detailing Łącko" className="relative isolate">
       {/* ============ MOBILE (< lg) — projekt pod telefon ============ */}
-      {/* Zdjęcie na PEŁNĄ szerokość hero (nie mały kafelek — to psuło kadr,
-          wciskając szeroki podmiot/auto w wąski pionowy pasek i wyglądało
-          na spłaszczone). Plik ma natywną proporcję 3:4 (1200×1600,
-          hero-mobile.jpg) — box aspect-[3/4] o pełnej szerokości ekranu
-          pokazuje go w CAŁOŚCI, bez przycinania i bez zniekształcenia.
-          Konsekwencja: przy pełnej szerokości i natywnym 3:4 zdjęcie ma
-          ~520px wysokości, więc hero NIE mieści się już w jednym ekranie
-          (świadomy kompromis — priorytetem jest niezniekształcone zdjęcie,
-          nie zero-scroll). Zdjęcie leży POZA px-5 (pełny bleed), treść
-          poniżej zostaje w swoim padded bloku. */}
-      <div className="relative flex min-h-svh flex-col overflow-hidden bg-hero-scrim lg:hidden">
-        <div className="relative mt-auto flex flex-col pb-[calc(5.5rem+env(safe-area-inset-bottom))]">
-          <div className="relative aspect-[3/4] w-full shrink-0 overflow-hidden">
+      {/* Zdjęcie na PEŁNĄ szerokość hero, w natywnej proporcji pliku (3:2 —
+          hero.jpg 2400×1600), więc widać CAŁE auto, bez przycinania i bez
+          zniekształcenia. Wcześniej był tu osobny kadr pionowy w boxie 3:4:
+          szerokie auto tonęło w pustej posadzce i suficie i czytało się jako
+          „wąskie/spłaszczone" — a przy ~520px wysokości wypychało cenę i CTA
+          poza pierwszy ekran. Poziomy kadr rozwiązuje oba naraz. Zdjęcie leży
+          POZA px-5 (pełny bleed), treść poniżej zostaje w padded bloku. */}
+      {/* Bez min-h-svh: kadr siedzi na górze, więc wymuszona pełna wysokość
+          zostawiała martwe ciemne pole pod CTA. Sekcja ma wysokość treści —
+          zapas na stały dolny pasek daje globalny spacer w page.tsx. */}
+      <div className="relative flex flex-col overflow-hidden bg-hero-scrim lg:hidden">
+        <div className="relative flex flex-col pb-10">
+          {/* Zdjęcie startuje na samej górze sekcji, czyli POD przezroczystym
+              navbarem (fixed, h-16) — logo leży na kadrze. Stąd scrim: bez
+              przyciemnienia jasna maska piany zjadałaby biały napis w headerze.
+              Fade tylko u DOŁU (górna krawędź schowana pod navbarem) i zaczyna
+              się tam, gdzie wjeżdża H1 — napis siada na wygaszonym kadrze
+              zamiast pod twardo uciętym prostokątem. */}
+          <div className="relative aspect-[3/2] w-full shrink-0 overflow-hidden [-webkit-mask-image:linear-gradient(to_bottom,black_0%,black_72%,transparent_100%)] [mask-image:linear-gradient(to_bottom,black_0%,black_72%,transparent_100%)]">
             <HeroPicture images={images} imgClassName="object-cover object-center" />
+            <div aria-hidden className="absolute inset-0 bg-hero-scrim/45" />
           </div>
-          <div className="flex flex-col px-5 pt-6">
+          {/* -mt-16 = H1 wchodzi na strefę fade (72–100% wysokości kadru). */}
+          <div className="relative -mt-16 flex flex-col px-5">
             <h1 className="hero-enter font-serif text-[2.6rem] leading-[1.05] font-medium text-balance text-hero-foreground">
               {headline}
             </h1>

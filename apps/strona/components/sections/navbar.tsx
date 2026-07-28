@@ -62,7 +62,10 @@ export function Navbar({ kontakt }: { kontakt: KontaktData }) {
           : "border-b border-transparent bg-transparent"
       }`}
     >
-      <div className="mx-auto flex h-16 max-w-5xl items-center justify-between gap-4 px-6">
+      {/* Ta sama klatka co hero (stage 120rem + --hero-inset), więc logo stoi
+          dokładnie nad H1. Poniżej lg hero ma układ mobilny z px-5 — navbar
+          schodzi na tę samą oś. */}
+      <div className="mx-auto flex h-16 max-w-[120rem] items-center justify-between gap-4 px-5 lg:px-[var(--hero-inset)]">
         <a
           href="#hero"
           className={`flex items-center rounded-lg focus-visible:ring-3 focus-visible:outline-none ${

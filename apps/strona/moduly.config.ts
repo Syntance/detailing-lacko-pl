@@ -75,7 +75,7 @@ export const modulyConfig: ModulyConfig = {
     siteUrl: process.env.NEXT_PUBLIC_SITE_URL ?? "https://detailing-lacko.pl",
   },
 
-  // Barwy maili spójne z brandem strony: żółty #FFC800 + grafit (nie turkus startera).
+  // Barwy maili spójne z brandem strony: żółty #F8C000 + grafit (nie turkus startera).
   emailTheme: {
     bg: "#f7f7f5",
     contentBg: "#ffffff",
@@ -88,7 +88,7 @@ export const modulyConfig: ModulyConfig = {
     headerFontKey: "sans",
     contentWidth: 600,
     radius: 8,
-    headerBg: "#ffc800",
+    headerBg: "#f8c000",
     headerText: "#23272f",
     headerEyebrow: "Detailing Łącko",
     brandName: "Detailing Łącko",

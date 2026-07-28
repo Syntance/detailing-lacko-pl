@@ -5,9 +5,9 @@
 
 /**
  * Paleta Detailing Łącko — jasny „studyjny" motyw: chłodna biel + żółty
- * akcent marki #FFC800 (warsztatowy, energetyczny).
+ * akcent marki #F8C000 (warsztatowy, energetyczny).
  *
- * Uwaga na kontrast: czysty żółty #FFC800 jest jasny, więc:
+ * Uwaga na kontrast: czysty żółty #F8C000 jest jasny, więc:
  *   --primary            → tylko WYPEŁNIENIA (przyciski, tła-tinty) + CIEMNY tekst
  *   --primary-strong     → czytelny złoty na TEKSTY / IKONY / RINGI na białym tle
  * Nadpisuje tokeny @moduly/ui, więc panel Magazyn dziedziczy branding.
@@ -22,14 +22,14 @@
   --muted: oklch(0.965 0.006 240);
   --muted-foreground: oklch(0.47 0.02 250);
 
-  /* #FFC800 — żółty marki (wypełnienia). Ciemny tekst na żółtym = wysoki kontrast. */
-  --primary: #ffc800;
+  /* #F8C000 — żółty marki (wypełnienia). Ciemny tekst na żółtym = wysoki kontrast. */
+  --primary: #f8c000;
   --primary-foreground: oklch(0.24 0.02 260);
 
   --border: oklch(0.9 0.007 250);
   --input: oklch(0.9 0.007 250);
-  /* Ciemny złoty — widoczny focus-ring na białym tle. */
-  --ring: oklch(0.55 0.115 82);
+  /* Ciemny złoty (hue #F8C000) — widoczny focus-ring na białym tle. */
+  --ring: oklch(0.55 0.115 87.3);
 
   --destructive: oklch(0.58 0.21 27);
 
@@ -37,14 +37,21 @@
   --radius-md: calc(var(--radius-lg) - 2px);
   --radius: var(--radius-lg);
 
-  /* Tokeny dodatkowe strony — czytelny złoty na teksty/ikony (≈5:1 na bieli). */
+  /* Tokeny dodatkowe strony — czytelny złoty na teksty/ikony (≈4.9:1 na bieli).
+     Ten sam hue co #F8C000, tylko przyciemniony: samo #F8C000 na bieli ma 1.7:1
+     i nie przechodzi WCAG AA (EAA), więc na tekst/ikony idzie ten wariant. */
   --surface-raised: oklch(0.975 0.005 240);
-  --primary-strong: oklch(0.55 0.115 82);
+  --primary-strong: oklch(0.55 0.115 87.3);
 
   /* Hero full-bleed — copy leży na zdjęciu z panelu, które może być dowolnie
      jasne. Scrim jest więc ciemny i mocno kryjący w strefie tekstu: biel na
      nim trzyma ≈11:1, a nawet przy 70% krycia nad jasnym kadrem ≈6:1 (WCAG AA
      wymaga 4.5:1). Nie czysta biel/czerń — tonowany OKLCH pod paletę marki. */
+  /* Oś wcięcia treści hero na desktopie: clamp = padding stage'u, 2.1rem =
+     offset kolumny tekstu. Navbar trzyma ten sam token, więc logo stoi w
+     jednej pionowej linii z H1 — bez tego obie osie rozjeżdżały się o ~314px. */
+  --hero-inset: calc(clamp(3rem, 5vw, 8rem) + 2.1rem);
+
   --hero-scrim: oklch(0.18 0.015 250);
   --hero-foreground: oklch(0.98 0.004 250);
   --hero-muted: oklch(0.86 0.008 250);
@@ -76,7 +83,7 @@
   }
 
   ::selection {
-    background: rgb(255 200 0 / 0.28);
+    background: rgb(248 192 0 / 0.28);
   }
 }
 

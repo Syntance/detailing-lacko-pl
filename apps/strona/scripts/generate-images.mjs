@@ -64,7 +64,7 @@ async function hero() {
     </radialGradient>
     <linearGradient id="rim" x1="0" y1="0" x2="1" y2="0">
       <stop offset="0" stop-color="#f5c400" stop-opacity="0.05"/>
-      <stop offset="0.5" stop-color="#ffc800" stop-opacity="0.95"/>
+      <stop offset="0.5" stop-color="#f8c000" stop-opacity="0.95"/>
       <stop offset="1" stop-color="#f5c400" stop-opacity="0.05"/>
     </linearGradient>
     <linearGradient id="floor" x1="0" y1="0" x2="0" y2="1">
@@ -80,7 +80,7 @@ async function hero() {
   <g opacity="0.65">
     <rect x="1350" y="120" width="10" height="900" fill="#ffd24d" opacity="0.16" transform="skewX(-18)"/>
     <rect x="1520" y="80" width="26" height="980" fill="#ffdd75" opacity="0.11" transform="skewX(-18)"/>
-    <rect x="1730" y="60" width="7" height="1020" fill="#ffc800" opacity="0.18" transform="skewX(-18)"/>
+    <rect x="1730" y="60" width="7" height="1020" fill="#f8c000" opacity="0.18" transform="skewX(-18)"/>
     <rect x="1900" y="140" width="16" height="880" fill="#ffd24d" opacity="0.09" transform="skewX(-18)"/>
   </g>
 
@@ -186,9 +186,9 @@ async function og() {
       <stop offset="1" stop-color="#dde7f0"/>
     </linearGradient>
     <linearGradient id="rim" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0" stop-color="#ffc800" stop-opacity="0"/>
-      <stop offset="0.5" stop-color="#ffc800"/>
-      <stop offset="1" stop-color="#ffc800" stop-opacity="0"/>
+      <stop offset="0" stop-color="#f8c000" stop-opacity="0"/>
+      <stop offset="0.5" stop-color="#f8c000"/>
+      <stop offset="1" stop-color="#f8c000" stop-opacity="0"/>
     </linearGradient>
     ${GRAIN}
   </defs>
@@ -197,7 +197,7 @@ async function og() {
   <text x="72" y="200" font-family="Arial, sans-serif" font-size="64" font-weight="700" fill="#101a26">Detailing Łącko</text>
   <text x="72" y="270" font-family="Arial, sans-serif" font-size="30" fill="#41525f">Pranie tapicerki od 300 zł · Polerowanie od 600 zł</text>
   <text x="72" y="320" font-family="Arial, sans-serif" font-size="30" fill="#41525f">Detailing w Łącku — zapraszamy z okolicy Nowego Sącza</text>
-  <rect x="72" y="370" width="240" height="6" rx="3" fill="#ffc800"/>
+  <rect x="72" y="370" width="240" height="6" rx="3" fill="#f8c000"/>
   <rect width="${w}" height="${h}" filter="url(#grain)" opacity="0.18"/>
 </svg>`;
 

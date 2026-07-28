@@ -164,9 +164,7 @@ export function Metamorfozy({ data }: { data: MetamorfozyData }) {
                     {t.text}
                   </span>
                   <span className="mt-3 text-sm font-medium text-primary-strong">
-                    {t.pary.length > 1
-                      ? `Zobacz ${t.pary.length} ujęcia →`
-                      : "Powiększ →"}
+                    Zobacz więcej →
                   </span>
                 </span>
               </button>

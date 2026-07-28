@@ -177,8 +177,8 @@ export function Hero({
             <div aria-hidden className="absolute inset-0 bg-hero-scrim/50" />
           </div>
 
-          <div className="w-full py-16 pr-6 pl-[clamp(3rem,5vw,8rem)]">
-            <div className="flex max-w-2xl translate-x-[5%] flex-col">
+          <div className="w-full py-16 pr-6 pl-[var(--hero-inset)]">
+            <div className="flex max-w-2xl flex-col">
               <h1 className="hero-enter font-serif text-7xl leading-[1.04] font-medium text-balance text-hero-foreground">
                 {headline}
               </h1>

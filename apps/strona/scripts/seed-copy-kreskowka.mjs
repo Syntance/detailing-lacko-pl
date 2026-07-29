@@ -70,6 +70,38 @@ const METAMORFOZY = {
   subheading: "",
 };
 
+/**
+ * Czas realizacji pozycji w MINUTACH — źródło prawdy dla rezerwacji online
+ * (godzina odbioru, dzienny limit). Wartości wyprowadzone z opisowych
+ * `timeLabel` (środek widełek; „1 dzień" = 480 min pracy). 1:1 z
+ * DEFAULT_CENNIK w lib/cennik.ts.
+ */
+const CENNIK_DURATIONS = {
+  "odswiezenie-in-out": 180,
+  "detailing-kompletny-in-out": 480,
+  "przygotowanie-do-sprzedazy": 480,
+  "przygotowanie-do-sprzedazy-pro": 720,
+  "mycie-detailingowe-baza": 90,
+  "dekontaminacja-lakieru": 30,
+  "wosk-syntetyczny-adbl-ssw": 30,
+  "wosk-twardy-premium": 60,
+  "wycieraczka-szyba-czolowa": 30,
+  "wycieraczka-komplet-szyb": 90,
+  "mycie-dekontaminacja-wosk": 150,
+  "sprzatanie-wnetrza-podstawowe": 90,
+  "pranie-tapicerki-komplet": 180,
+  "kompleksowe-czyszczenie-wnetrza": 300,
+  "czyszczenie-impregnacja-skory": 180,
+  ozonowanie: 30,
+  "siersc-zwierzat": 45,
+  "polerowanie-reflektorow": 90,
+  "one-step-hatchback": 390,
+  "one-step-sedan-kombi": 450,
+  "one-step-suv-van": 510,
+  "one-step-wosk-twardy": 60,
+  "korekta-dwuetapowa": 960,
+};
+
 async function patchBlob(key, patch, describe) {
   const rows = await sql`select data from site_blobs where key = ${key} limit 1`;
   if (!rows[0]) {
@@ -98,8 +130,15 @@ try {
           ? { ...category, name: CENNIK_CATEGORY_NAMES[category.id] }
           : category,
       ),
+      // Czas realizacji tylko tam, gdzie panel go jeszcze nie ustawił —
+      // ręczna edycja w Magazyn → Cennik ma pierwszeństwo przed seedem.
+      items: (cennik.items ?? []).map((item) =>
+        !item.durationMinutes && CENNIK_DURATIONS[item.id]
+          ? { ...item, durationMinutes: CENNIK_DURATIONS[item.id] }
+          : item,
+      ),
     }),
-    'copy sekcji + nazwy kolumn „Mycie i wosk" / „Polerowanie"',
+    'copy sekcji, nazwy kolumn i czasy realizacji pozycji (rezerwacje)',
   );
 
   await patchBlob(

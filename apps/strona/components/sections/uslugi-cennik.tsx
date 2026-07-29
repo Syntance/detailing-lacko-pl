@@ -65,12 +65,17 @@ function OzdobaNaglowka({ categoryId }: { categoryId: string }) {
 function PozycjaCennika({ item }: { item: CennikItem }) {
   return (
     <li className="flex items-baseline justify-between gap-3 border-t-2 border-dashed border-kreska px-5 py-[13px] first:border-t-0">
-      <span className="flex flex-col gap-0.5">
+      <span className="flex flex-col gap-1">
         <span className="text-[15px] font-semibold">
           {stripBullet(item.name)}
         </span>
         {item.description ? (
-          <span className="text-xs text-pretty text-muted-foreground">
+          // 13px/1,5 w `text-tekst`, nie 12px w `text-muted-foreground`: opisy
+          // mają po 3–4 linie w wąskiej kolumnie, a #6B7075 daje na bieli 5:1 —
+          // ledwie ponad progiem AA. Hierarchię wobec nazwy trzyma stopień
+          // i grubość (15px semibold vs 13px regular), nie wyblakły kolor.
+          // Ten sam stopień co opisy pakietów w czarnym pasie nad kartami.
+          <span className="text-[13px] leading-[1.5] text-pretty text-tekst">
             {item.description}
           </span>
         ) : null}

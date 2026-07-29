@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Reorder, useDragControls } from "motion/react";
 import { Button, Input, PageHeader } from "@moduly/ui";
 import { ChevronUp, Pencil, Plus, Trash2 } from "lucide-react";
-import { formatItemPrice } from "@/lib/cennik";
+import { formatDuration, formatItemPrice } from "@/lib/cennik";
 import type { CennikCategory, CennikData, CennikItem } from "@/lib/cennik";
 import { useMagazynHistory } from "@/hooks/use-magazyn-history";
 import {
@@ -62,6 +62,7 @@ function newItem(categoryId: string, order: number): CennikItem {
     name: "",
     description: "",
     timeLabel: "",
+    durationMinutes: 0,
     priceFrom: 0,
     priceTo: 0,
     pricePrefix: "",
@@ -599,6 +600,8 @@ function CategoryPozycjeCard({
 function itemSummary(item: CennikItem): string {
   const parts: string[] = [formatItemPrice(item)];
   if (item.timeLabel) parts.push(item.timeLabel);
+  if (item.durationMinutes > 0)
+    parts.push(`rezerwacje: ${formatDuration(item.durationMinutes)}`);
   if (item.popular) parts.push("najczęściej wybierane");
   if (item.disabled) parts.push("ukryta na stronie");
   return parts.join(" · ");
@@ -704,10 +707,24 @@ function ItemRow({
                 onChange={(e) => onChange({ description: e.target.value })}
               />
             </Field>
-            <Field label="Czas" hint="np. 1,5 h">
+            <Field label="Czas (opis)" hint="np. 1,5 h">
               <Input
                 value={item.timeLabel}
                 onChange={(e) => onChange({ timeLabel: e.target.value })}
+              />
+            </Field>
+            {/* Źródło prawdy dla kalendarza rezerwacji (opis wyżej jest tylko
+                dla ludzi) — z tego liczy się godzina odbioru i dzienny limit. */}
+            <Field label="Czas realizacji (min)" hint="0 = nie wlicza się do rezerwacji">
+              <Input
+                type="number"
+                inputMode="numeric"
+                min={0}
+                step={15}
+                value={item.durationMinutes}
+                onChange={(e) =>
+                  onChange({ durationMinutes: Math.max(0, Number(e.target.value) || 0) })
+                }
               />
             </Field>
             <Field label="Kategoria" hint="przenosi pozycję">

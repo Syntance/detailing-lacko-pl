@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Input, PageHeader } from "@moduly/ui";
-import { Check, Plus, RotateCcw, Trash2, X } from "lucide-react";
+import { Check, Moon, Plus, RotateCcw, Trash2, X } from "lucide-react";
+import { formatDuration } from "@/lib/cennik";
 import {
   REZERWACJA_STATUS_LABEL,
   WEEKDAY_LABEL,
@@ -194,7 +195,32 @@ function ReservationsPanel({ initial }: { initial: Rezerwacja[] }) {
                 </>
               ) : null}
             </p>
-            {r.service ? (
+            {r.services.length > 0 ? (
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">
+                  {r.services
+                    .map((s) => `${s.name} (${s.priceLabel})`)
+                    .join(" · ")}
+                  {r.durationMinutes > 0
+                    ? ` — razem ok. ${formatDuration(r.durationMinutes)}`
+                    : ""}
+                </p>
+                {r.pickupDate ? (
+                  <p className="flex items-center gap-1.5 text-sm font-medium">
+                    {r.pickupDate !== r.date ? (
+                      <Moon
+                        className="size-3.5 text-primary-strong"
+                        aria-hidden
+                      />
+                    ) : null}
+                    Odbiór:{" "}
+                    {r.pickupDate !== r.date
+                      ? `${formatDatePl(r.pickupDate)} ok. ${r.pickupTime} (auto zostaje na noc)`
+                      : `tego samego dnia ok. ${r.pickupTime}`}
+                  </p>
+                ) : null}
+              </div>
+            ) : r.service ? (
               <p className="text-sm text-muted-foreground">Usługa: {r.service}</p>
             ) : null}
             {r.note ? (
@@ -368,7 +394,33 @@ function AvailabilityPanel({ initial }: { initial: DostepnoscData }) {
               }
             />
           </Field>
+          <Field
+            label="Limit pracy dziennie (h)"
+            hint="0 = bez limitu. Powyżej limitu robota przechodzi na kolejny dzień."
+          >
+            <Input
+              type="number"
+              min={0}
+              max={24}
+              step={0.5}
+              value={cfg.maxDailyMinutes / 60}
+              onChange={(e) =>
+                patch({
+                  maxDailyMinutes: Math.max(
+                    0,
+                    Math.round((Number(e.target.value) || 0) * 60),
+                  ),
+                })
+              }
+            />
+          </Field>
         </div>
+        <p className="text-xs text-pretty text-muted-foreground">
+          Czas każdej rezerwacji liczy się z pola „Czas realizacji (min)"
+          pozycji w Magazyn → Cennik. Gdy robota nie mieści się do końca dnia
+          albo w limicie, klient od razu widzi, że auto odbierze następnego dnia
+          — z wyliczoną godziną.
+        </p>
       </Fieldset>
 
       <Fieldset legend="Godziny pracy (dni tygodnia)">
@@ -463,26 +515,8 @@ function AvailabilityPanel({ initial }: { initial: DostepnoscData }) {
         )}
       </Fieldset>
 
-      <Fieldset legend="Usługi do wyboru w rezerwacji">
-        <Field
-          label="Lista usług"
-          hint="Każda usługa w osobnej linii — pokazują się w polu wyboru."
-        >
-          <textarea
-            rows={5}
-            value={cfg.services.join("\n")}
-            onChange={(e) =>
-              patch({
-                services: e.target.value
-                  .split("\n")
-                  .map((s) => s.trim())
-                  .filter(Boolean),
-              })
-            }
-            className="rounded-xl border border-input bg-background px-3 py-2 text-sm"
-          />
-        </Field>
-      </Fieldset>
+      {/* Lista usług NIE jest już edytowana tutaj: klient zaznacza pozycje
+          wprost z cennika (Magazyn → Cennik), z czasem realizacji per pozycja. */}
     </div>
   );
 }

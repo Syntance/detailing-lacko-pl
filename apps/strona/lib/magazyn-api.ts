@@ -9,11 +9,15 @@ import { getPostgresClient } from "./db";
 /**
  * Wspólna obsługa PUT dla edytorów panelu (cennik / galeria / kontakt):
  * guard sesji admina → walidacja Zod → zapis → audit log → rewalidacja "/".
+ *
+ * Trzeci parametr typu ZodType (Input=unknown) — schematy z `.default()`
+ * przyjmują na wejściu mniej pól, niż zwracają, a payload i tak jest
+ * niezaufanym `unknown` aż do safeParse.
  */
 export async function handleMagazynPut<T>(
   request: Request,
   options: {
-    schema: z.ZodType<T>;
+    schema: z.ZodType<T, z.ZodTypeDef, unknown>;
     resource: string;
     save: (data: T) => Promise<void>;
   },

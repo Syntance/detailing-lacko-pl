@@ -27,8 +27,19 @@ export const cennikItemSchema = z.object({
   categoryId: z.string().min(1),
   name: z.string().min(1),
   description: z.string(),
-  /** Czas trwania pozycji, np. „1,5 h", „6–7 h (1 dzień)". */
+  /** Czas trwania pozycji dla człowieka, np. „1,5 h", „6–7 h (1 dzień)". */
   timeLabel: z.string(),
+  /**
+   * Czas realizacji w MINUTACH — źródło prawdy dla rezerwacji (harmonogram,
+   * dzienny limit, godzina odbioru). `timeLabel` jest opisowy i nie da się go
+   * wiarygodnie sparsować („5 h (+ schnięcie 4–8 h)", „1,5–2 dni"), więc
+   * kalendarz liczy wyłącznie na tym polu.
+   *
+   * `.default(0)` — stare blob-y w bazie nie mają tego pola i muszą się dalej
+   * parsować; 0 znaczy „nie wliczam do czasu" (widget pokaże pozycję, ale nie
+   * doda minut). Realne wartości ustawia panel albo seed.
+   */
+  durationMinutes: z.number().int().min(0).max(10_080).default(0),
   priceFrom: z.number().int().min(0),
   /** 0 = cena stała (bez widełek). */
   priceTo: z.number().int().min(0),
@@ -78,6 +89,15 @@ export function formatItemPrice(item: CennikItem): string {
       : `${item.priceFrom} zł`;
   const withPrefix = item.pricePrefix ? `${item.pricePrefix}${range}` : range;
   return item.unit ? `${withPrefix} ${item.unit}` : withPrefix;
+}
+
+/** Format czasu realizacji: „30 min", „1,5 h", „4 h", „9,5 h". */
+export function formatDuration(minutes: number): string {
+  if (minutes <= 0) return "";
+  if (minutes < 60) return `${minutes} min`;
+  const hours = minutes / 60;
+  const rounded = Math.round(hours * 2) / 2;
+  return `${String(rounded).replace(".", ",")} h`;
 }
 
 /** Domyślny cennik — 1:1 z Notion „Cennik i zakres usług". */
@@ -148,6 +168,7 @@ export const DEFAULT_CENNIK: CennikData = {
       description:
         "Mycie z zewnątrz + wnętrze express: odkurzanie, kokpit, szyby, dywaniki. Bez dressingu opon i prania tapicerki.",
       timeLabel: "3 h",
+      durationMinutes: 180,
       priceFrom: 200,
       priceTo: 0,
       pricePrefix: "",
@@ -163,6 +184,7 @@ export const DEFAULT_CENNIK: CennikData = {
       description:
         "Mycie z dekontaminacją + wosk syntetyczny + kompleksowe czyszczenie wnętrza. 100 zł taniej niż suma składowych.",
       timeLabel: "1 dzień",
+      durationMinutes: 480,
       priceFrom: 650,
       priceTo: 0,
       pricePrefix: "",
@@ -180,6 +202,7 @@ export const DEFAULT_CENNIK: CennikData = {
       description:
         "Piana aktywna, szampon kwaśny lub neutralny wg stanu lakieru, dwa wiadra, felgi + deironizer, osuszenie mikrofibrą, dressing opon.",
       timeLabel: "1,5 h",
+      durationMinutes: 90,
       priceFrom: 150,
       priceTo: 0,
       pricePrefix: "",
@@ -195,6 +218,7 @@ export const DEFAULT_CENNIK: CennikData = {
       description:
         "Bug remover, tar remover, deironizer, water spot remover — usuwa naloty, smołę, opiłki i osady twardej wody.",
       timeLabel: "30 min",
+      durationMinutes: 30,
       priceFrom: 50,
       priceTo: 0,
       pricePrefix: "",
@@ -209,6 +233,7 @@ export const DEFAULT_CENNIK: CennikData = {
       name: "• Wosk syntetyczny ADBL SSW",
       description: "Ochrona i połysk, trwałość 2–3 miesiące.",
       timeLabel: "30 min",
+      durationMinutes: 30,
       priceFrom: 50,
       priceTo: 0,
       pricePrefix: "",
@@ -224,6 +249,7 @@ export const DEFAULT_CENNIK: CennikData = {
       description:
         "Najmocniejsza ochrona przed ceramiką — trwałość ok. 12 miesięcy, głęboki połysk, wymaga odtłuszczenia lakieru (IPA).",
       timeLabel: "1 h",
+      durationMinutes: 60,
       priceFrom: 200,
       priceTo: 0,
       pricePrefix: "",
@@ -239,6 +265,7 @@ export const DEFAULT_CENNIK: CennikData = {
       description:
         "W cenie polerowanie szyby (Glass Compound) przed aplikacją. Woda spływa przy ~60 km/h, trwałość ok. 6–12 miesięcy.",
       timeLabel: "30 min",
+      durationMinutes: 30,
       priceFrom: 80,
       priceTo: 0,
       pricePrefix: "",
@@ -254,6 +281,7 @@ export const DEFAULT_CENNIK: CennikData = {
       description:
         "Czoło z polerowaniem Glass Compound, pozostałe szyby aplikacja powłoki. Trwałość ok. 6–12 miesięcy.",
       timeLabel: "90 min",
+      durationMinutes: 90,
       priceFrom: 200,
       priceTo: 0,
       pricePrefix: "",
@@ -269,6 +297,7 @@ export const DEFAULT_CENNIK: CennikData = {
       description:
         "Pełne przygotowanie lakieru bez polerowania + dressing plastików zewnętrznych (Blackouter).",
       timeLabel: "2,5 h",
+      durationMinutes: 150,
       priceFrom: 250,
       priceTo: 0,
       pricePrefix: "",
@@ -285,6 +314,7 @@ export const DEFAULT_CENNIK: CennikData = {
       name: "Sprzątanie wnętrza podstawowe",
       description: "Odkurzanie, plastiki, szyby od wewnątrz, dywaniki.",
       timeLabel: "1,5 h",
+      durationMinutes: 90,
       priceFrom: 150,
       priceTo: 0,
       pricePrefix: "",
@@ -299,6 +329,7 @@ export const DEFAULT_CENNIK: CennikData = {
       name: "Pranie tapicerki (komplet)",
       description: "Fotele + kanapa + boczki drzwi.",
       timeLabel: "3 h (+ schnięcie 4–8 h)",
+      durationMinutes: 180,
       priceFrom: 300,
       priceTo: 0,
       pricePrefix: "",
@@ -314,6 +345,7 @@ export const DEFAULT_CENNIK: CennikData = {
       description:
         "Pranie tapicerki + podłoga, bagażnik, boczki, plastiki, podsufitka, szyby, odkurzanie, czyszczenie parą nawiewów i zakamarków.",
       timeLabel: "5 h (+ schnięcie 4–8 h)",
+      durationMinutes: 300,
       priceFrom: 500,
       priceTo: 0,
       pricePrefix: "",
@@ -328,6 +360,7 @@ export const DEFAULT_CENNIK: CennikData = {
       name: "Czyszczenie + impregnacja skóry",
       description: "Cleaner + balsam, w cenie sprzątanie wnętrza.",
       timeLabel: "3 h",
+      durationMinutes: 180,
       priceFrom: 400,
       priceTo: 0,
       pricePrefix: "",
@@ -342,6 +375,7 @@ export const DEFAULT_CENNIK: CennikData = {
       name: "• Ozonowanie / usuwanie zapachów",
       description: "Papierosy, zwierzęta, stęchlizna + odświeżenie układu klimatyzacji.",
       timeLabel: "30 min",
+      durationMinutes: 30,
       priceFrom: 80,
       priceTo: 0,
       pricePrefix: "",
@@ -356,6 +390,7 @@ export const DEFAULT_CENNIK: CennikData = {
       name: "• Sierść zwierząt",
       description: "Dodatek przy dużej ilości sierści.",
       timeLabel: "+30–60 min",
+      durationMinutes: 45,
       priceFrom: 80,
       priceTo: 0,
       pricePrefix: "+",
@@ -372,6 +407,7 @@ export const DEFAULT_CENNIK: CennikData = {
       name: "Polerowanie reflektorów (para)",
       description: "Matowanie, polerka maszynowa, zabezpieczenie.",
       timeLabel: "1,5 h",
+      durationMinutes: 90,
       priceFrom: 250,
       priceTo: 0,
       pricePrefix: "",
@@ -387,6 +423,7 @@ export const DEFAULT_CENNIK: CennikData = {
       description:
         "Mycie z dekontaminacją + glinkowanie + polerka jednoetapowa (usuwa 50–70% rys) + panel wipe + wosk SSW.",
       timeLabel: "6–7 h (1 dzień)",
+      durationMinutes: 390,
       priceFrom: 600,
       priceTo: 0,
       pricePrefix: "",
@@ -402,6 +439,7 @@ export const DEFAULT_CENNIK: CennikData = {
       description:
         "Mycie z dekontaminacją + glinkowanie + polerka jednoetapowa (usuwa 50–70% rys) + panel wipe + wosk SSW.",
       timeLabel: "7–8 h (1 dzień)",
+      durationMinutes: 450,
       priceFrom: 750,
       priceTo: 0,
       pricePrefix: "",
@@ -417,6 +455,7 @@ export const DEFAULT_CENNIK: CennikData = {
       description:
         "Mycie z dekontaminacją + glinkowanie + polerka jednoetapowa (usuwa 50–70% rys) + panel wipe + wosk SSW.",
       timeLabel: "8–9 h (1 dzień)",
+      durationMinutes: 510,
       priceFrom: 900,
       priceTo: 0,
       pricePrefix: "",
@@ -432,6 +471,7 @@ export const DEFAULT_CENNIK: CennikData = {
       description:
         "Zamiast SSW twardy wosk na świeżo wypolerowany i odtłuszczony lakier, ochrona ok. 12 miesięcy. Dopłata do dowolnego one step.",
       timeLabel: "+1 h",
+      durationMinutes: 60,
       priceFrom: 150,
       priceTo: 0,
       pricePrefix: "+",
@@ -447,6 +487,7 @@ export const DEFAULT_CENNIK: CennikData = {
       name: "Korekta dwuetapowa",
       description: "Wycena po oględzinach.",
       timeLabel: "2 dni",
+      durationMinutes: 960,
       priceFrom: 1200,
       priceTo: 0,
       pricePrefix: "od ",
@@ -462,6 +503,7 @@ export const DEFAULT_CENNIK: CennikData = {
       name: "Przygotowanie auta do sprzedaży",
       description: "Detailing kompletny IN+OUT + zdjęcia do ogłoszenia.",
       timeLabel: "1 dzień",
+      durationMinutes: 480,
       priceFrom: 650,
       priceTo: 0,
       pricePrefix: "",
@@ -477,6 +519,7 @@ export const DEFAULT_CENNIK: CennikData = {
       description:
         "Kompleksowe wnętrze + dekontaminacja + one step + wosk + zdjęcia do ogłoszenia. Hatchback 1000 / sedan-kombi 1150 / SUV-van 1300.",
       timeLabel: "1,5–2 dni",
+      durationMinutes: 720,
       priceFrom: 1000,
       priceTo: 1300,
       pricePrefix: "",

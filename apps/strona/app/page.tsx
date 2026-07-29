@@ -80,7 +80,11 @@ export default async function HomePage() {
             wraca, gdy panel dostanie prawdziwe zdjęcia zamiast placeholderów. */}
         <Metamorfozy data={metamorfozy} />
         <Proces kontakt={kontakt} />
-        <RezerwacjaSekcja dostepnosc={dostepnosc} kontakt={kontakt} />
+        <RezerwacjaSekcja
+          dostepnosc={dostepnosc}
+          cennik={cennik}
+          kontakt={kontakt}
+        />
         <Faq items={faq} />
         <Kontakt kontakt={kontakt} />
       </main>

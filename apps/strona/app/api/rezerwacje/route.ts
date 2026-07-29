@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
-import { computeSlots, rezerwacjaInputSchema } from "@/lib/rezerwacje";
+import { computeSlots, resolveUslugi, rezerwacjaInputSchema } from "@/lib/rezerwacje";
 import { enforceRateLimit, requestIp } from "@/lib/rate-limit";
+import { getCennik } from "@/lib/site-data";
 import {
   createRezerwacja,
   getDostepnosc,
-  getTakenSlots,
+  listPraceAktywne,
 } from "@/lib/rezerwacje-store";
 
 export const dynamic = "force-dynamic";
@@ -61,10 +62,22 @@ export async function POST(request: Request) {
     );
   }
 
-  // Slot musi być realnie dostępny wg konfiguracji (nie tylko „niezajęty").
-  const taken = await getTakenSlots(input.date);
-  const available = computeSlots(config, input.date, taken);
-  if (!available.includes(input.time)) {
+  // Czas i ceny liczymy z cennika po stronie serwera — nigdy z payloadu.
+  const cennik = await getCennik();
+  const resolved = resolveUslugi(cennik, input.serviceIds);
+  if (!resolved) {
+    return NextResponse.json(
+      { error: "Wybrana usługa nie istnieje. Odśwież stronę.", code: "bad_services" },
+      { status: 400 },
+    );
+  }
+
+  // Slot musi być realnie dostępny wg konfiguracji, zajętości i czasu usług
+  // (nie tylko „niezajęty") — stąd pełne przeliczenie propozycji dla dnia.
+  const prace = await listPraceAktywne(input.date);
+  const available = computeSlots(config, input.date, resolved.durationMinutes, prace);
+  const slot = available.find((s) => s.time === input.time);
+  if (!slot) {
     return NextResponse.json(
       {
         error: "Ten termin jest już niedostępny. Wybierz inny.",
@@ -74,7 +87,18 @@ export async function POST(request: Request) {
     );
   }
 
-  const result = await createRezerwacja(input);
+  const result = await createRezerwacja({
+    date: input.date,
+    time: input.time,
+    name: input.name,
+    phone: input.phone,
+    email: input.email,
+    note: input.note,
+    services: resolved.services,
+    durationMinutes: resolved.durationMinutes,
+    pickupDate: slot.pickupDate,
+    pickupTime: slot.pickupTime,
+  });
   if (!result.ok) {
     return NextResponse.json(
       {
@@ -85,5 +109,8 @@ export async function POST(request: Request) {
     );
   }
 
-  return NextResponse.json({ ok: true }, { status: 201 });
+  return NextResponse.json(
+    { ok: true, pickupDate: slot.pickupDate, pickupTime: slot.pickupTime },
+    { status: 201 },
+  );
 }

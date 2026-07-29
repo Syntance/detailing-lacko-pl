@@ -1,5 +1,6 @@
 import type { KontaktData } from "@/lib/site";
-import type { DostepnoscData } from "@/lib/rezerwacje";
+import type { CennikData } from "@/lib/cennik";
+import { buildRezerwacjaCennik, type DostepnoscData } from "@/lib/rezerwacje";
 import { buildPhotoContactHref } from "@/lib/photo-contact";
 import { Reveal } from "@/components/motion/reveal";
 import { Rezerwacja } from "./rezerwacja";
@@ -10,17 +11,23 @@ import { PhoneLink, PhotoLink } from "./phone-link";
  * i typografia jak w pozostałych sekcjach makiety „kreskówka"; tło piasek
  * (jak Efekty), bo siedzi między białą sekcją współpracy a żółtym FAQ.
  *
+ * Usługi do wyboru budujemy tu, po stronie serwera, z cennika (panel Magazyn
+ * → Cennik) — do klienta idzie odchudzona lista bez opisów.
+ *
  * Gdy rezerwacje są w panelu wyłączone, sekcja nie udaje działającego
  * formularza — pokazuje telefon jako jedyną realną drogę.
  */
 export function RezerwacjaSekcja({
   dostepnosc,
+  cennik,
   kontakt,
 }: {
   dostepnosc: DostepnoscData;
+  cennik: CennikData;
   kontakt: KontaktData;
 }) {
   const photoHref = buildPhotoContactHref(kontakt);
+  const kategorie = buildRezerwacjaCennik(cennik);
 
   return (
     <section
@@ -30,7 +37,7 @@ export function RezerwacjaSekcja({
     >
       <div className="mx-auto flex max-w-[900px] flex-col gap-[30px] px-5 py-16 md:px-6 md:py-[68px]">
         <Reveal className="flex flex-col gap-2.5">
-          <p className="w-max rotate-[1.2deg] rounded-full border-2 border-ink bg-zolty px-3.5 py-1.5 font-mono text-[10px] tracking-[0.2em] uppercase">
+          <p className="etykieta w-max rotate-[1.2deg] rounded-full border-2 border-ink bg-zolty px-3.5 py-1.5">
             04 · rezerwacja
           </p>
           <h2
@@ -43,7 +50,7 @@ export function RezerwacjaSekcja({
 
         <Reveal>
           {dostepnosc.enabled ? (
-            <Rezerwacja config={dostepnosc} />
+            <Rezerwacja config={dostepnosc} kategorie={kategorie} />
           ) : (
             <div className="cien-6 flex flex-col items-start gap-4 rounded-2xl border-[3px] border-ink bg-background p-6 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-[15px] font-medium text-pretty">

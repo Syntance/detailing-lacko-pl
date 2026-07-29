@@ -3,10 +3,8 @@ import {
   type CennikData,
   type CennikItem,
 } from "@/lib/cennik";
-import { buildPhotoContactHref } from "@/lib/photo-contact";
-import type { KontaktData } from "@/lib/site";
 import { Reveal, RevealItem, RevealStagger } from "@/components/motion/reveal";
-import { PhotoLink } from "./phone-link";
+import { BookingLink } from "./phone-link";
 
 /**
  * Cennik 1:1 z makietą „kreskówka": trzy karty z twardą kreską i przerywanymi
@@ -79,13 +77,7 @@ function PozycjaCennika({ item }: { item: CennikItem }) {
   );
 }
 
-export function UslugiCennik({
-  cennik,
-  kontakt,
-}: {
-  cennik: CennikData;
-  kontakt: KontaktData;
-}) {
+export function UslugiCennik({ cennik }: { cennik: CennikData }) {
   const items = cennik.items.filter((i) => !i.disabled);
   const categories = cennik.categories.filter((c) => !c.disabled);
 
@@ -101,7 +93,6 @@ export function UslugiCennik({
   ];
 
   const pakiet = items.find((item) => item.id === PAKIET_ITEM_ID);
-  const photoHref = buildPhotoContactHref(kontakt);
 
   return (
     <section id="cennik" aria-labelledby="cennik-heading" className="scroll-mt-24">
@@ -172,13 +163,12 @@ export function UslugiCennik({
                   </p>
                 ) : null}
               </div>
-              <PhotoLink
-                href={photoHref}
+              <BookingLink
                 section="cennik"
                 className="rounded-full border-[3px] border-zolty bg-zolty px-[22px] py-[13px] text-[15px] font-bold whitespace-nowrap text-ink focus-visible:ring-3 focus-visible:ring-background/60 focus-visible:outline-none"
               >
                 {cennik.settings.noteCtaLabel}
-              </PhotoLink>
+              </BookingLink>
             </div>
           </Reveal>
         ) : null}

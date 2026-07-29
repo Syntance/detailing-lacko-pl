@@ -1,11 +1,18 @@
-import { Phone } from "lucide-react";
 import type { KontaktData } from "@/lib/site";
 import type { DostepnoscData } from "@/lib/rezerwacje";
+import { buildPhotoContactHref } from "@/lib/photo-contact";
 import { Reveal } from "@/components/motion/reveal";
 import { Rezerwacja } from "./rezerwacja";
-import { PhoneLink } from "./phone-link";
+import { PhoneLink, PhotoLink } from "./phone-link";
 
-/** Osobna sekcja „Umów termin" z rezerwacją online (przed sekcją Kontakt). */
+/**
+ * Sekcja „04 · rezerwacja" — cel wszystkich CTA na stronie. Plakietka
+ * i typografia jak w pozostałych sekcjach makiety „kreskówka"; tło piasek
+ * (jak Efekty), bo siedzi między białą sekcją współpracy a żółtym FAQ.
+ *
+ * Gdy rezerwacje są w panelu wyłączone, sekcja nie udaje działającego
+ * formularza — pokazuje telefon jako jedyną realną drogę.
+ */
 export function RezerwacjaSekcja({
   dostepnosc,
   kontakt,
@@ -13,44 +20,60 @@ export function RezerwacjaSekcja({
   dostepnosc: DostepnoscData;
   kontakt: KontaktData;
 }) {
+  const photoHref = buildPhotoContactHref(kontakt);
+
   return (
     <section
       id="rezerwacja"
       aria-labelledby="rezerwacja-heading"
-      className="scroll-mt-20"
+      className="scroll-mt-24 border-y-[3px] border-ink bg-piasek"
     >
-      <div className="mx-auto max-w-5xl px-6 py-20 md:py-28">
-        <Reveal>
+      <div className="mx-auto flex max-w-[900px] flex-col gap-[30px] px-5 py-16 md:px-6 md:py-[68px]">
+        <Reveal className="flex flex-col gap-2.5">
+          <p className="w-max rotate-[1.2deg] rounded-full border-2 border-ink bg-zolty px-3.5 py-1.5 font-mono text-[10px] tracking-[0.2em] uppercase">
+            04 · rezerwacja
+          </p>
           <h2
             id="rezerwacja-heading"
-            className="font-serif text-3xl leading-tight font-medium md:text-4xl"
+            className="text-3xl leading-[1.05] font-bold tracking-[-0.02em] md:text-[40px]"
           >
-            Umów termin
+            Wybierz termin i masz to z głowy
           </h2>
-          <p className="mt-3 max-w-2xl text-pretty text-muted-foreground">
-            Zarezerwuj termin online w kilka sekund — wybierz dzień i godzinę,
-            potwierdzę telefonicznie.
-          </p>
         </Reveal>
 
-        <Reveal className="mt-8">
+        <Reveal>
           {dostepnosc.enabled ? (
             <Rezerwacja config={dostepnosc} />
           ) : (
-            <div className="flex flex-col items-start gap-4 rounded-2xl border border-primary/25 bg-primary/[0.06] p-6 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-pretty">
-                Rezerwacje online są chwilowo niedostępne — zadzwoń, umówimy termin od ręki.
+            <div className="cien-6 flex flex-col items-start gap-4 rounded-2xl border-[3px] border-ink bg-background p-6 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-[15px] font-medium text-pretty">
+                Rezerwacje online są chwilowo wyłączone — zadzwoń, umówimy
+                termin od ręki.
               </p>
               <PhoneLink
                 phoneE164={kontakt.phoneE164}
                 section="rezerwacja"
-                className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition-transform hover:scale-[1.02] focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none motion-reduce:transition-none"
+                className="cien-zolty-3 inline-flex min-h-12 shrink-0 items-center rounded-full border-2 border-ink bg-ink px-5 py-3 text-[15px] font-bold whitespace-nowrap text-background focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+                ariaLabel={`Zadzwoń: ${kontakt.phoneDisplay}`}
               >
-                <Phone className="size-4" aria-hidden />
                 Zadzwoń: {kontakt.phoneDisplay}
               </PhoneLink>
             </div>
           )}
+        </Reveal>
+
+        {/* Wycena ze zdjęcia zostaje jako droga poboczna: przy „nie wiem, co
+            wybrać" to ona zdejmuje barierę, a rezerwacja terminu jej nie
+            zastępuje (formularz nie przyjmuje zdjęć). */}
+        <Reveal className="flex flex-wrap items-baseline justify-center gap-x-2 gap-y-1 text-center text-sm font-medium">
+          <span className="text-tekst">Nie wiesz, która usługa?</span>
+          <PhotoLink
+            href={photoHref}
+            section="rezerwacja"
+            className="font-bold underline underline-offset-4 hover:text-primary-strong focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+          >
+            Wyślij zdjęcie — dostaniesz cenę
+          </PhotoLink>
         </Reveal>
       </div>
     </section>

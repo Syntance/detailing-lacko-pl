@@ -1,7 +1,39 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { trackMessengerClick, trackPhoneClick, trackPhotoClick } from "@/lib/track";
+import {
+  trackBookingCta,
+  trackMessengerClick,
+  trackPhoneClick,
+  trackPhotoClick,
+} from "@/lib/track";
+
+/**
+ * CTA konwersji głównej — „Zarezerwuj termin". Kotwica do sekcji rezerwacji
+ * (one-page), więc zwykły <a href="#rezerwacja"> + tracking.
+ */
+export function BookingLink({
+  section,
+  className,
+  children,
+  ariaLabel,
+}: {
+  section: string;
+  className?: string;
+  children: ReactNode;
+  ariaLabel?: string;
+}) {
+  return (
+    <a
+      href="#rezerwacja"
+      onClick={() => trackBookingCta(section)}
+      className={className}
+      aria-label={ariaLabel}
+    >
+      {children}
+    </a>
+  );
+}
 
 /** Klikalny telefon — jedna konwersja główna strony. */
 export function PhoneLink({

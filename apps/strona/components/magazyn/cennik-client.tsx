@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Reorder, useDragControls } from "motion/react";
 import { Button, Input, PageHeader } from "@moduly/ui";
-import { Plus, Trash2 } from "lucide-react";
+import { ChevronUp, Pencil, Plus, Trash2 } from "lucide-react";
+import { formatItemPrice } from "@/lib/cennik";
 import type { CennikCategory, CennikData, CennikItem } from "@/lib/cennik";
 import { useMagazynHistory } from "@/hooks/use-magazyn-history";
 import {
@@ -114,12 +115,16 @@ export function CennikClient({ initial }: { initial: CennikData }) {
     ) {
       return;
     }
-    setCategories(reorder(sortedCategories.filter((c) => c.id !== category.id)));
+    setCategories(
+      reorder(sortedCategories.filter((c) => c.id !== category.id)),
+    );
     setItems(items.filter((i) => i.categoryId !== category.id));
   };
 
   const addCategory = () =>
-    setCategories(reorder([...sortedCategories, newCategory(sortedCategories.length)]));
+    setCategories(
+      reorder([...sortedCategories, newCategory(sortedCategories.length)]),
+    );
 
   return (
     <div className="space-y-6">
@@ -187,7 +192,12 @@ export function CennikClient({ initial }: { initial: CennikData }) {
                   />
                 ))}
               </Reorder.Group>
-              <Button type="button" variant="outline" className="gap-1.5" onClick={addCategory}>
+              <Button
+                type="button"
+                variant="outline"
+                className="gap-1.5"
+                onClick={addCategory}
+              >
                 <Plus className="size-4" aria-hidden /> Dodaj kartę
               </Button>
             </div>
@@ -214,7 +224,9 @@ export function CennikClient({ initial }: { initial: CennikData }) {
                     if (newCategoryId === category.id) return;
                     const moving = items.find((i) => i.id === itemId);
                     if (!moving) return;
-                    const remaining = reorder(rows.filter((i) => i.id !== itemId));
+                    const remaining = reorder(
+                      rows.filter((i) => i.id !== itemId),
+                    );
                     const targetRows = items
                       .filter((i) => i.categoryId === newCategoryId)
                       .sort((a, b) => a.order - b.order);
@@ -228,7 +240,12 @@ export function CennikClient({ initial }: { initial: CennikData }) {
                         i.categoryId !== category.id &&
                         i.categoryId !== newCategoryId,
                     );
-                    setItems([...untouched, ...remaining, ...targetRows, movedItem]);
+                    setItems([
+                      ...untouched,
+                      ...remaining,
+                      ...targetRows,
+                      movedItem,
+                    ]);
                   };
 
                   return (
@@ -253,7 +270,9 @@ export function CennikClient({ initial }: { initial: CennikData }) {
                       }}
                       onChangeItem={(itemId, patch) =>
                         setItems(
-                          items.map((i) => (i.id === itemId ? { ...i, ...patch } : i)),
+                          items.map((i) =>
+                            i.id === itemId ? { ...i, ...patch } : i,
+                          ),
                         )
                       }
                       onRemoveItem={(itemId) =>
@@ -267,7 +286,12 @@ export function CennikClient({ initial }: { initial: CennikData }) {
                   );
                 })}
               </Reorder.Group>
-              <Button type="button" variant="outline" className="gap-1.5" onClick={addCategory}>
+              <Button
+                type="button"
+                variant="outline"
+                className="gap-1.5"
+                onClick={addCategory}
+              >
                 <Plus className="size-4" aria-hidden /> Dodaj kategorię
               </Button>
             </div>
@@ -306,7 +330,10 @@ export function CennikClient({ initial }: { initial: CennikData }) {
                   onChange={(e) =>
                     history.setState((draft) => ({
                       ...draft,
-                      settings: { ...draft.settings, noteTitle: e.target.value },
+                      settings: {
+                        ...draft.settings,
+                        noteTitle: e.target.value,
+                      },
                     }))
                   }
                 />
@@ -417,7 +444,10 @@ function CategoryKartyCard({
       >
         <div className="grid gap-4 md:grid-cols-2">
           <Field label="Nazwa karty">
-            <Input value={category.name} onChange={(e) => onChange({ name: e.target.value })} />
+            <Input
+              value={category.name}
+              onChange={(e) => onChange({ name: e.target.value })}
+            />
           </Field>
           <Field label="Czas trwania" hint="np. 3–5 godzin">
             <Input
@@ -439,10 +469,15 @@ function CategoryKartyCard({
               inputMode="numeric"
               min={0}
               value={category.priceFrom}
-              onChange={(e) => onChange({ priceFrom: Number(e.target.value) || 0 })}
+              onChange={(e) =>
+                onChange({ priceFrom: Number(e.target.value) || 0 })
+              }
             />
           </Field>
-          <Field label="Wyróżnik pod kartą" hint="np. Najczęściej wybierane: … — 400–500 zł">
+          <Field
+            label="Wyróżnik pod kartą"
+            hint="np. Najczęściej wybierane: … — 400–500 zł"
+          >
             <Input
               value={category.highlight}
               onChange={(e) => onChange({ highlight: e.target.value })}
@@ -531,10 +566,11 @@ function CategoryPozycjeCard({
           onReorder={onReorderItems}
           className="space-y-4"
         >
-          {rows.map((item) => (
+          {rows.map((item, index) => (
             <ItemRow
               key={item.id}
               item={item}
+              index={index + 1}
               categories={allCategories}
               onChange={(patch) => onChangeItem(item.id, patch)}
               onRemove={() => onRemoveItem(item.id)}
@@ -545,7 +581,13 @@ function CategoryPozycjeCard({
           ))}
         </Reorder.Group>
 
-        <Button type="button" variant="outline" size="sm" className="gap-1.5" onClick={onAddItem}>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="gap-1.5"
+          onClick={onAddItem}
+        >
           <Plus className="size-4" aria-hidden /> Dodaj pozycję
         </Button>
       </Fieldset>
@@ -553,20 +595,37 @@ function CategoryPozycjeCard({
   );
 }
 
+/** Jednolinijkowe podsumowanie pozycji widoczne, gdy wiersz jest zwinięty. */
+function itemSummary(item: CennikItem): string {
+  const parts: string[] = [formatItemPrice(item)];
+  if (item.timeLabel) parts.push(item.timeLabel);
+  if (item.popular) parts.push("najczęściej wybierane");
+  if (item.disabled) parts.push("ukryta na stronie");
+  return parts.join(" · ");
+}
+
 function ItemRow({
   item,
+  index,
   categories,
   onChange,
   onRemove,
   onMoveToCategory,
 }: {
   item: CennikItem;
+  /** Numer pozycji w obrębie kategorii (1-based). */
+  index: number;
   categories: CennikCategory[];
   onChange: (patch: Partial<CennikItem>) => void;
   onRemove: () => void;
   onMoveToCategory: (newCategoryId: string) => void;
 }) {
   const dragControls = useDragControls();
+  const panelId = useId();
+  // Nowo dodana pozycja (bez nazwy) startuje rozwinięta — inaczej trzeba by
+  // klikać "Edytuj" na pustym wierszu zaraz po "Dodaj pozycję".
+  const [open, setOpen] = useState(() => item.name.trim() === "");
+  const label = item.name || "Nowa pozycja";
 
   return (
     <Reorder.Item
@@ -575,104 +634,162 @@ function ItemRow({
       dragControls={dragControls}
       as="div"
     >
-      <div className="space-y-3 rounded-lg border border-border bg-background/50 p-4">
-        <div className="flex items-center justify-between">
+      <div className="rounded-lg border border-border bg-background/50">
+        <div className="flex items-center gap-2 p-3">
           <DragHandle
             onPointerDown={(e) => dragControls.start(e)}
-            label={`Przeciągnij pozycję ${item.name || "bez nazwy"}`}
+            label={`Przeciągnij pozycję ${label}`}
           />
+          <span
+            aria-hidden
+            className="flex size-6 shrink-0 items-center justify-center rounded-md bg-muted text-xs font-medium tabular-nums text-muted-foreground"
+          >
+            {index}
+          </span>
+          <button
+            type="button"
+            onClick={() => setOpen((prev) => !prev)}
+            aria-expanded={open}
+            aria-controls={panelId}
+            className="min-w-0 flex-1 rounded-md px-1 py-0.5 text-left focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+          >
+            <span className="block truncate text-sm font-medium text-foreground">
+              <span className="sr-only">{`Pozycja ${index}: `}</span>
+              {label}
+            </span>
+            <span className="block truncate text-xs text-muted-foreground">
+              {itemSummary(item)}
+            </span>
+          </button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => setOpen((prev) => !prev)}
+            aria-expanded={open}
+            aria-controls={panelId}
+            className="gap-1.5"
+          >
+            {open ? (
+              <>
+                <ChevronUp className="size-4" aria-hidden /> Zwiń
+              </>
+            ) : (
+              <>
+                <Pencil className="size-4" aria-hidden /> Edytuj
+              </>
+            )}
+          </Button>
           <RowControls
             onRemove={onRemove}
-            removeLabel={`Usuń pozycję ${item.name || "bez nazwy"}`}
+            removeLabel={`Usuń pozycję ${label}`}
           />
         </div>
 
-        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
-          <Field label="Nazwa" hint={`prefiks "• " = dodatek`}>
-            <Input value={item.name} onChange={(e) => onChange({ name: e.target.value })} />
-          </Field>
-          <Field label="Opis">
-            <Input
-              value={item.description}
-              onChange={(e) => onChange({ description: e.target.value })}
-            />
-          </Field>
-          <Field label="Czas" hint="np. 1,5 h">
-            <Input
-              value={item.timeLabel}
-              onChange={(e) => onChange({ timeLabel: e.target.value })}
-            />
-          </Field>
-          <Field label="Kategoria" hint="przenosi pozycję">
-            <select
-              value={item.categoryId}
-              onChange={(e) => onMoveToCategory(e.target.value)}
-              className="h-11 rounded-xl border border-input bg-background px-3 text-sm focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
-            >
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name || "(bez nazwy)"}
-                </option>
-              ))}
-            </select>
-          </Field>
-        </div>
+        <div
+          id={panelId}
+          hidden={!open}
+          className="space-y-3 border-t border-border p-4"
+        >
+          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+            <Field label="Nazwa" hint={`prefiks "• " = dodatek`}>
+              <Input
+                value={item.name}
+                onChange={(e) => onChange({ name: e.target.value })}
+              />
+            </Field>
+            <Field label="Opis">
+              <Input
+                value={item.description}
+                onChange={(e) => onChange({ description: e.target.value })}
+              />
+            </Field>
+            <Field label="Czas" hint="np. 1,5 h">
+              <Input
+                value={item.timeLabel}
+                onChange={(e) => onChange({ timeLabel: e.target.value })}
+              />
+            </Field>
+            <Field label="Kategoria" hint="przenosi pozycję">
+              <select
+                value={item.categoryId}
+                onChange={(e) => onMoveToCategory(e.target.value)}
+                className="h-11 rounded-xl border border-input bg-background px-3 text-sm focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+              >
+                {categories.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name || "(bez nazwy)"}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          </div>
 
-        <div className="grid gap-3 md:grid-cols-4">
-          <Field label="Cena od (zł)">
-            <Input
-              type="number"
-              inputMode="numeric"
-              min={0}
-              value={item.priceFrom}
-              onChange={(e) => onChange({ priceFrom: Number(e.target.value) || 0 })}
-            />
-          </Field>
-          <Field label="Cena do (zł)" hint="0 = cena stała">
-            <Input
-              type="number"
-              inputMode="numeric"
-              min={0}
-              value={item.priceTo}
-              onChange={(e) => onChange({ priceTo: Number(e.target.value) || 0 })}
-            />
-          </Field>
-          <Field label="Przedrostek ceny" hint={`np. "od " albo "+"`}>
-            <Input
-              value={item.pricePrefix}
-              onChange={(e) => onChange({ pricePrefix: e.target.value })}
-            />
-          </Field>
-          <Field label="Dopisek" hint="np. za parę">
-            <Input value={item.unit} onChange={(e) => onChange({ unit: e.target.value })} />
-          </Field>
-        </div>
+          <div className="grid gap-3 md:grid-cols-4">
+            <Field label="Cena od (zł)">
+              <Input
+                type="number"
+                inputMode="numeric"
+                min={0}
+                value={item.priceFrom}
+                onChange={(e) =>
+                  onChange({ priceFrom: Number(e.target.value) || 0 })
+                }
+              />
+            </Field>
+            <Field label="Cena do (zł)" hint="0 = cena stała">
+              <Input
+                type="number"
+                inputMode="numeric"
+                min={0}
+                value={item.priceTo}
+                onChange={(e) =>
+                  onChange({ priceTo: Number(e.target.value) || 0 })
+                }
+              />
+            </Field>
+            <Field label="Przedrostek ceny" hint={`np. "od " albo "+"`}>
+              <Input
+                value={item.pricePrefix}
+                onChange={(e) => onChange({ pricePrefix: e.target.value })}
+              />
+            </Field>
+            <Field label="Dopisek" hint="np. za parę">
+              <Input
+                value={item.unit}
+                onChange={(e) => onChange({ unit: e.target.value })}
+              />
+            </Field>
+          </div>
 
-        <div className="flex items-center gap-5">
-          <label className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Checkbox
-              checked={item.popular}
-              onCheckedChange={(checked) => onChange({ popular: checked })}
-              ariaLabel={`Oznacz ${item.name || "pozycję"} jako popularne`}
-            />
-            Najczęściej wybierane
-          </label>
-          <label className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Checkbox
-              checked={!item.disabled}
-              onCheckedChange={(checked) => onChange({ disabled: !checked })}
-              ariaLabel={`Widoczność pozycji ${item.name || "bez nazwy"}`}
-            />
-            Widoczna
-          </label>
-          <label className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Checkbox
-              checked={item.priceHidden === true}
-              onCheckedChange={(checked) => onChange({ priceHidden: checked })}
-              ariaLabel={`Ukryj cenę pozycji ${item.name || "bez nazwy"}`}
-            />
-            Ukryj cenę
-          </label>
+          <div className="flex items-center gap-5">
+            <label className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Checkbox
+                checked={item.popular}
+                onCheckedChange={(checked) => onChange({ popular: checked })}
+                ariaLabel={`Oznacz ${item.name || "pozycję"} jako popularne`}
+              />
+              Najczęściej wybierane
+            </label>
+            <label className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Checkbox
+                checked={!item.disabled}
+                onCheckedChange={(checked) => onChange({ disabled: !checked })}
+                ariaLabel={`Widoczność pozycji ${item.name || "bez nazwy"}`}
+              />
+              Widoczna
+            </label>
+            <label className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Checkbox
+                checked={item.priceHidden === true}
+                onCheckedChange={(checked) =>
+                  onChange({ priceHidden: checked })
+                }
+                ariaLabel={`Ukryj cenę pozycji ${item.name || "bez nazwy"}`}
+              />
+              Ukryj cenę
+            </label>
+          </div>
         </div>
       </div>
     </Reorder.Item>

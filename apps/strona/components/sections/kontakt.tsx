@@ -1,7 +1,6 @@
-import { buildPhotoContactHref } from "@/lib/photo-contact";
 import type { KontaktData } from "@/lib/site";
 import { Reveal } from "@/components/motion/reveal";
-import { PhoneLink, PhotoLink } from "./phone-link";
+import { BookingLink, PhoneLink } from "./phone-link";
 
 /**
  * „Umów termin" 1:1 z makietą „kreskówka": czarna sekcja zamykająca, znak
@@ -9,12 +8,6 @@ import { PhoneLink, PhotoLink } from "./phone-link";
  * Świadomie bez formularza — tak jak w makiecie.
  */
 export function Kontakt({ kontakt }: { kontakt: KontaktData }) {
-  const photoHref = buildPhotoContactHref(kontakt);
-  // Makieta pisze „na WhatsApp", bo linkuje do wa.me. Gdy panel nie ma
-  // ustawionego messengerUrl, CTA spada na SMS — wtedy etykieta nie może
-  // obiecywać WhatsAppa.
-  const whatsapp = /wa\.me|whatsapp/i.test(photoHref);
-
   return (
     <section
       id="kontakt"
@@ -40,15 +33,12 @@ export function Kontakt({ kontakt }: { kontakt: KontaktData }) {
           </h2>
 
           <div className="flex flex-wrap items-stretch justify-center gap-4">
-            <PhotoLink
-              href={photoHref}
+            <BookingLink
               section="kontakt"
               className="cien-zolty-mgla-5 rounded-xl border-[3px] border-zolty bg-zolty px-[26px] py-3.5 text-[16.5px] font-bold text-ink focus-visible:ring-3 focus-visible:ring-background/60 focus-visible:outline-none"
             >
-              {whatsapp
-                ? "Wyślij zdjęcie na WhatsApp"
-                : "Wyślij zdjęcie — dostaniesz cenę"}
-            </PhotoLink>
+              Zarezerwuj termin
+            </BookingLink>
 
             <PhoneLink
               phoneE164={kontakt.phoneE164}

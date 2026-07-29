@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Input } from "@moduly/ui";
-import { CalendarCheck, Check, Clock, Loader2 } from "lucide-react";
+import Link from "next/link";
+import { Check, Loader2 } from "lucide-react";
 import type { DostepnoscData } from "@/lib/rezerwacje";
 import { trackReservationSubmit } from "@/lib/track";
 
@@ -27,11 +27,35 @@ function formatDatePl(dateStr: string): string {
   }
 }
 
+/** Etykieta kroku — mono, uppercase, jak plakietki sekcji w makiecie. */
+function Krok({ numer, children }: { numer: number; children: React.ReactNode }) {
+  return (
+    <span className="flex items-center gap-2.5">
+      <span
+        aria-hidden
+        className="grid size-7 shrink-0 place-items-center rounded-full border-2 border-ink bg-zolty text-xs font-bold"
+      >
+        {numer}
+      </span>
+      <span className="font-mono text-[10px] tracking-[0.2em] uppercase">
+        {children}
+      </span>
+    </span>
+  );
+}
+
+/** Wspólny wygląd pól formularza — twarda kreska 2px zamiast szarej ramki. */
+const POLE =
+  "h-12 w-full rounded-xl border-2 border-ink bg-background px-3.5 text-[15px] font-medium focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none";
+
 /**
  * Widget rezerwacji online: data → wolne godziny → dane kontaktowe.
  * Sloty liczy serwer (GET /api/rezerwacje/sloty), rezerwację przyjmuje
  * POST /api/rezerwacje (walidacja + anty-dubel). Rezerwacja jest wstępna —
  * właściciel potwierdza w panelu Magazyn.
+ *
+ * Wygląd w języku makiety „kreskówka": biała karta z kreską 3px, żółty
+ * nagłówek, godziny jako pigułki z twardym cieniem po wybraniu.
  */
 export function Rezerwacja({ config }: Props) {
   const today = new Date();
@@ -126,199 +150,222 @@ export function Rezerwacja({ config }: Props) {
 
   if (done) {
     return (
-      <div className="rounded-2xl border border-primary/30 bg-primary/[0.06] p-6 sm:p-8">
-        <div className="flex items-start gap-4">
-          <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
-            <Check className="size-6" aria-hidden />
-          </span>
-          <div>
-            <h3 className="font-serif text-xl font-medium">
-              Rezerwacja przyjęta
-            </h3>
-            <p className="mt-2 text-pretty text-muted-foreground">
-              Zapisałem termin <strong>{formatDatePl(date)}</strong> na{" "}
-              <strong>{time}</strong>. Potwierdzę go telefonicznie — do usłyszenia!
-            </p>
-          </div>
+      <div
+        role="status"
+        className="cien-6 flex items-start gap-4 rounded-2xl border-[3px] border-ink bg-zolty p-6 sm:p-8"
+      >
+        <span className="grid size-12 shrink-0 place-items-center rounded-full border-[3px] border-ink bg-background">
+          <Check className="size-6" aria-hidden />
+        </span>
+        <div>
+          <h3 className="text-xl font-bold">Termin zaklepany!</h3>
+          <p className="mt-2 text-[15px] text-pretty">
+            Zapisałem <strong className="font-bold">{formatDatePl(date)}</strong>{" "}
+            na <strong className="font-bold">{time}</strong>. Potwierdzę
+            telefonicznie — do usłyszenia!
+          </p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="rounded-2xl border border-border bg-card p-6 sm:p-8">
-      <div className="flex items-center gap-3">
-        <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary-strong">
-          <CalendarCheck className="size-5" aria-hidden />
+    <div className="cien-6 overflow-hidden rounded-2xl border-[3px] border-ink bg-background">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b-[3px] border-ink bg-zolty px-5 py-[18px]">
+        <h3 className="text-xl font-bold">{config.heading}</h3>
+        <span className="rounded-full bg-ink px-2.5 py-[5px] font-mono text-[9px] tracking-[0.18em] text-zolty uppercase">
+          online 24/7
         </span>
-        <div>
-          <h3 className="font-serif text-xl font-medium">{config.heading}</h3>
-        </div>
       </div>
-      {config.note ? (
-        <p className="mt-2 text-sm text-pretty text-muted-foreground">
-          {config.note}
-        </p>
-      ) : null}
 
-      <form onSubmit={submit} className="mt-6 space-y-6">
-        <div className="grid gap-2">
-          <label htmlFor="rez-date" className="text-sm font-medium">
-            1. Wybierz dzień
-          </label>
-          <input
-            id="rez-date"
-            type="date"
-            value={date}
-            min={minStr}
-            max={maxStr}
-            onChange={(e) => setDate(e.target.value)}
-            required
-            className="h-11 w-full max-w-xs rounded-xl border border-input bg-background px-3 text-sm focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
-          />
-        </div>
-
-        {date ? (
-          <div className="grid gap-2">
-            <span className="flex items-center gap-1.5 text-sm font-medium">
-              <Clock className="size-4 text-primary-strong" aria-hidden />
-              2. Wybierz godzinę
-              <span className="font-normal text-muted-foreground">
-                · {formatDatePl(date)}
-              </span>
-            </span>
-            {slotsLoading ? (
-              <p className="flex items-center gap-2 py-2 text-sm text-muted-foreground">
-                <Loader2 className="size-4 animate-spin" aria-hidden />
-                Sprawdzam wolne godziny…
-              </p>
-            ) : slots.length === 0 ? (
-              <p className="rounded-lg border border-border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
-                Brak wolnych terminów tego dnia. Wybierz inny dzień albo zadzwoń.
-              </p>
-            ) : (
-              <div className="flex flex-wrap gap-2" role="group" aria-label="Wolne godziny">
-                {slots.map((s) => {
-                  const active = s === time;
-                  return (
-                    <button
-                      key={s}
-                      type="button"
-                      onClick={() => setTime(s)}
-                      aria-pressed={active}
-                      className={`min-w-16 rounded-xl border px-4 py-2.5 text-sm font-medium transition-colors focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none ${
-                        active
-                          ? "border-primary bg-primary text-primary-foreground"
-                          : "border-border hover:border-primary-strong/60 hover:text-primary-strong"
-                      }`}
-                    >
-                      {s}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        ) : null}
-
-        {date && time ? (
-          <div className="grid gap-4 border-t border-border pt-6">
-            <span className="text-sm font-medium">3. Twoje dane</span>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <label className="grid gap-1.5 text-sm">
-                <span className="text-muted-foreground">Imię</span>
-                <Input
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required
-                  autoComplete="name"
-                  placeholder="Jan"
-                />
-              </label>
-              <label className="grid gap-1.5 text-sm">
-                <span className="text-muted-foreground">Telefon</span>
-                <Input
-                  type="tel"
-                  inputMode="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  required
-                  autoComplete="tel"
-                  placeholder="600 000 000"
-                />
-              </label>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <label className="grid gap-1.5 text-sm">
-                <span className="text-muted-foreground">
-                  E-mail{" "}
-                  <span className="text-xs">(opcjonalnie)</span>
-                </span>
-                <Input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  autoComplete="email"
-                  placeholder="jan@przyklad.pl"
-                />
-              </label>
-              {config.services.length > 0 ? (
-                <label className="grid gap-1.5 text-sm">
-                  <span className="text-muted-foreground">Usługa</span>
-                  <select
-                    value={service}
-                    onChange={(e) => setService(e.target.value)}
-                    className="h-11 rounded-xl border border-input bg-background px-3 text-sm focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
-                  >
-                    {config.services.map((s) => (
-                      <option key={s} value={s}>
-                        {s}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              ) : null}
-            </div>
-            <label className="grid gap-1.5 text-sm">
-              <span className="text-muted-foreground">
-                Auto i uwagi{" "}
-                <span className="text-xs">(opcjonalnie)</span>
-              </span>
-              <textarea
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                rows={3}
-                placeholder="np. Golf VII, plamy na fotelach"
-                className="rounded-xl border border-input bg-background px-3 py-2 text-sm focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
-              />
-            </label>
-
-            <div className="flex flex-wrap items-center gap-3">
-              <button
-                type="submit"
-                disabled={pending}
-                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground transition-transform hover:scale-[1.02] focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none disabled:opacity-70 motion-reduce:transition-none"
-              >
-                {pending ? (
-                  <Loader2 className="size-4 animate-spin" aria-hidden />
-                ) : (
-                  <CalendarCheck className="size-4" aria-hidden />
-                )}
-                {pending ? "Rezerwuję…" : `Rezerwuję ${time}`}
-              </button>
-              <span className="text-xs text-muted-foreground">
-                Wstępna rezerwacja — potwierdzę telefonicznie.
-              </span>
-            </div>
-          </div>
-        ) : null}
-
-        {error ? (
-          <p role="alert" className="text-sm text-destructive">
-            {error}
+      <div className="p-5 sm:p-7">
+        {config.note ? (
+          <p className="text-[14.5px] leading-[1.55] text-pretty text-tekst">
+            {config.note}
           </p>
         ) : null}
-      </form>
+
+        <form onSubmit={submit} className="mt-6 flex flex-col gap-6">
+          <div className="flex flex-col gap-2.5">
+            <label htmlFor="rez-date">
+              <Krok numer={1}>Wybierz dzień</Krok>
+            </label>
+            <input
+              id="rez-date"
+              type="date"
+              value={date}
+              min={minStr}
+              max={maxStr}
+              onChange={(e) => setDate(e.target.value)}
+              required
+              className={`${POLE} max-w-xs`}
+            />
+          </div>
+
+          {date ? (
+            <div className="flex flex-col gap-2.5 border-t-2 border-dashed border-kreska pt-6">
+              <Krok numer={2}>Wybierz godzinę · {formatDatePl(date)}</Krok>
+              {slotsLoading ? (
+                <p className="flex items-center gap-2 py-2 text-sm font-medium text-tekst">
+                  <Loader2 className="size-4 animate-spin" aria-hidden />
+                  Sprawdzam wolne godziny…
+                </p>
+              ) : slots.length === 0 ? (
+                <p className="rounded-xl border-2 border-dashed border-kreska px-4 py-3 text-sm font-medium text-tekst">
+                  Brak wolnych terminów tego dnia. Wybierz inny dzień albo
+                  zadzwoń.
+                </p>
+              ) : (
+                <div
+                  className="flex flex-wrap gap-2.5"
+                  role="group"
+                  aria-label="Wolne godziny"
+                >
+                  {slots.map((s) => {
+                    const active = s === time;
+                    return (
+                      <button
+                        key={s}
+                        type="button"
+                        onClick={() => setTime(s)}
+                        aria-pressed={active}
+                        className={`min-w-[4.5rem] rounded-full border-2 border-ink px-4 py-2.5 text-[15px] font-semibold transition-transform focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none motion-reduce:transition-none ${
+                          active
+                            ? "cien-3 bg-zolty"
+                            : "bg-background hover:-translate-y-0.5"
+                        }`}
+                      >
+                        {s}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          ) : null}
+
+          {date && time ? (
+            <div className="flex flex-col gap-4 border-t-2 border-dashed border-kreska pt-6">
+              <Krok numer={3}>Twoje dane</Krok>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <label className="flex flex-col gap-1.5">
+                  <span className="text-sm font-semibold">Imię</span>
+                  <input
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    required
+                    autoComplete="name"
+                    placeholder="Jan"
+                    className={POLE}
+                  />
+                </label>
+                <label className="flex flex-col gap-1.5">
+                  <span className="text-sm font-semibold">Telefon</span>
+                  <input
+                    type="tel"
+                    inputMode="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    required
+                    autoComplete="tel"
+                    placeholder="600 000 000"
+                    className={POLE}
+                  />
+                </label>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <label className="flex flex-col gap-1.5">
+                  <span className="text-sm font-semibold">
+                    E-mail{" "}
+                    <span className="font-normal text-muted-foreground">
+                      (opcjonalnie)
+                    </span>
+                  </span>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    autoComplete="email"
+                    placeholder="jan@przyklad.pl"
+                    className={POLE}
+                  />
+                </label>
+                {config.services.length > 0 ? (
+                  <label className="flex flex-col gap-1.5">
+                    <span className="text-sm font-semibold">Usługa</span>
+                    <select
+                      value={service}
+                      onChange={(e) => setService(e.target.value)}
+                      className={POLE}
+                    >
+                      {config.services.map((s) => (
+                        <option key={s} value={s}>
+                          {s}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                ) : null}
+              </div>
+              <label className="flex flex-col gap-1.5">
+                <span className="text-sm font-semibold">
+                  Auto i uwagi{" "}
+                  <span className="font-normal text-muted-foreground">
+                    (opcjonalnie)
+                  </span>
+                </span>
+                <textarea
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  rows={3}
+                  placeholder="np. Golf VII, plamy na fotelach"
+                  className="w-full rounded-xl border-2 border-ink bg-background px-3.5 py-2.5 text-[15px] font-medium focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+                />
+              </label>
+
+              <div className="flex flex-wrap items-center gap-4">
+                <button
+                  type="submit"
+                  disabled={pending}
+                  className="cien-zolty-3 inline-flex min-h-12 items-center justify-center gap-2 rounded-full border-2 border-ink bg-ink px-6 py-3 text-[15px] font-bold text-background focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none disabled:opacity-70"
+                >
+                  {pending ? (
+                    <Loader2 className="size-4 animate-spin" aria-hidden />
+                  ) : null}
+                  {pending ? "Rezerwuję…" : `Rezerwuję ${time}`}
+                </button>
+                <span className="font-mono text-[10px] tracking-[0.16em] text-muted-foreground uppercase">
+                  wstępna rezerwacja · potwierdzam telefonicznie
+                </span>
+              </div>
+
+              {/* Obowiązek informacyjny RODO — dane z formularza przetwarzamy,
+                  żeby zrealizować rezerwację; użytkownik musi wiedzieć gdzie
+                  szukać szczegółów (art. 13 RODO). */}
+              <p className="text-xs text-pretty text-muted-foreground">
+                Podane dane wykorzystam wyłącznie do obsługi tej rezerwacji.
+                Szczegóły:{" "}
+                <Link
+                  href="/polityka-prywatnosci"
+                  className="font-semibold text-ink underline underline-offset-2"
+                >
+                  polityka prywatności
+                </Link>
+                .
+              </p>
+            </div>
+          ) : null}
+
+          {error ? (
+            <p
+              role="alert"
+              className="rounded-xl border-2 border-destructive bg-destructive/10 px-4 py-3 text-sm font-semibold text-destructive"
+            >
+              {error}
+            </p>
+          ) : null}
+        </form>
+      </div>
     </div>
   );
 }

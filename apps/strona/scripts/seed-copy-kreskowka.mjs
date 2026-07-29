@@ -54,7 +54,8 @@ const CENNIK_SETTINGS = {
     "Jedyny pełny cennik w promieniu 20 km. Rozliczamy dokładnie według niego.",
   noteText:
     "100 zł taniej niż suma składowych · pakiet pod sprzedaż auta też 650 zł, ze zdjęciami do ogłoszenia",
-  noteCtaLabel: "Wyślij zdjęcie →",
+  // CTA czarnego pasa prowadzi do sekcji rezerwacji (#rezerwacja), nie do SMS-a.
+  noteCtaLabel: "Zarezerwuj termin →",
 };
 
 /** Nazwy kolumn cennika 1:1 z makietą (po id kategorii). */

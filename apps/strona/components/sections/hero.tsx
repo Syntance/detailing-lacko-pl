@@ -1,8 +1,7 @@
 import { getImageProps } from "next/image";
 import type { HeroImages } from "@/lib/cms-content";
-import { buildPhotoContactHref } from "@/lib/photo-contact";
 import type { KontaktData } from "@/lib/site";
-import { PhoneLink, PhotoLink } from "./phone-link";
+import { BookingLink, PhoneLink } from "./phone-link";
 
 /**
  * Hero 1:1 z makietą „kreskówka": żółte tło w kropkowaną siatkę, twarda
@@ -65,8 +64,6 @@ export function Hero({
   images: HeroImages;
   kontakt: KontaktData;
 }) {
-  const photoHref = buildPhotoContactHref(kontakt);
-
   return (
     <section
       id="hero"
@@ -98,16 +95,15 @@ export function Hero({
           </div>
 
           <div className="hero-enter flex flex-wrap items-stretch gap-4 [animation-delay:270ms]">
-            <PhotoLink
-              href={photoHref}
+            <BookingLink
               section="hero"
               className="cien-mgla-5 flex flex-col gap-px rounded-xl bg-ink px-6 py-3.5 text-background focus-visible:ring-3 focus-visible:ring-ink/40 focus-visible:outline-none"
             >
-              <span className="text-[16.5px] font-bold">
-                Wyślij zdjęcie — dostaniesz cenę
+              <span className="text-[16.5px] font-bold">Zarezerwuj termin</span>
+              <span className="text-xs text-noc-jasny">
+                online, bez dzwonienia
               </span>
-              <span className="text-xs text-noc-jasny">odpisujemy do 2 h</span>
-            </PhotoLink>
+            </BookingLink>
 
             <PhoneLink
               phoneE164={kontakt.phoneE164}

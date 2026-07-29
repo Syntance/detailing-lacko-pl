@@ -6,6 +6,7 @@ import { Kontakt } from "@/components/sections/kontakt";
 import { Metamorfozy } from "@/components/sections/metamorfozy";
 import { Navbar } from "@/components/sections/navbar";
 import { Proces } from "@/components/sections/proces";
+import { RezerwacjaSekcja } from "@/components/sections/rezerwacja-sekcja";
 import { Stopka } from "@/components/sections/stopka";
 import { UslugiCennik } from "@/components/sections/uslugi-cennik";
 import { getHeroImages } from "@/lib/cms-content";
@@ -67,16 +68,19 @@ export default async function HomePage() {
 
       <Navbar kontakt={kontakt} />
 
-      {/* Kolejność sekcji 1:1 z makietą „kreskówka": hero → cennik (01) →
-          efekty (02) → współpraca (03) → FAQ → kontakt. */}
+      {/* Kolejność sekcji z makiety „kreskówka": hero → cennik (01) →
+          efekty (02) → współpraca (03) → rezerwacja (04) → FAQ → kontakt.
+          Rezerwacja to cel wszystkich CTA „Zarezerwuj termin" i stoi po
+          dowodach (ceny, efekty, przebieg), a przed FAQ domykającym obiekcje. */}
       <main>
         <Hero images={heroImages} kontakt={kontakt} />
-        <UslugiCennik cennik={cennik} kontakt={kontakt} />
+        <UslugiCennik cennik={cennik} />
         {/* Sekcja Efekty = kuratorowane pary przed/po (panel → Metamorfozy).
             CMS-owa Galeria z suwakami czeka w components/sections/galeria.tsx —
             wraca, gdy panel dostanie prawdziwe zdjęcia zamiast placeholderów. */}
         <Metamorfozy data={metamorfozy} />
         <Proces kontakt={kontakt} />
+        <RezerwacjaSekcja dostepnosc={dostepnosc} kontakt={kontakt} />
         <Faq items={faq} />
         <Kontakt kontakt={kontakt} />
       </main>

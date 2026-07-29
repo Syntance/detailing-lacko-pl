@@ -1,3 +1,5 @@
+import { getImageProps } from "next/image";
+import type { HeroImages } from "@/lib/cms-content";
 import { buildPhotoContactHref } from "@/lib/photo-contact";
 import type { KontaktData } from "@/lib/site";
 import { PhoneLink, PhotoLink } from "./phone-link";
@@ -5,15 +7,64 @@ import { PhoneLink, PhotoLink } from "./phone-link";
 /**
  * Hero 1:1 z makietą „kreskówka": żółte tło w kropkowaną siatkę, twarda
  * kreska pod sekcją, po lewej naklejka lokalizacji → H1 → lead → kafel ceny
- * → dwa CTA, po prawej przekrzywiona biała karta ze znakiem marki, naklejka
- * „100% ręcznie!" i trzy bąble piany.
+ * → dwa CTA, po prawej przekrzywiona biała karta ze zdjęciem auta w pianie,
+ * lanca wystająca z prawego górnego narożnika i trzy bąble piany.
  *
  * Makieta jest jednym układem desktopowym (grid 1.05fr/.95fr) — poniżej lg
  * kolumny schodzą pod siebie w kolejności z DOM: najpierw copy i CTA, potem
- * karta ze znakiem. Zdjęcie auta z panelu (Magazyn → Treść) nie występuje
- * w makiecie, więc hero go nie renderuje; edytor w panelu zostaje nietknięty.
+ * karta ze zdjęciem. Zdjęcie w karcie pochodzi z panelu (Magazyn → Treść).
  */
-export function Hero({ kontakt }: { kontakt: KontaktData }) {
+
+/**
+ * Zdjęcie hero z art direction: telefon dostaje kadr mobilny, desktop
+ * desktopowy — przez <picture> + media query, więc przeglądarka pobiera
+ * TYLKO jeden plik. Brak `priority` celowo: <link rel=preload> nie umie media
+ * query i preloadowałby oba pliki; eager+fetchpriority na <img> w initial HTML
+ * daje LCP bez podwójnego pobierania.
+ */
+function HeroPicture({
+  images,
+  imgClassName,
+}: {
+  images: HeroImages;
+  imgClassName: string;
+}) {
+  const common = {
+    alt: "Auto pokryte pianą aktywną podczas mycia detailingowego",
+    fill: true as const,
+    quality: 70,
+    // Karta zajmuje 88% prawej kolumny (~460 px), ale kadr jest powiększony
+    // 1,55×, więc prosimy o plik pod ~720 px, żeby zoom nie zmiękł.
+    sizes: "(max-width: 1024px) 88vw, 720px",
+  };
+  const mobile = getImageProps({ ...common, src: images.mobile });
+  const desktop = getImageProps({ ...common, src: images.desktop });
+  const { srcSet: desktopSrcSet, ...imgProps } = desktop.props;
+
+  return (
+    <picture>
+      <source
+        media="(max-width: 1023.5px)"
+        srcSet={mobile.props.srcSet ?? mobile.props.src}
+      />
+      <img
+        {...imgProps}
+        srcSet={desktopSrcSet}
+        loading="eager"
+        fetchPriority="high"
+        className={imgClassName}
+      />
+    </picture>
+  );
+}
+
+export function Hero({
+  images,
+  kontakt,
+}: {
+  images: HeroImages;
+  kontakt: KontaktData;
+}) {
   const photoHref = buildPhotoContactHref(kontakt);
 
   return (
@@ -70,28 +121,32 @@ export function Hero({ kontakt }: { kontakt: KontaktData }) {
         </div>
 
         <div className="relative flex justify-center">
-          <div className="cien-7 w-[88%] rotate-2 rounded-2xl border-[3px] border-ink bg-background px-[22px] py-[26px]">
-            {/* SVG marki: świadomie <img>, nie next/image — optymalizator
-                Next nie przetwarza SVG (brak dangerouslyAllowSVG), a wektor
-                i tak skaluje się bez straty. */}
-            <img
-              src="/brand/lw-kolor.svg"
-              alt="Lanca z pianą — znak Detailing Łącko"
-              width={1866}
-              height={637}
-              className="block w-full"
-            />
-            <p className="mt-3 text-center font-mono text-[10px] tracking-[0.22em] text-muted-foreground uppercase">
-              psss... piana robi robotę
-            </p>
+          <div className="cien-7 w-[88%] rotate-2 rounded-2xl border-[3px] border-ink bg-background p-3.5">
+            {/* Kadr 4:3 z powiększeniem 1,55× i osią 50%/38% — wartości
+                z makiety, wchodzą na przód auta zamiast pokazywać cały warsztat. */}
+            <div className="relative aspect-[4/3] overflow-hidden rounded-[10px]">
+              <HeroPicture
+                images={images}
+                imgClassName="scale-[1.55] object-cover origin-[50%_38%]"
+              />
+            </div>
+            <div className="mt-3 flex justify-center">
+              <p className="font-mono text-[10px] tracking-[0.22em] text-muted-foreground uppercase">
+                psss... piana robi robotę
+              </p>
+            </div>
           </div>
 
-          <p
-            aria-hidden
-            className="cien-4 absolute -top-3.5 right-[2%] rotate-[7deg] rounded-full border-[3px] border-ink bg-background px-4 py-2.5 text-sm font-bold"
-          >
-            100% ręcznie!
-          </p>
+          {/* Lanca wystaje z narożnika karty i „pryska" na auto. Na wąskich
+              ekranach mniejszy zwis, żeby sekcja (overflow-hidden) nie ucięła
+              pistoletu. SVG przez <img> — Next nie optymalizuje SVG. */}
+          <img
+            src="/brand/lw-kolor.svg"
+            alt="Lanca z pianą"
+            width={1866}
+            height={637}
+            className="absolute top-[-3%] right-[-2%] z-[2] w-[46%] -rotate-[14deg] drop-shadow-[4px_6px_0_var(--ink)] sm:right-[-10%] sm:w-[42%]"
+          />
 
           <div aria-hidden className="absolute -bottom-2.5 left-0 flex">
             <span className="size-[34px] rounded-full border-[3px] border-ink bg-background" />

@@ -8,6 +8,7 @@ import { Navbar } from "@/components/sections/navbar";
 import { Proces } from "@/components/sections/proces";
 import { Stopka } from "@/components/sections/stopka";
 import { UslugiCennik } from "@/components/sections/uslugi-cennik";
+import { getHeroImages } from "@/lib/cms-content";
 import {
   getCennik,
   getFaq,
@@ -43,13 +44,15 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function HomePage() {
-  const [cennik, kontakt, dostepnosc, faqData, metamorfozy] = await Promise.all([
-    getCennik(),
-    getKontakt(),
-    getDostepnosc(),
-    getFaq(),
-    getMetamorfozy(),
-  ]);
+  const [heroImages, cennik, kontakt, dostepnosc, faqData, metamorfozy] =
+    await Promise.all([
+      getHeroImages(),
+      getCennik(),
+      getKontakt(),
+      getDostepnosc(),
+      getFaq(),
+      getMetamorfozy(),
+    ]);
 
   const faq = faqData.items;
 
@@ -67,7 +70,7 @@ export default async function HomePage() {
       {/* Kolejność sekcji 1:1 z makietą „kreskówka": hero → cennik (01) →
           efekty (02) → współpraca (03) → FAQ → kontakt. */}
       <main>
-        <Hero kontakt={kontakt} />
+        <Hero images={heroImages} kontakt={kontakt} />
         <UslugiCennik cennik={cennik} kontakt={kontakt} />
         {/* Sekcja Efekty = kuratorowane pary przed/po (panel → Metamorfozy).
             CMS-owa Galeria z suwakami czeka w components/sections/galeria.tsx —

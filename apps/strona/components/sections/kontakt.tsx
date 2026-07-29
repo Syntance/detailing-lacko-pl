@@ -65,7 +65,10 @@ export function Kontakt({ kontakt }: { kontakt: KontaktData }) {
             {kontakt.hoursNote}
           </p>
 
-          <p className="max-w-[70ch] font-mono text-[10px] leading-[1.9] tracking-[0.16em] text-muted-foreground uppercase">
+          {/* Makieta ma tu #6B7075, ale na czystej czerni to 4,2:1 — poniżej
+              WCAG AA (EAA to wymóg prawny). Jaśniejszy szary z tej samej
+              palety (#A9ACAF, ten sam co notka czarnego pasa) daje 9,2:1. */}
+          <p className="max-w-[70ch] font-mono text-[10px] leading-[1.9] tracking-[0.16em] text-noc-szary uppercase">
             {kontakt.serviceAreas.join(" · ")}
           </p>
         </Reveal>

@@ -66,7 +66,9 @@ export function Stopka({ kontakt }: { kontakt: KontaktData }) {
           </nav>
         </div>
 
-        <div className="mt-10 flex flex-col gap-2 font-mono text-[10px] tracking-[0.16em] text-muted-foreground uppercase sm:flex-row sm:items-center sm:justify-between">
+        {/* Szary na czerni: #A9ACAF, nie #6B7075 z makiety — patrz komentarz
+            w kontakt.tsx (kontrast WCAG AA). */}
+        <div className="mt-10 flex flex-col gap-2 font-mono text-[10px] tracking-[0.16em] text-noc-szary uppercase sm:flex-row sm:items-center sm:justify-between">
           <p>© {year} Detailing Łącko</p>
           <p className="sm:text-right">
             Projekt i wdrożenie:{" "}

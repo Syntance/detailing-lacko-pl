@@ -140,6 +140,7 @@ export function Hero({
           {/* Lanca wystaje z narożnika karty i „pryska" na auto. Wariant
               z brandingu z białą obwódką („czarne tło") — obwódka odcina znak
               od zdjęcia pod nim, więc żaden cień CSS nie jest potrzebny.
+              Bez obrotu: grafika leży poziomo tak, jak w pliku.
               Wymiary = viewBox pliku (obwódka dodaje po 11 px do 1866×637).
               Na wąskich ekranach mniejszy zwis, żeby sekcja (overflow-hidden)
               nie ucięła pistoletu. SVG przez <img> — Next nie optymalizuje SVG. */}
@@ -148,7 +149,7 @@ export function Hero({
             alt="Lanca z pianą"
             width={1888}
             height={659}
-            className="absolute top-[-3%] right-[-2%] z-[2] w-[46%] -rotate-[14deg] sm:right-[-10%] sm:w-[42%]"
+            className="absolute top-[-3%] right-[-2%] z-[2] w-[46%] sm:right-[-10%] sm:w-[42%]"
           />
 
           <div aria-hidden className="absolute -bottom-2.5 left-0 flex">

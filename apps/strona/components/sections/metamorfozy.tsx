@@ -26,7 +26,7 @@ function Plakietka({ po }: { po?: boolean }) {
   return (
     <span
       aria-hidden
-      className={`pointer-events-none absolute top-2.5 left-2.5 rounded-full border-2 border-ink px-[9px] py-1 font-mono text-[9px] tracking-[0.16em] uppercase ${
+      className={`etykieta-sm pointer-events-none absolute top-2.5 left-2.5 rounded-full border-2 border-ink px-[9px] py-1 ${
         po ? "bg-zolty" : "bg-background"
       }`}
     >
@@ -69,12 +69,16 @@ function ParaZdjec({
         <div
           key={label}
           className={`relative min-w-0 overflow-hidden bg-piasek ${
-            pelny
-              ? "aspect-[3/4] h-[min(60vh,70vw)] max-w-full"
-              : "h-[180px]"
+            pelny ? "aspect-[3/4] h-[min(60vh,70vw)] max-w-full" : "h-[180px]"
           }`}
         >
-          <Image src={url} alt={alt} fill sizes={sizes} className="object-cover" />
+          <Image
+            src={url}
+            alt={alt}
+            fill
+            sizes={sizes}
+            className="object-cover"
+          />
           <Plakietka po={label === "po"} />
         </div>
       ))}
@@ -123,7 +127,7 @@ export function Metamorfozy({ data }: { data: MetamorfozyData }) {
     >
       <div className="mx-auto flex max-w-[1140px] flex-col gap-[34px] px-5 py-16 md:px-6 md:py-[68px]">
         <Reveal className="flex flex-col gap-2.5">
-          <p className="w-max rotate-[1.5deg] rounded-full border-2 border-ink bg-zolty px-3.5 py-1.5 font-mono text-[10px] tracking-[0.2em] uppercase">
+          <p className="etykieta w-max rotate-[1.5deg] rounded-full border-2 border-ink bg-zolty px-3.5 py-1.5">
             02 · efekty
           </p>
           <h2
@@ -153,7 +157,7 @@ export function Metamorfozy({ data }: { data: MetamorfozyData }) {
                 <span className="flex flex-col gap-[3px] border-t-[3px] border-ink px-4 py-[13px]">
                   <span className="text-[15px] font-bold">{t.title}</span>
                   {t.cover.podpis ? (
-                    <span className="font-mono text-[10px] tracking-[0.12em] text-pretty text-muted-foreground uppercase">
+                    <span className="etykieta text-pretty text-muted-foreground">
                       {t.cover.podpis}
                     </span>
                   ) : null}

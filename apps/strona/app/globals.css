@@ -89,6 +89,29 @@
   background-size: 22px 22px;
 }
 
+/* Etykiety mono (badge sekcji „01 · cennik", podpisy, meta typu czas realizacji).
+   Wcześniej każde miejsce miało własne 8,5–10,5 px przy weight 400 — IBM Plex
+   Mono ma niską x-height, a tracking 0,2em dodatkowo rozrzedza wyraz, więc w
+   tym rozmiarze etykiety były na granicy czytelności. Skala ma dwa poziomy,
+   oba weight 500 (jedyne grubsze cięcie wczytane w layout.tsx):
+   `etykieta` 12px — badge sekcji, podpisy pod nagłówkami, stopka;
+   `etykieta-sm` 11px — meta w wierszu (czas, „filar", plakietki w kartach).
+   Kolory zostają per miejsce, bo kontrast był już wyrównany do AA. */
+@utility etykieta {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+@utility etykieta-sm {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
 /* Twarde cienie offsetowe (bez blura) — sygnaturowy chwyt makiety.
    Numer = offset w px, wariant = kolor cienia. */
 @utility cien-3 {

@@ -72,7 +72,7 @@ export function Hero({
     >
       <div className="mx-auto grid max-w-[1140px] items-center gap-10 px-5 pt-12 pb-14 md:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:pt-16 lg:pb-[72px]">
         <div className="flex flex-col gap-[22px]">
-          <p className="hero-enter cien-3 w-max -rotate-2 rounded-full border-2 border-ink bg-background px-4 py-[7px] font-mono text-[10.5px] tracking-[0.2em] uppercase">
+          <p className="etykieta hero-enter cien-3 w-max -rotate-2 rounded-full border-2 border-ink bg-background px-4 py-[7px]">
             {kontakt.addressLine} · gmina {kontakt.city}
           </p>
 
@@ -81,15 +81,16 @@ export function Hero({
           </h1>
 
           <p className="hero-enter max-w-[40ch] text-[17px] leading-[1.5] font-medium text-pretty [animation-delay:90ms] lg:text-[19px]">
-            Pranie tapicerki, czyszczenie wnętrza, polerowanie lakieru
-            i reflektorów
+            Pranie tapicerki, czyszczenie wnętrza, polerowanie lakieru i
+            reflektorów
           </p>
 
           <div className="hero-enter cien-5 flex w-max max-w-full rotate-[1.2deg] flex-col gap-0.5 rounded-xl border-[3px] border-ink bg-background px-[18px] py-[13px] [animation-delay:180ms]">
             <p className="text-[15px] text-pretty lg:text-base">
-              Komplet foteli z kanapą — <strong className="font-bold">300 zł</strong>
+              Komplet foteli z kanapą —{" "}
+              <strong className="font-bold">300 zł</strong>
             </p>
-            <p className="font-mono text-[10px] tracking-[0.16em] text-muted-foreground uppercase">
+            <p className="etykieta text-muted-foreground">
               1 dzień · płatność po efekcie
             </p>
           </div>
@@ -127,7 +128,7 @@ export function Hero({
               />
             </div>
             <div className="mt-3 flex justify-center">
-              <p className="font-mono text-[10px] tracking-[0.22em] text-muted-foreground uppercase">
+              <p className="etykieta text-muted-foreground">
                 psss... piana robi robotę
               </p>
             </div>

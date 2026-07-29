@@ -26,7 +26,7 @@ export function Proces({ kontakt }: { kontakt: KontaktData }) {
     <section id="jak" aria-labelledby="jak-heading" className="scroll-mt-24">
       <div className="mx-auto flex max-w-[1140px] flex-col gap-[34px] px-5 py-16 md:px-6 md:py-[68px]">
         <Reveal className="flex flex-col gap-2.5">
-          <p className="w-max -rotate-1 rounded-full border-2 border-ink bg-zolty px-3.5 py-1.5 font-mono text-[10px] tracking-[0.2em] uppercase">
+          <p className="etykieta w-max -rotate-1 rounded-full border-2 border-ink bg-zolty px-3.5 py-1.5">
             03 · współpraca
           </p>
           <h2

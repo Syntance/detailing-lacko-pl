@@ -58,7 +58,7 @@ export function Kontakt({ kontakt }: { kontakt: KontaktData }) {
           {/* Makieta ma tu #6B7075, ale na czystej czerni to 4,2:1 — poniżej
               WCAG AA (EAA to wymóg prawny). Jaśniejszy szary z tej samej
               palety (#A9ACAF, ten sam co notka czarnego pasa) daje 9,2:1. */}
-          <p className="max-w-[70ch] font-mono text-[10px] leading-[1.9] tracking-[0.16em] text-noc-szary uppercase">
+          <p className="etykieta max-w-[70ch] leading-[1.9] text-noc-szary">
             {kontakt.serviceAreas.join(" · ")}
           </p>
         </Reveal>

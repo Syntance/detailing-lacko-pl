@@ -40,7 +40,7 @@ export function Navbar({ kontakt }: { kontakt: KontaktData }) {
             <span className="text-[15px] leading-none font-bold tracking-[0.06em] uppercase md:text-base">
               Detailing Łącko
             </span>
-            <span className="font-mono text-[8.5px] tracking-[0.26em] text-muted-foreground uppercase">
+            <span className="etykieta-sm text-muted-foreground">
               wnętrze · lakier
             </span>
           </span>

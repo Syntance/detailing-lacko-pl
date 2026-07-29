@@ -7,8 +7,9 @@ import { Reveal, RevealItem, RevealStagger } from "@/components/motion/reveal";
 import { BookingLink } from "./phone-link";
 
 /**
- * Cennik 1:1 z makietą „kreskówka": trzy karty z twardą kreską i przerywanymi
- * liniami między pozycjami, pod nimi czarny pas z pakietem IN+OUT.
+ * Cennik 1:1 z makietą „kreskówka": na górze czarny pas ze wszystkimi pakietami
+ * (cena + krótki opis + czas), pod nim karty kategorii z twardą kreską i
+ * przerywanymi liniami — pełny cennik pozycja po pozycji.
  *
  * Makieta nie ma akordeonu, filtrów ani tabeli „pełny cennik" (poprzednia
  * wersja miała wszystkie trzy), więc sekcja jest w całości serwerowa — jedyny
@@ -16,8 +17,12 @@ import { BookingLink } from "./phone-link";
  * po id; pozycje i ceny pochodzą z panelu, ozdoby nagłówków z makiety.
  */
 
-/** Karta pakietu w czarnym pasie — pozycja z panelu po id. */
-const PAKIET_ITEM_ID = "detailing-kompletny-in-out";
+/**
+ * Pakiety idą do czarnego pasa NAD kartami (nie jako czwarta kolumna) — to
+ * wejście w ofertę: całe auto w jednej wizycie. Cały cennik pozycja po pozycji
+ * jest pod nim, w kartach kategorii.
+ */
+const PAKIETY_CATEGORY_ID = "pakiety";
 
 /** Kolejność kolumn = kolejność z makiety (Wnętrze jako filar oferty). */
 const CARD_CATEGORY_IDS = ["wnetrze", "zewnatrz", "polerowanie-korekta"];
@@ -34,7 +39,7 @@ function stripBullet(name: string): string {
 function OzdobaNaglowka({ categoryId }: { categoryId: string }) {
   if (categoryId === "wnetrze") {
     return (
-      <span className="rounded-full bg-ink px-2.5 py-[5px] font-mono text-[9px] tracking-[0.18em] text-zolty uppercase">
+      <span className="etykieta-sm rounded-full bg-ink px-2.5 py-[5px] text-zolty">
         filar
       </span>
     );
@@ -49,7 +54,7 @@ function OzdobaNaglowka({ categoryId }: { categoryId: string }) {
   }
   if (categoryId === "polerowanie-korekta") {
     return (
-      <span className="font-mono text-[9px] tracking-[0.18em] text-muted-foreground uppercase">
+      <span className="etykieta-sm whitespace-nowrap text-muted-foreground">
         50–70% rys
       </span>
     );
@@ -77,6 +82,39 @@ function PozycjaCennika({ item }: { item: CennikItem }) {
   );
 }
 
+/** Pakiet w czarnym pasie: nazwa, cena, mały opis i czas trwania. */
+function PakietPozycja({ item }: { item: CennikItem }) {
+  return (
+    <li className="flex flex-col gap-1.5 border-t-2 border-dashed border-noc-szary/40 pt-3.5">
+      <div className="flex items-baseline justify-between gap-3">
+        <span className="text-[15px] font-semibold">
+          {stripBullet(item.name)}
+        </span>
+        <span className="text-lg font-bold whitespace-nowrap text-zolty tabular-nums">
+          {formatItemPrice(item)}
+        </span>
+      </div>
+      {item.description ? (
+        <span className="text-[13px] leading-[1.5] text-pretty text-noc-szary">
+          {item.description}
+        </span>
+      ) : null}
+      {item.timeLabel || item.popular ? (
+        <span className="etykieta-sm flex flex-wrap items-center gap-2">
+          {item.popular ? (
+            <span className="rounded-full bg-zolty px-2 py-[3px] text-ink">
+              najczęściej wybierane
+            </span>
+          ) : null}
+          {item.timeLabel ? (
+            <span className="text-noc-szary">{item.timeLabel}</span>
+          ) : null}
+        </span>
+      ) : null}
+    </li>
+  );
+}
+
 export function UslugiCennik({ cennik }: { cennik: CennikData }) {
   const items = cennik.items.filter((i) => !i.disabled);
   const categories = cennik.categories.filter((c) => !c.disabled);
@@ -84,22 +122,29 @@ export function UslugiCennik({ cennik }: { cennik: CennikData }) {
   // Kolumny: najpierw kategorie z makiety w jej kolejności, potem ewentualne
   // dodane w panelu — żadna nie znika ze strony po edycji.
   const cardCategories = [
-    ...CARD_CATEGORY_IDS.map((id) => categories.find((c) => c.id === id)).filter(
-      (c): c is NonNullable<typeof c> => Boolean(c),
-    ),
+    ...CARD_CATEGORY_IDS.map((id) =>
+      categories.find((c) => c.id === id),
+    ).filter((c): c is NonNullable<typeof c> => Boolean(c)),
     ...categories.filter(
-      (c) => c.id !== "pakiety" && !CARD_CATEGORY_IDS.includes(c.id),
+      (c) => c.id !== PAKIETY_CATEGORY_ID && !CARD_CATEGORY_IDS.includes(c.id),
     ),
   ];
 
-  const pakiet = items.find((item) => item.id === PAKIET_ITEM_ID);
+  const pakietyKategoria = categories.find((c) => c.id === PAKIETY_CATEGORY_ID);
+  const pakiety = items
+    .filter((item) => item.categoryId === PAKIETY_CATEGORY_ID)
+    .sort((a, b) => a.order - b.order);
 
   return (
-    <section id="cennik" aria-labelledby="cennik-heading" className="scroll-mt-24">
+    <section
+      id="cennik"
+      aria-labelledby="cennik-heading"
+      className="scroll-mt-24"
+    >
       <div className="mx-auto flex max-w-[1140px] flex-col gap-[34px] px-5 py-16 md:px-6 md:py-[68px]">
         <Reveal className="flex flex-wrap items-end justify-between gap-6">
           <div className="flex flex-col gap-2.5">
-            <p className="w-max -rotate-[1.5deg] rounded-full border-2 border-ink bg-zolty px-3.5 py-1.5 font-mono text-[10px] tracking-[0.2em] uppercase">
+            <p className="etykieta w-max -rotate-[1.5deg] rounded-full border-2 border-ink bg-zolty px-3.5 py-1.5">
               01 · cennik
             </p>
             <h2
@@ -115,6 +160,41 @@ export function UslugiCennik({ cennik }: { cennik: CennikData }) {
             </p>
           ) : null}
         </Reveal>
+
+        {pakiety.length ? (
+          <Reveal>
+            <div className="cien-zolty-6 flex flex-col gap-[22px] rounded-2xl border-[3px] border-ink bg-ink px-[26px] py-6 text-background">
+              <div className="flex flex-wrap items-end justify-between gap-5">
+                <div className="flex flex-col gap-1.5">
+                  <p className="etykieta-sm text-zolty">
+                    {pakietyKategoria?.timeLabel
+                      ? `pakiety · ${pakietyKategoria.timeLabel}`
+                      : "pakiety"}
+                  </p>
+                  <h3 className="text-[22px] leading-[1.1] font-bold">
+                    {pakietyKategoria?.name ?? "Pakiety"}
+                  </h3>
+                  {cennik.settings.noteText ? (
+                    <p className="max-w-[62ch] text-[13.5px] text-pretty text-noc-szary">
+                      {cennik.settings.noteText}
+                    </p>
+                  ) : null}
+                </div>
+                <BookingLink
+                  section="cennik"
+                  className="rounded-full border-[3px] border-zolty bg-zolty px-[22px] py-[13px] text-[15px] font-bold whitespace-nowrap text-ink focus-visible:ring-3 focus-visible:ring-background/60 focus-visible:outline-none"
+                >
+                  {cennik.settings.noteCtaLabel}
+                </BookingLink>
+              </div>
+              <ul className="grid gap-x-8 gap-y-[18px] sm:grid-cols-2">
+                {pakiety.map((item) => (
+                  <PakietPozycja key={item.id} item={item} />
+                ))}
+              </ul>
+            </div>
+          </Reveal>
+        ) : null}
 
         <RevealStagger className="grid items-start gap-[22px] lg:grid-cols-3">
           {cardCategories.map((category) => {
@@ -148,30 +228,6 @@ export function UslugiCennik({ cennik }: { cennik: CennikData }) {
             );
           })}
         </RevealStagger>
-
-        {pakiet ? (
-          <Reveal>
-            <div className="cien-zolty-6 flex flex-wrap items-center justify-between gap-6 rounded-2xl border-[3px] border-ink bg-ink px-[26px] py-[22px] text-background">
-              <div className="flex flex-col gap-1">
-                <p className="text-[19px] font-bold">
-                  {stripBullet(pakiet.name)} —{" "}
-                  <span className="text-zolty">{formatItemPrice(pakiet)}</span>
-                </p>
-                {cennik.settings.noteText ? (
-                  <p className="text-[13.5px] text-pretty text-noc-szary">
-                    {cennik.settings.noteText}
-                  </p>
-                ) : null}
-              </div>
-              <BookingLink
-                section="cennik"
-                className="rounded-full border-[3px] border-zolty bg-zolty px-[22px] py-[13px] text-[15px] font-bold whitespace-nowrap text-ink focus-visible:ring-3 focus-visible:ring-background/60 focus-visible:outline-none"
-              >
-                {cennik.settings.noteCtaLabel}
-              </BookingLink>
-            </div>
-          </Reveal>
-        ) : null}
       </div>
     </section>
   );

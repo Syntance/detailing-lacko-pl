@@ -83,12 +83,14 @@ export function formatItemPrice(item: CennikItem): string {
 /** Domyślny cennik — 1:1 z Notion „Cennik i zakres usług". */
 export const DEFAULT_CENNIK: CennikData = {
   settings: {
-    heading: "Cennik",
-    subheading: "",
+    heading: "Ceny z góry, bez haczyków",
+    subheading:
+      "Jedyny pełny cennik w promieniu 20 km. Rozliczamy dokładnie według niego.",
     noteTitle: "Sprzedajesz auto?",
+    // Podpis w czarnym pasie pakietu (makieta „kreskówka").
     noteText:
-      "Kupujący zbije cenę o brudne wnętrze mocniej, niż kosztuje jego wyczyszczenie. Handlarze i komisy: od 2 aut miesięcznie stała stawka ok. 400 zł/auto.",
-    noteCtaLabel: "Wyślij zdjęcie",
+      "100 zł taniej niż suma składowych · pakiet pod sprzedaż auta też 650 zł, ze zdjęciami do ogłoszenia",
+    noteCtaLabel: "Wyślij zdjęcie →",
     expandLabel: "Rozwiń pełny cennik",
     collapseLabel: "Zwiń cennik",
   },
@@ -107,7 +109,8 @@ export const DEFAULT_CENNIK: CennikData = {
     },
     {
       id: "zewnatrz",
-      name: "Zewnątrz",
+      // Nazwa kolumny 1:1 z makietą „kreskówka".
+      name: "Mycie i wosk",
       description: "Mycie detailingowe, dekontaminacja, wosk i dodatki chroniące lakier.",
       priceFrom: 150,
       timeLabel: "30 min – 2,5 h",
@@ -127,7 +130,7 @@ export const DEFAULT_CENNIK: CennikData = {
     },
     {
       id: "polerowanie-korekta",
-      name: "Polerowanie i korekta lakieru",
+      name: "Polerowanie",
       description: "Polerowanie jednoetapowe (one step) i reflektory.",
       priceFrom: 250,
       timeLabel: "1,5 h – 1 dzień",

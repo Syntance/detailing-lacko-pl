@@ -1,70 +1,45 @@
-"use client";
-
-import { useState } from "react";
-import { ChevronDown } from "lucide-react";
 import type { FaqItem } from "@moduly/types";
-import { trackFaqOpen } from "@/lib/track";
-import { Reveal } from "@/components/motion/reveal";
+import { Reveal, RevealItem, RevealStagger } from "@/components/motion/reveal";
 
 /**
- * FAQ — pozostałe obiekcje (brief §6). Treść edytowalna w Magazyn → CMS.
+ * FAQ 1:1 z makietą „kreskówka": żółte tło w kropkowaną siatkę, a pytania
+ * jako białe karty z twardą kreską i cieniem — pytanie i odpowiedź widoczne
+ * od razu. Makieta nie ma akordeonu (poprzednia wersja miała), więc sekcja
+ * jest serwerowa: zero JS, całe FAQ w HTML od pierwszego renderu (bonus dla
+ * SEO/GEO). Treść z panelu Magazyn → FAQ.
  */
 export function Faq({ items }: { items: FaqItem[] }) {
-  const [openId, setOpenId] = useState<string | null>(null);
-
   const sorted = [...items].sort((a, b) => a.order - b.order);
   if (!sorted.length) return null;
 
   return (
-    <section id="faq" aria-labelledby="faq-heading" className="scroll-mt-20">
-      <div className="mx-auto max-w-3xl px-6 py-20 md:py-28">
+    <section
+      id="faq"
+      aria-labelledby="faq-heading"
+      className="kropki scroll-mt-24 border-t-[3px] border-ink bg-zolty"
+    >
+      <div className="mx-auto flex max-w-[900px] flex-col gap-[30px] px-5 py-16 md:px-6 md:py-[68px]">
         <Reveal>
           <h2
             id="faq-heading"
-            className="font-serif text-3xl leading-tight font-medium md:text-4xl"
+            className="text-3xl leading-[1.05] font-bold tracking-[-0.02em] md:text-[40px]"
           >
             Częste pytania
           </h2>
         </Reveal>
 
-        <Reveal className="mt-8">
-          <ul className="divide-y divide-border rounded-2xl border border-border bg-card">
-            {sorted.map((item) => {
-              const open = openId === item.id;
-              return (
-                <li key={item.id}>
-                  <h3>
-                    <button
-                      type="button"
-                      aria-expanded={open}
-                      aria-controls={`faq-panel-${item.id}`}
-                      onClick={() => {
-                        setOpenId(open ? null : item.id);
-                        if (!open) trackFaqOpen(item.question);
-                      }}
-                      className="flex min-h-12 w-full items-center justify-between gap-4 px-5 py-4 text-left text-base font-medium transition-colors hover:text-primary-strong focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
-                    >
-                      {item.question}
-                      <ChevronDown
-                        className={`size-5 shrink-0 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`}
-                        aria-hidden
-                      />
-                    </button>
-                  </h3>
-                  <div
-                    id={`faq-panel-${item.id}`}
-                    hidden={!open}
-                    className="px-5 pb-5"
-                  >
-                    <p className="text-sm text-pretty text-muted-foreground">
-                      {item.answer}
-                    </p>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        </Reveal>
+        <RevealStagger className="flex flex-col gap-3.5">
+          {sorted.map((item) => (
+            <RevealItem key={item.id}>
+              <div className="cien-4 flex flex-col gap-1.5 rounded-[14px] border-[3px] border-ink bg-background px-[21px] py-[17px]">
+                <h3 className="text-base font-bold">{item.question}</h3>
+                <p className="text-[14.5px] leading-[1.55] text-pretty text-tekst">
+                  {item.answer}
+                </p>
+              </div>
+            </RevealItem>
+          ))}
+        </RevealStagger>
       </div>
     </section>
   );

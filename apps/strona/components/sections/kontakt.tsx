@@ -1,109 +1,74 @@
-import { Camera, Clock, MapPin, Phone } from "lucide-react";
 import { buildPhotoContactHref } from "@/lib/photo-contact";
 import type { KontaktData } from "@/lib/site";
 import { Reveal } from "@/components/motion/reveal";
 import { PhoneLink, PhotoLink } from "./phone-link";
 
 /**
- * „Umów termin" — sekcja konwersji (plan www v2 §7). Jedna strona, dwa
- * działania: wiadomość ze zdjęciem albo telefon. Świadomie bez formularza
- * (zero formularzy wieloetapowych) i bez fraz spoza doliny Dunajca.
+ * „Umów termin" 1:1 z makietą „kreskówka": czarna sekcja zamykająca, znak
+ * marki w wersji mono, dwa CTA (wiadomość ze zdjęciem + telefon) i NAP.
+ * Świadomie bez formularza — tak jak w makiecie.
  */
 export function Kontakt({ kontakt }: { kontakt: KontaktData }) {
   const photoHref = buildPhotoContactHref(kontakt);
+  // Makieta pisze „na WhatsApp", bo linkuje do wa.me. Gdy panel nie ma
+  // ustawionego messengerUrl, CTA spada na SMS — wtedy etykieta nie może
+  // obiecywać WhatsAppa.
+  const whatsapp = /wa\.me|whatsapp/i.test(photoHref);
 
   return (
     <section
       id="kontakt"
       aria-labelledby="kontakt-heading"
-      className="scroll-mt-20 border-y border-border bg-card/40"
+      className="scroll-mt-24 border-t-[3px] border-ink bg-noc text-background"
     >
-      <div className="mx-auto max-w-5xl px-6 py-20 md:py-28">
-        <Reveal>
+      <div className="mx-auto flex max-w-[1140px] flex-col items-center gap-[30px] px-5 pt-16 pb-14 text-center md:px-6 md:pt-[72px] md:pb-14">
+        {/* SVG marki przez <img> — optymalizator Next nie przetwarza SVG. */}
+        <img
+          src="/brand/lw-mono-czern.svg"
+          alt=""
+          width={1888}
+          height={659}
+          className="block w-[190px]"
+        />
+
+        <Reveal className="flex flex-col items-center gap-[30px]">
           <h2
             id="kontakt-heading"
-            className="font-serif text-3xl leading-tight font-medium md:text-4xl"
+            className="text-[2rem] leading-[1.05] font-bold tracking-[-0.02em] md:text-[42px]"
           >
             Umów termin
           </h2>
-          <p className="mt-3 max-w-2xl text-pretty text-muted-foreground">
-            Wyślij zdjęcie albo zadzwoń — do 2 h po 16:00 dostaniesz cenę
-            z cennika, wolny termin i szczerą ocenę, czy plama zejdzie. Płacisz
-            dopiero, gdy zobaczysz efekt.
-          </p>
-        </Reveal>
 
-        <div className="mt-8 grid gap-5 lg:grid-cols-2">
-          <Reveal className="space-y-5">
+          <div className="flex flex-wrap items-stretch justify-center gap-4">
             <PhotoLink
               href={photoHref}
               section="kontakt"
-              className="flex items-center gap-4 rounded-2xl bg-primary p-5 text-primary-foreground transition-transform hover:scale-[1.01] focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none motion-reduce:transition-none"
+              className="cien-zolty-mgla-5 rounded-xl border-[3px] border-zolty bg-zolty px-[26px] py-3.5 text-[16.5px] font-bold text-ink focus-visible:ring-3 focus-visible:ring-background/60 focus-visible:outline-none"
             >
-              <Camera className="size-6 shrink-0" aria-hidden />
-              <span>
-                <span className="block text-lg font-semibold">
-                  Wyślij zdjęcie — dostaniesz cenę
-                </span>
-                <span className="text-sm opacity-85">
-                  odpisujemy do 2 h po 16:00
-                </span>
-              </span>
+              {whatsapp
+                ? "Wyślij zdjęcie na WhatsApp"
+                : "Wyślij zdjęcie — dostaniesz cenę"}
             </PhotoLink>
 
             <PhoneLink
               phoneE164={kontakt.phoneE164}
               section="kontakt"
-              className="flex items-center gap-4 rounded-2xl border border-primary/30 bg-primary/[0.06] p-5 transition-colors hover:border-primary/60 focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+              className="flex items-center rounded-xl border-[3px] border-background px-[26px] py-3.5 text-[16.5px] font-semibold transition-colors hover:bg-background/10 focus-visible:ring-3 focus-visible:ring-background/60 focus-visible:outline-none"
+              ariaLabel={`Zadzwoń: ${kontakt.phoneDisplay}`}
             >
-              <Phone className="size-6 shrink-0 text-primary-strong" aria-hidden />
-              <span>
-                <span className="block text-xl font-semibold">
-                  {kontakt.phoneDisplay}
-                </span>
-                <span className="text-sm text-muted-foreground">
-                  {kontakt.hoursNote}
-                </span>
-              </span>
+              {kontakt.phoneDisplay}
             </PhoneLink>
-          </Reveal>
+          </div>
 
-          <Reveal delay={0.1}>
-            <div className="h-full rounded-2xl border border-border bg-card p-5">
-              <p className="flex items-start gap-3">
-                <MapPin
-                  className="mt-0.5 size-5 shrink-0 text-primary-strong"
-                  aria-hidden
-                />
-                <span>
-                  <span className="block font-medium">
-                    {kontakt.addressLine}, {kontakt.postalCode} {kontakt.city}
-                  </span>
-                  {kontakt.googleMapsUrl ? (
-                    <a
-                      href={kontakt.googleMapsUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="mt-1 inline-block text-sm text-primary-strong underline-offset-4 hover:underline"
-                    >
-                      Wyznacz trasę w Google Maps
-                    </a>
-                  ) : null}
-                </span>
-              </p>
-              <p className="mt-4 flex items-start gap-3 text-sm text-muted-foreground">
-                <Clock
-                  className="mt-0.5 size-5 shrink-0 text-primary-strong"
-                  aria-hidden
-                />
-                <span>
-                  Usługa stacjonarna — obsługujemy dolinę Dunajca:{" "}
-                  {kontakt.serviceAreas.join(" · ")}
-                </span>
-              </p>
-            </div>
-          </Reveal>
-        </div>
+          <p className="text-[15px] text-noc-jasny">
+            {kontakt.addressLine}, {kontakt.postalCode} {kontakt.city} ·{" "}
+            {kontakt.hoursNote}
+          </p>
+
+          <p className="max-w-[70ch] font-mono text-[10px] leading-[1.9] tracking-[0.16em] text-muted-foreground uppercase">
+            {kontakt.serviceAreas.join(" · ")}
+          </p>
+        </Reveal>
       </div>
     </section>
   );

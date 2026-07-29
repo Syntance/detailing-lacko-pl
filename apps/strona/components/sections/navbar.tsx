@@ -1,136 +1,75 @@
-"use client";
-
-import { useEffect, useState } from "react";
-import { Phone } from "lucide-react";
+import Image from "next/image";
 import type { KontaktData } from "@/lib/site";
 import { PhoneLink } from "./phone-link";
 
+/**
+ * Nagłówek 1:1 z makietą „kreskówka": sticky, biały, twarda kreska 3px na
+ * dole, sygnet + lockup nazwy, pigułki nawigacji z obwódką 2px i telefon
+ * jako czarna pigułka z żółtym cieniem.
+ *
+ * Bez stanu scrolla i bez IntersectionObserver (poprzedni navbar był
+ * przezroczysty nad hero) — makieta ma jedno, stałe tło, więc to komponent
+ * serwerowy. Poniżej sm pigułki sekcji przewijają się poziomo, żeby wszystkie
+ * cztery pozycje makiety zostały dostępne bez hamburgera.
+ */
+
 const NAV_ITEMS = [
-  { href: "#cennik", id: "cennik", label: "Cennik" },
-  { href: "#metamorfozy", id: "metamorfozy", label: "Efekty" },
-  { href: "#proces", id: "proces", label: "Jak pracujemy" },
-  { href: "#faq", id: "faq", label: "FAQ" },
-  { href: "#kontakt", id: "kontakt", label: "Kontakt" },
+  { href: "#cennik", label: "Cennik" },
+  { href: "#efekty", label: "Efekty" },
+  { href: "#faq", label: "FAQ" },
 ] as const;
 
-/**
- * Sticky navbar one-page: przezroczysty nad hero, po scrollu biały z blur.
- * Kotwice do sekcji z podświetleniem aktywnej (IntersectionObserver) i CTA
- * telefon (główna konwersja) — TYLKO na desktopie. Na mobile (< md) navbar
- * to samo logo: nawigacją telefonu jest stały dolny pasek akcji (BottomBar),
- * hamburger celowo nie istnieje.
- */
 export function Navbar({ kontakt }: { kontakt: KontaktData }) {
-  const [scrolled, setScrolled] = useState(false);
-  const [active, setActive] = useState<string>("");
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 8);
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
-  useEffect(() => {
-    const sections = NAV_ITEMS.map((item) =>
-      document.getElementById(item.id),
-    ).filter((el): el is HTMLElement => el !== null);
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries
-          .filter((entry) => entry.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
-        if (visible) setActive(visible.target.id);
-      },
-      { rootMargin: "-45% 0px -50% 0px", threshold: [0, 0.25, 0.5, 1] },
-    );
-    sections.forEach((section) => observer.observe(section));
-    return () => observer.disconnect();
-  }, []);
-
-  // Przezroczysty navbar leży na full-bleed hero, który ma ciemny scrim —
-  // wtedy tekst musi być jasny. Po scrollu tło robi się jasne, więc wraca
-  // ciemna typografia. Jeden warunek steruje obiema warstwami.
-  const solid = scrolled;
-
   return (
-    <header
-      className={`fixed inset-x-0 top-0 z-50 transition-colors duration-300 motion-reduce:transition-none ${
-        solid
-          ? "border-b border-border bg-background/85 backdrop-blur-md"
-          : "border-b border-transparent bg-transparent"
-      }`}
-    >
-      {/* Ta sama klatka co hero (stage 120rem + --hero-inset), więc logo stoi
-          dokładnie nad H1. Poniżej lg hero ma układ mobilny z px-5 — navbar
-          schodzi na tę samą oś. */}
-      <div className="mx-auto flex h-16 max-w-[120rem] items-center justify-between gap-4 px-5 lg:px-[var(--hero-inset)]">
+    <header className="sticky top-0 z-40 border-b-[3px] border-ink bg-background">
+      <div className="mx-auto flex max-w-[1140px] items-center justify-between gap-4 px-5 py-3 md:gap-6 md:px-6">
         <a
           href="#hero"
-          className={`flex items-center rounded-lg focus-visible:ring-3 focus-visible:outline-none ${
-            solid ? "focus-visible:ring-ring/50" : "focus-visible:ring-hero-foreground/60"
-          }`}
+          className="flex shrink-0 items-center gap-3 rounded-lg focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
           aria-label="Detailing Łącko — początek strony"
         >
-          <span
-            className={`font-serif text-lg leading-none font-medium ${
-              solid ? "text-foreground" : "text-hero-foreground"
-            }`}
-          >
-            Detailing Łącko
+          <Image
+            src="/brand/syg-kolor.png"
+            alt=""
+            width={56}
+            height={56}
+            priority
+            className="block w-11 md:w-14"
+          />
+          <span className="flex flex-col gap-[3px]">
+            <span className="text-[15px] leading-none font-bold tracking-[0.06em] uppercase md:text-base">
+              Detailing Łącko
+            </span>
+            <span className="font-mono text-[8.5px] tracking-[0.26em] text-muted-foreground uppercase">
+              wnętrze · lakier
+            </span>
           </span>
         </a>
 
         <nav
           aria-label="Główna nawigacja"
-          className="hidden items-center gap-1 md:flex"
+          className="flex min-w-0 items-center gap-2 text-[14.5px] font-semibold md:gap-3"
         >
-          {NAV_ITEMS.map((item) => {
-            const isActive = active === item.id;
-            return (
+          <span className="hidden items-center gap-2 sm:flex md:gap-3">
+            {NAV_ITEMS.map((item) => (
               <a
-                key={item.id}
+                key={item.href}
                 href={item.href}
-                aria-current={isActive ? "true" : undefined}
-                className={`relative rounded-lg px-3 py-2 text-sm font-medium transition-colors focus-visible:ring-3 focus-visible:outline-none ${
-                  solid
-                    ? `focus-visible:ring-ring/50 ${
-                        isActive
-                          ? "text-foreground"
-                          : "text-muted-foreground hover:text-foreground"
-                      }`
-                    : `focus-visible:ring-hero-foreground/60 ${
-                        isActive
-                          ? "text-hero-foreground"
-                          : "text-hero-muted hover:text-hero-foreground"
-                      }`
-                }`}
+                className="rounded-full border-2 border-ink px-4 py-2 transition-colors hover:bg-zolty focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
               >
                 {item.label}
-                <span
-                  aria-hidden
-                  className={`absolute inset-x-3 -bottom-0.5 h-0.5 rounded-full bg-primary transition-opacity ${
-                    isActive ? "opacity-100" : "opacity-0"
-                  }`}
-                />
               </a>
-            );
-          })}
-        </nav>
-
-        <div className="flex items-center gap-2">
+            ))}
+          </span>
           <PhoneLink
             phoneE164={kontakt.phoneE164}
             section="navbar"
-            className="hidden items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-transform hover:scale-[1.03] focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none motion-reduce:transition-none sm:inline-flex"
+            className="cien-zolty-3 rounded-full border-2 border-ink bg-ink px-4 py-2 whitespace-nowrap text-background focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none md:px-[18px]"
             ariaLabel={`Zadzwoń: ${kontakt.phoneDisplay}`}
           >
-            <Phone className="size-4" aria-hidden />
             {kontakt.phoneDisplay}
           </PhoneLink>
-
-        </div>
+        </nav>
       </div>
     </header>
   );

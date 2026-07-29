@@ -1,17 +1,13 @@
 import type { Metadata } from "next";
 import { JsonLd } from "@/components/json-ld";
-import { DlaczegoJa } from "@/components/sections/dlaczego-ja";
 import { Faq } from "@/components/sections/faq";
 import { Hero } from "@/components/sections/hero";
 import { Kontakt } from "@/components/sections/kontakt";
 import { Metamorfozy } from "@/components/sections/metamorfozy";
 import { Navbar } from "@/components/sections/navbar";
 import { Proces } from "@/components/sections/proces";
-import { BottomBar } from "@/components/sections/bottom-bar";
 import { Stopka } from "@/components/sections/stopka";
 import { UslugiCennik } from "@/components/sections/uslugi-cennik";
-import { getHeroImages } from "@/lib/cms-content";
-import { buildPhotoContactHref } from "@/lib/photo-contact";
 import {
   getCennik,
   getFaq,
@@ -47,15 +43,13 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function HomePage() {
-  const [heroImages, cennik, kontakt, dostepnosc, faqData, metamorfozy] =
-    await Promise.all([
-      getHeroImages(),
-      getCennik(),
-      getKontakt(),
-      getDostepnosc(),
-      getFaq(),
-      getMetamorfozy(),
-    ]);
+  const [cennik, kontakt, dostepnosc, faqData, metamorfozy] = await Promise.all([
+    getCennik(),
+    getKontakt(),
+    getDostepnosc(),
+    getFaq(),
+    getMetamorfozy(),
+  ]);
 
   const faq = faqData.items;
 
@@ -70,28 +64,21 @@ export default async function HomePage() {
 
       <Navbar kontakt={kontakt} />
 
-      {/* Kolejność sekcji: efekt → cena → logistyka → zaufanie → FAQ →
-          kontakt. Efekty (Metamorfozy) przed cennikiem — dowód przed/po jest
-          teraz argumentem za ceną zamiast osobnej sekcji edukacyjnej. */}
-      {/* pb kompensuje stały dolny pasek akcji na mobile (BottomBar). */}
-      <main className="pb-[calc(4.25rem+env(safe-area-inset-bottom))] lg:pb-0">
-        <Hero images={heroImages} kontakt={kontakt} />
+      {/* Kolejność sekcji 1:1 z makietą „kreskówka": hero → cennik (01) →
+          efekty (02) → współpraca (03) → FAQ → kontakt. */}
+      <main>
+        <Hero kontakt={kontakt} />
+        <UslugiCennik cennik={cennik} kontakt={kontakt} />
         {/* Sekcja Efekty = kuratorowane pary przed/po (panel → Metamorfozy).
             CMS-owa Galeria z suwakami czeka w components/sections/galeria.tsx —
             wraca, gdy panel dostanie prawdziwe zdjęcia zamiast placeholderów. */}
         <Metamorfozy data={metamorfozy} />
-        <UslugiCennik cennik={cennik} kontakt={kontakt} />
-        <Proces />
-        <DlaczegoJa />
+        <Proces kontakt={kontakt} />
         <Faq items={faq} />
         <Kontakt kontakt={kontakt} />
       </main>
 
       <Stopka kontakt={kontakt} />
-      <BottomBar
-        phoneE164={kontakt.phoneE164}
-        photoHref={buildPhotoContactHref(kontakt)}
-      />
       <JsonLd
         kontakt={kontakt}
         cennik={cennik}

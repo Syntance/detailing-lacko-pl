@@ -7,82 +7,77 @@ import type { MetamorfozyData, MetamorfozyPara } from "@/lib/metamorfozy";
 import { Reveal, RevealItem, RevealStagger } from "@/components/motion/reveal";
 
 /**
- * Sekcja „Efekty" — kuratorowane kafelki przed/po (lęk nr 2: „czy to coś
- * daje?"). Kafelek = jedna para TEJ SAMEJ powierzchni: brudna po lewej,
- * gotowa po prawej — różnica broni się sama, bez suwaka i animacji.
- * Klik otwiera prawie pełnoekranowy podgląd z KOMPLETEM par danego tematu.
- * Dane z panelu Magazyn → Metamorfozy (pierwsza para tematu = okładka).
+ * Sekcja „Efekty" 1:1 z makietą „kreskówka": kafelki par przed/po na ciepłej
+ * szarości, twarda kreska, plakietki „przed" / „po!" i lekkie przekrzywienie
+ * kafelków. Dane z panelu Magazyn → Metamorfozy (pierwsza para tematu =
+ * okładka kafelka).
+ *
+ * Klik otwiera podgląd z KOMPLETEM par tematu — makieta tego nie pokazuje
+ * (jej kafelki to statyczne pola na zdjęcia), ale to jedyne miejsce, gdzie
+ * widać pozostałe pary z panelu, więc podgląd zostaje, przepisany na język
+ * makiety.
  */
 
-/** Etykieta + zdjęcie — wspólny klocek kafelka i podglądu. */
+/** Przekrzywienia kafelków — wartości z makiety, cyklicznie po indeksie. */
+const ROTACJE = ["-rotate-[1.2deg]", "rotate-[1deg]", "-rotate-[0.8deg]"];
+
+/** Plakietka „przed" (biała) / „po!" (żółta) — narożnik zdjęcia. */
+function Plakietka({ po }: { po?: boolean }) {
+  return (
+    <span
+      aria-hidden
+      className={`pointer-events-none absolute top-2.5 left-2.5 rounded-full border-2 border-ink px-[9px] py-1 font-mono text-[9px] tracking-[0.16em] uppercase ${
+        po ? "bg-zolty" : "bg-background"
+      }`}
+    >
+      {po ? "po!" : "przed"}
+    </span>
+  );
+}
+
+/**
+ * Para zdjęć — kafelek i podgląd.
+ *
+ * Kafelek (okładka): sztywne 180 px wysokości z makiety, więc pionowe kadry
+ * 3:4 zostają przycięte do formatu z projektu — to teaser.
+ * Podgląd (`pelny`): proporcja źródłowa 3:4 bez przycięcia, wysokość ograniczona
+ * do połowy ekranu +20% (60vh/70vw), żeby para mieściła się bez przewijania.
+ */
 function ParaZdjec({
   para,
   sizes,
-  hover,
-  compact,
+  pelny,
 }: {
   para: MetamorfozyPara;
   sizes: string;
-  hover?: boolean;
-  /**
-   * Pełnoekranowy podgląd: na szerokim ekranie grid-cols-2 rozciąga każde
-   * zdjęcie na ~44vw, a przy proporcji 3:4 to i tak za wysoko, żeby się
-   * zmieścić. Flex + h-[min(60vh,70vw)] daje pudełku KONKRETNĄ wysokość
-   * (nie max-h — `fill` jest position:absolute i nie ma własnego rozmiaru,
-   * więc "auto" wysokość liczona z aspect-ratio kolabsuje do 0), z której
-   * dopiero liczy się szerokość. Bazowa granica to połowa wysokości ekranu
-   * (50vh/44vw), +20% na czytelność (60vh/~53vw → 70vw w proporcji 3:4);
-   * wąskie/wysokie ekrany (mobile) nadal rosną w dół, nie w bok.
-   */
-  compact?: boolean;
+  pelny?: boolean;
 }) {
-  // Tło `bg-border` maluje się na całym pudełku — w trybie compact pudełko
-  // MUSI się skurczyć do szerokości pary (inline-flex), inaczej "obramowanie"
-  // ciągnie się na całą szerokość modala. Centrowanie idzie więc na osobnym,
-  // przezroczystym wrapperze na zewnątrz.
   return (
-    <div className={compact ? "flex justify-center" : ""}>
-      <div
-        className={`overflow-hidden rounded-xl bg-border ${
-          compact ? "inline-flex items-start gap-px" : "grid grid-cols-2 gap-px"
-        }`}
-      >
-        {(
-          [
-            ["PRZED", para.beforeUrl, para.beforeAlt],
-            ["PO", para.afterUrl, para.afterAlt],
-          ] as const
-        ).map(([label, url, alt]) => (
-          // aspect 3:4 = proporcja źródłowych zdjęć — kadr widać W CAŁOŚCI,
-          // object-cover niczego tu nie przycina.
-          <div
-            key={label}
-            className={`relative aspect-[3/4] bg-card ${compact ? "h-[min(60vh,70vw)] max-w-full" : ""}`}
-          >
-            <Image
-              src={url}
-              alt={alt}
-              fill
-              sizes={sizes}
-              className={`object-cover ${
-                hover
-                  ? "transition-transform duration-500 group-hover:scale-[1.03] motion-reduce:transition-none"
-                  : ""
-              }`}
-            />
-            <span
-              aria-hidden
-              className={`absolute top-3 left-3 rounded-full px-3 py-1 text-xs font-semibold tracking-wide ${
-                label === "PO"
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-black/60 text-white"
-              }`}
-            >
-              {label}
-            </span>
-          </div>
-        ))}
-      </div>
+    <div
+      className={
+        pelny
+          ? "inline-flex items-start gap-[3px] bg-ink"
+          : "grid grid-cols-2 gap-[3px] bg-ink"
+      }
+    >
+      {(
+        [
+          ["przed", para.beforeUrl, para.beforeAlt],
+          ["po", para.afterUrl, para.afterAlt],
+        ] as const
+      ).map(([label, url, alt]) => (
+        <div
+          key={label}
+          className={`relative min-w-0 overflow-hidden bg-piasek ${
+            pelny
+              ? "aspect-[3/4] h-[min(60vh,70vw)] max-w-full"
+              : "h-[180px]"
+          }`}
+        >
+          <Image src={url} alt={alt} fill sizes={sizes} className="object-cover" />
+          <Plakietka po={label === "po"} />
+        </div>
+      ))}
     </div>
   );
 }
@@ -122,55 +117,55 @@ export function Metamorfozy({ data }: { data: MetamorfozyData }) {
 
   return (
     <section
-      id="metamorfozy"
-      aria-labelledby="metamorfozy-heading"
-      className="scroll-mt-20"
+      id="efekty"
+      aria-labelledby="efekty-heading"
+      className="scroll-mt-24 border-y-[3px] border-ink bg-piasek"
     >
-      <div className="mx-auto max-w-5xl px-6 py-20 md:py-28">
-        <Reveal>
+      <div className="mx-auto flex max-w-[1140px] flex-col gap-[34px] px-5 py-16 md:px-6 md:py-[68px]">
+        <Reveal className="flex flex-col gap-2.5">
+          <p className="w-max rotate-[1.5deg] rounded-full border-2 border-ink bg-zolty px-3.5 py-1.5 font-mono text-[10px] tracking-[0.2em] uppercase">
+            02 · efekty
+          </p>
           <h2
-            id="metamorfozy-heading"
-            className="font-serif text-3xl leading-tight font-medium md:text-4xl"
+            id="efekty-heading"
+            className="text-3xl leading-[1.05] font-bold tracking-[-0.02em] md:text-[40px]"
           >
             {data.heading}
           </h2>
-          {data.subheading ? (
-            <p className="mt-3 text-sm text-muted-foreground">
-              {data.subheading}
-            </p>
-          ) : null}
         </Reveal>
 
-        <RevealStagger className="mt-10 grid gap-6 lg:grid-cols-2">
-          {tematy.map((t) => (
-            <RevealItem key={t.id} className="h-full">
+        <RevealStagger className="grid gap-[26px] sm:grid-cols-2 lg:grid-cols-3">
+          {tematy.map((t, index) => (
+            <RevealItem key={t.id}>
               <button
                 type="button"
                 onClick={() => setOpenId(t.id)}
                 aria-haspopup="dialog"
                 aria-label={`Zobacz wszystkie zdjęcia: ${t.title}`}
-                className="group flex h-full w-full flex-col overflow-hidden rounded-2xl border border-border bg-card text-left transition-colors hover:border-primary-strong/50 focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+                className={`cien-6 block w-full overflow-hidden rounded-[14px] border-[3px] border-ink bg-background text-left transition-transform hover:-translate-y-0.5 focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none motion-reduce:transition-none ${
+                  ROTACJE[index % ROTACJE.length]
+                }`}
               >
                 <ParaZdjec
                   para={t.cover}
-                  sizes="(max-width: 1024px) 50vw, 240px"
-                  hover
+                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 180px"
                 />
-                <span className="flex flex-1 flex-col p-5">
-                  <span className="font-serif text-lg font-medium">
-                    {t.title}
-                  </span>
-                  <span className="mt-2 text-sm text-pretty text-muted-foreground">
-                    {t.text}
-                  </span>
-                  <span className="mt-3 text-sm font-medium text-primary-strong">
-                    Zobacz więcej →
-                  </span>
+                <span className="flex flex-col gap-[3px] border-t-[3px] border-ink px-4 py-[13px]">
+                  <span className="text-[15px] font-bold">{t.title}</span>
+                  {t.cover.podpis ? (
+                    <span className="font-mono text-[10px] tracking-[0.12em] text-pretty text-muted-foreground uppercase">
+                      {t.cover.podpis}
+                    </span>
+                  ) : null}
                 </span>
               </button>
             </RevealItem>
           ))}
         </RevealStagger>
+
+        <p className="self-center text-center text-sm font-medium text-tekst">
+          Zdjęcia z realizacji — bez stocków.
+        </p>
       </div>
 
       {temat ? (
@@ -178,19 +173,19 @@ export function Metamorfozy({ data }: { data: MetamorfozyData }) {
           role="dialog"
           aria-modal="true"
           aria-label={`${temat.title} — zdjęcia przed i po`}
-          className="fixed inset-0 z-[60] bg-black/70 backdrop-blur-sm"
+          className="fixed inset-0 z-50 bg-ink/70"
           onClick={close}
         >
           <div
-            className="absolute inset-x-2 inset-y-3 overflow-y-auto rounded-2xl border border-border bg-background shadow-2xl md:inset-x-8 md:inset-y-6"
+            className="absolute inset-x-2 inset-y-3 overflow-y-auto rounded-2xl border-[3px] border-ink bg-background md:inset-x-8 md:inset-y-6"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-border bg-background/95 px-5 py-4 backdrop-blur md:px-8">
+            <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b-[3px] border-ink bg-background px-5 py-4 md:px-8">
               <div>
-                <h3 className="font-serif text-xl leading-tight font-medium md:text-2xl">
+                <h3 className="text-xl leading-tight font-bold md:text-2xl">
                   {temat.title}
                 </h3>
-                <p className="mt-1 max-w-2xl text-sm text-pretty text-muted-foreground">
+                <p className="mt-1 max-w-2xl text-sm text-pretty text-tekst">
                   {temat.text}
                 </p>
               </div>
@@ -199,7 +194,7 @@ export function Metamorfozy({ data }: { data: MetamorfozyData }) {
                 type="button"
                 onClick={close}
                 aria-label="Zamknij podgląd"
-                className="inline-flex size-11 shrink-0 items-center justify-center rounded-full border border-border transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+                className="inline-flex size-11 shrink-0 items-center justify-center rounded-full border-[3px] border-ink transition-colors hover:bg-zolty focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
               >
                 <X className="size-5" aria-hidden />
               </button>
@@ -207,10 +202,16 @@ export function Metamorfozy({ data }: { data: MetamorfozyData }) {
 
             <div className="flex flex-col gap-8 px-5 py-6 md:px-8 md:py-8">
               {temat.pary.map((para) => (
-                <figure key={para.id}>
-                  <ParaZdjec para={para} sizes="(max-width: 768px) 45vw, 400px" compact />
+                <figure key={para.id} className="flex flex-col items-center">
+                  <div className="overflow-hidden rounded-xl border-[3px] border-ink">
+                    <ParaZdjec
+                      para={para}
+                      sizes="(max-width: 768px) 45vw, 400px"
+                      pelny
+                    />
+                  </div>
                   {para.podpis ? (
-                    <figcaption className="mt-2 text-sm font-medium text-pretty text-muted-foreground">
+                    <figcaption className="mt-2.5 text-sm font-medium text-pretty text-tekst">
                       {para.podpis}
                     </figcaption>
                   ) : null}

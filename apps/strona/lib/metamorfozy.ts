@@ -42,9 +42,9 @@ export type MetamorfozyTemat = z.infer<typeof metamorfozyTematSchema>;
 export type MetamorfozyData = z.infer<typeof metamorfozyDataSchema>;
 
 export const DEFAULT_METAMORFOZY: MetamorfozyData = {
-  heading: "Zakres usług",
-  subheading:
-    "Zobacz różnicę przed i po",
+  // Nagłówek 1:1 z makietą „kreskówka"; podtytułu makieta nie ma.
+  heading: "Przed i po — zobacz różnicę",
+  subheading: "",
   tematy: [
     {
       id: "felgi",

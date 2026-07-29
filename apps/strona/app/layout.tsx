@@ -1,21 +1,24 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import { Manrope, Space_Grotesk } from "next/font/google";
+import { IBM_Plex_Mono, Space_Grotesk } from "next/font/google";
 import { Providers } from "../components/providers/providers";
 import { initModuly } from "../lib/init";
 import "./globals.css";
 
 initModuly();
 
-const manrope = Manrope({
-  subsets: ["latin", "latin-ext"],
-  variable: "--font-manrope",
-  display: "swap",
-});
-
+/** Makieta „kreskówka": Space Grotesk na całą typografię. */
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin", "latin-ext"],
   variable: "--font-space-grotesk",
+  display: "swap",
+});
+
+/** IBM Plex Mono — etykiety, badge'y i podpisy (uppercase, szeroki tracking). */
+const ibmPlexMono = IBM_Plex_Mono({
+  subsets: ["latin", "latin-ext"],
+  weight: ["400", "500"],
+  variable: "--font-ibm-plex-mono",
   display: "swap",
 });
 
@@ -41,7 +44,10 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="pl" className={`${manrope.variable} ${spaceGrotesk.variable}`}>
+    <html
+      lang="pl"
+      className={`${spaceGrotesk.variable} ${ibmPlexMono.variable}`}
+    >
       <body>
         <Providers>{children}</Providers>
       </body>

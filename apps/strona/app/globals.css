@@ -4,27 +4,30 @@
 @custom-variant dark (&:is(.dark *));
 
 /**
- * Paleta Detailing Łącko — jasny „studyjny" motyw: chłodna biel + żółty
- * akcent marki #F8C000 (warsztatowy, energetyczny).
+ * Paleta Detailing Łącko — projekt „kreskówka" (Claude Design): biel, twarda
+ * czarna kreska #0E0F11, żółty marki #F8C000 i twarde cienie offsetowe.
+ * Wartości 1:1 z makiety — hex, nie OKLCH, bo makieta jest źródłem prawdy.
  *
  * Uwaga na kontrast: czysty żółty #F8C000 jest jasny, więc:
  *   --primary            → tylko WYPEŁNIENIA (przyciski, tła-tinty) + CIEMNY tekst
  *   --primary-strong     → czytelny złoty na TEKSTY / IKONY / RINGI na białym tle
  * Nadpisuje tokeny @moduly/ui, więc panel Magazyn dziedziczy branding.
+ * `--border`/`--input` zostają jasne (panel Magazyn ich używa na subtelne
+ * linie); twarda kreska strony to osobny token `--ink`.
  */
 :root {
-  --background: oklch(0.991 0.003 240);
-  --foreground: oklch(0.24 0.02 250);
+  --background: #ffffff;
+  --foreground: #0e0f11;
 
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.24 0.02 250);
+  --card: #ffffff;
+  --card-foreground: #0e0f11;
 
-  --muted: oklch(0.965 0.006 240);
-  --muted-foreground: oklch(0.47 0.02 250);
+  --muted: #f4f3f1;
+  --muted-foreground: #6b7075;
 
   /* #F8C000 — żółty marki (wypełnienia). Ciemny tekst na żółtym = wysoki kontrast. */
   --primary: #f8c000;
-  --primary-foreground: oklch(0.24 0.02 260);
+  --primary-foreground: #0e0f11;
 
   --border: oklch(0.9 0.007 250);
   --input: oklch(0.9 0.007 250);
@@ -43,28 +46,78 @@
   --surface-raised: oklch(0.975 0.005 240);
   --primary-strong: oklch(0.55 0.115 87.3);
 
-  /* Hero full-bleed — copy leży na zdjęciu z panelu, które może być dowolnie
-     jasne. Scrim jest więc ciemny i mocno kryjący w strefie tekstu: biel na
-     nim trzyma ≈11:1, a nawet przy 70% krycia nad jasnym kadrem ≈6:1 (WCAG AA
-     wymaga 4.5:1). Nie czysta biel/czerń — tonowany OKLCH pod paletę marki. */
-  /* Oś wcięcia treści hero na desktopie: clamp = padding stage'u, 2.1rem =
-     offset kolumny tekstu. Navbar trzyma ten sam token, więc logo stoi w
-     jednej pionowej linii z H1 — bez tego obie osie rozjeżdżały się o ~314px. */
-  --hero-inset: calc(clamp(3rem, 5vw, 8rem) + 2.1rem);
-
-  --hero-scrim: oklch(0.18 0.015 250);
-  --hero-foreground: oklch(0.98 0.004 250);
-  --hero-muted: oklch(0.86 0.008 250);
+  /* --- Paleta makiety „kreskówka" --- */
+  /* Kreska i typografia nagłówków. */
+  --ink: #0e0f11;
+  /* Tekst akapitowy w kartach (ciemny, ale nie tak mocny jak kreska). */
+  --tekst: #2a2d31;
+  --zolty: #f8c000;
+  /* Tło sekcji „Efekty" — ciepła szarość między białymi sekcjami. */
+  --piasek: #f4f3f1;
+  /* Przerywana linia między pozycjami cennika. */
+  --kreska-przerywana: #d8d6d2;
+  /* Sekcja kontaktu — czysta czerń makiety (nie --ink). */
+  --noc: #000000;
+  --noc-jasny: #e4e6e8;
+  --noc-szary: #a9acaf;
 }
 
 @theme inline {
-  --font-sans: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
+  /* Makieta używa Space Grotesk wszędzie; `font-serif` zostaje aliasem, żeby
+     panel Magazyn i strony prawne nie wymagały przepisywania klas. */
+  --font-sans: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif;
   --font-serif: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-ibm-plex-mono), ui-monospace, monospace;
   --color-surface-raised: var(--surface-raised);
   --color-primary-strong: var(--primary-strong);
-  --color-hero-scrim: var(--hero-scrim);
-  --color-hero-foreground: var(--hero-foreground);
-  --color-hero-muted: var(--hero-muted);
+  --color-ink: var(--ink);
+  --color-tekst: var(--tekst);
+  --color-zolty: var(--zolty);
+  --color-piasek: var(--piasek);
+  --color-kreska: var(--kreska-przerywana);
+  --color-noc: var(--noc);
+  --color-noc-jasny: var(--noc-jasny);
+  --color-noc-szary: var(--noc-szary);
+}
+
+/* Kropkowana siatka pod hero i FAQ — 1:1 z makietą. */
+@utility kropki {
+  background-image: radial-gradient(
+    color-mix(in srgb, var(--ink) 8%, transparent) 1.5px,
+    transparent 1.5px
+  );
+  background-size: 22px 22px;
+}
+
+/* Twarde cienie offsetowe (bez blura) — sygnaturowy chwyt makiety.
+   Numer = offset w px, wariant = kolor cienia. */
+@utility cien-3 {
+  box-shadow: 3px 3px 0 var(--ink);
+}
+@utility cien-4 {
+  box-shadow: 4px 4px 0 var(--ink);
+}
+@utility cien-5 {
+  box-shadow: 5px 5px 0 var(--ink);
+}
+@utility cien-6 {
+  box-shadow: 6px 6px 0 var(--ink);
+}
+@utility cien-7 {
+  box-shadow: 7px 7px 0 var(--ink);
+}
+@utility cien-zolty-3 {
+  box-shadow: 3px 3px 0 var(--zolty);
+}
+@utility cien-zolty-6 {
+  box-shadow: 6px 6px 0 var(--zolty);
+}
+/* Warianty półprzezroczyste — cień na ciemnym/żółtym tle w hero i kontakcie. */
+@utility cien-mgla-5 {
+  box-shadow: 5px 5px 0 color-mix(in srgb, var(--ink) 25%, transparent);
+}
+@utility cien-zolty-mgla-5 {
+  box-shadow: 5px 5px 0 color-mix(in srgb, var(--zolty) 30%, transparent);
 }
 
 @layer base {

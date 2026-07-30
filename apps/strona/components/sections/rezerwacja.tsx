@@ -359,7 +359,7 @@ export function Rezerwacja({ config, kategorie }: Props) {
     <div className="cien-6 overflow-hidden rounded-2xl border-[3px] border-ink bg-background">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b-[3px] border-ink bg-zolty px-5 py-[18px]">
         <h3 className="text-xl font-bold">{config.heading}</h3>
-        <span className="etykieta-sm rounded-full border-2 border-background bg-ink px-2.5 py-[5px] text-zolty">
+        <span className="etykieta-sm rounded-full bg-ink px-2.5 py-[5px] text-zolty">
           online 24/7
         </span>
       </div>

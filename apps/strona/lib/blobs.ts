@@ -26,8 +26,22 @@ export async function readBlob<S extends z.ZodTypeAny>(
     `;
     const row = rows[0];
     if (!row) return fallback;
-    const parsed = schema.safeParse(row.data);
-    return parsed.success ? parsed.data : fallback;
+    // Wiersze zapisane starym writeBlob są podwójnie zakodowane (jsonb trzyma
+    // STRING z JSON-em, nie obiekt) — sterownik zwraca wtedy stringa. Rozpakowanie
+    // tutaj sprawia, że stare wiersze działają bez migracji; pierwszy zapis
+    // z panelu naprawia je na stałe.
+    const raw = typeof row.data === "string" ? JSON.parse(row.data) : row.data;
+    const parsed = schema.safeParse(raw);
+    if (!parsed.success) {
+      // Cichy fallback ukrywał tę awarię tygodniami: panel zapisywał, a strona
+      // renderowała wartości z kodu. Walidacja musi krzyczeć.
+      console.error(
+        `[site_blobs] Blob "${key}" nie przeszedł walidacji — strona użyje wartości domyślnych:`,
+        parsed.error.issues.slice(0, 5),
+      );
+      return fallback;
+    }
+    return parsed.data;
   } catch (error) {
     console.error(`[site_blobs] Odczyt "${key}" nie powiódł się:`, error);
     return fallback;
@@ -36,13 +50,16 @@ export async function readBlob<S extends z.ZodTypeAny>(
 
 export async function writeBlob(key: string, data: unknown): Promise<void> {
   const { sql } = getPostgresClient();
-  // JSON.stringify(...)::jsonb zamiast sql.json — sql.json rzuca
-  // ERR_INVALID_ARG_TYPE w kontekście route handlera (bundling Turbopack),
-  // mimo że działa standalone. Ten wariant jest jednoznaczny i przenośny.
+  // Podwójne rzutowanie ::text::jsonb jest konieczne. Przy samym ${json}::jsonb
+  // postgres.js wnioskuje typ parametru z rzutowania, uznaje go za jsonb
+  // i SAM serializuje wartość — a że `json` jest już stringiem, w bazie lądował
+  // jsonb typu "string" (JSON w stringu) zamiast obiektu. Wymuszenie ::text
+  // wysyła parametr jako tekst, a dopiero Postgres parsuje go do jsonb.
+  // (sql.json() odpada — rzuca ERR_INVALID_ARG_TYPE w route handlerze pod Turbopackiem.)
   const json = JSON.stringify(data);
   await sql`
     insert into site_blobs (key, data, updated_at)
-    values (${key}, ${json}::jsonb, now())
+    values (${key}, ${json}::text::jsonb, now())
     on conflict (key) do update
       set data = excluded.data, updated_at = now()
   `;

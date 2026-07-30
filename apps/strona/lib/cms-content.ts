@@ -95,9 +95,11 @@ export async function saveHomeContent(input: HomeContentInput): Promise<void> {
   };
   const { sql } = getPostgresClient();
   const json = JSON.stringify(next);
+  // ::text::jsonb, nie samo ::jsonb — inaczej postgres.js sam serializuje
+  // parametr i w bazie ląduje jsonb typu "string" (szczegóły w lib/blobs.ts).
   await sql`
     insert into page_content (page_id, content, updated_at)
-    values ('home', ${json}::jsonb, now())
+    values ('home', ${json}::text::jsonb, now())
     on conflict (page_id) do update
       set content = excluded.content, updated_at = now()
   `;

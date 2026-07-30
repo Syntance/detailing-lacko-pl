@@ -40,8 +40,15 @@ function Plakietka({ po }: { po?: boolean }) {
  *
  * Kafelek (okładka): sztywne 180 px wysokości z makiety, więc pionowe kadry
  * 3:4 zostają przycięte do formatu z projektu — to teaser.
- * Podgląd (`pelny`): proporcja źródłowa 3:4 bez przycięcia, wysokość ograniczona
- * do połowy ekranu +20% (60vh/70vw), żeby para mieściła się bez przewijania.
+ *
+ * Podgląd (`pelny`): rozmiar liczony z SZEROKOŚCI (grid-cols-2 + aspect-[3/4]),
+ * nie z wysokości ekranu. Wcześniej kadr miał `h-[min(60vh,70vw)]`, więc para
+ * zajmowała `1,5 × 70vw = 105vw` — matematycznie zawsze więcej niż szerokość
+ * ekranu, przez co na telefonie wychodziła poza modal i była ucinana.
+ * Teraz para wypełnia dostępną szerokość, a proporcja 3:4 (zgodna ze
+ * źródłem) daje zero przycięcia. Sufit wysokości pilnuje `max-w` na ramce
+ * w podglądzie: przy szerokości pary `90vh + 3px` jedno zdjęcie ma dokładnie
+ * 60vh, więc na wysokich ekranach para nadal mieści się bez przewijania.
  */
 function ParaZdjec({
   para,
@@ -54,11 +61,7 @@ function ParaZdjec({
 }) {
   return (
     <div
-      className={
-        pelny
-          ? "inline-flex items-start gap-[3px] bg-ink"
-          : "grid grid-cols-2 gap-[3px] bg-ink"
-      }
+      className={`grid grid-cols-2 gap-[3px] bg-ink ${pelny ? "w-full" : ""}`}
     >
       {(
         [
@@ -69,7 +72,7 @@ function ParaZdjec({
         <div
           key={label}
           className={`relative min-w-0 overflow-hidden bg-piasek ${
-            pelny ? "aspect-[3/4] h-[min(60vh,70vw)] max-w-full" : "h-[180px]"
+            pelny ? "aspect-[3/4] w-full" : "h-[180px]"
           }`}
         >
           <Image
@@ -207,7 +210,11 @@ export function Metamorfozy({ data }: { data: MetamorfozyData }) {
             <div className="flex flex-col gap-8 px-5 py-6 md:px-8 md:py-8">
               {temat.pary.map((para) => (
                 <figure key={para.id} className="flex flex-col items-center">
-                  <div className="overflow-hidden rounded-xl border-[3px] border-ink">
+                  {/* max-w = sufit wysokości: przy szerokości pary 90vh + 3px
+                      jedno zdjęcie 3:4 ma dokładnie 60vh. `w-full` sprawia, że
+                      na telefonie para zwęża się do modala, zamiast z niego
+                      wychodzić. */}
+                  <div className="w-full max-w-[calc(90vh+3px)] overflow-hidden rounded-xl border-[3px] border-ink">
                     <ParaZdjec
                       para={para}
                       sizes="(max-width: 768px) 45vw, 400px"

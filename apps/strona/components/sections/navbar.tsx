@@ -1,9 +1,10 @@
+import Image from "next/image";
 import type { KontaktData } from "@/lib/site";
 import { PhoneLink } from "./phone-link";
 
 /**
  * Nagłówek 1:1 z makietą „kreskówka": sticky, biały, twarda kreska 3px na
- * dole, pionowy lockup marki, pigułki nawigacji z obwódką 2px i telefon
+ * dole, sygnet + lockup nazwy, pigułki nawigacji z obwódką 2px i telefon
  * jako czarna pigułka z żółtym cieniem.
  *
  * Bez stanu scrolla i bez IntersectionObserver (poprzedni navbar był
@@ -24,21 +25,25 @@ export function Navbar({ kontakt }: { kontakt: KontaktData }) {
       <div className="mx-auto flex max-w-[1140px] items-center justify-between gap-4 px-5 py-3 md:gap-6 md:px-6">
         <a
           href="#hero"
-          className="flex shrink-0 items-center rounded-lg focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+          className="flex shrink-0 items-center gap-3 rounded-lg focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
           aria-label="Detailing Łącko — początek strony"
         >
-          {/* Pionowy lockup z brandingu niesie już znak, nazwę i tagline, więc
-              teksty obok znikają — inaczej „Detailing Łącko" stałoby dwa razy
-              obok siebie. SVG przez <img>: Next nie optymalizuje SVG, a wektor
-              i tak skaluje się bez straty. Nazwa dostępna jest na <a> wyżej,
-              stąd alt="" (grafika byłaby powtórzeniem tej samej treści). */}
-          <img
-            src="/brand/logo-pionowe.svg"
+          <Image
+            src="/brand/syg-kolor.png"
             alt=""
-            width={1866}
-            height={1080}
-            className="block h-12 w-auto md:h-16"
+            width={56}
+            height={56}
+            priority
+            className="block w-11 md:w-14"
           />
+          <span className="flex flex-col gap-[3px]">
+            <span className="text-[15px] leading-none font-bold tracking-[0.06em] uppercase md:text-base">
+              Detailing Łącko
+            </span>
+            <span className="etykieta-sm text-muted-foreground">
+              wnętrze · lakier
+            </span>
+          </span>
         </a>
 
         <nav

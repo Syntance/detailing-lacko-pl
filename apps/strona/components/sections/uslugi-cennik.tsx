@@ -7,9 +7,9 @@ import { Reveal, RevealItem, RevealStagger } from "@/components/motion/reveal";
 import { BookingLink } from "./phone-link";
 
 /**
- * Cennik 1:1 z makietą „kreskówka": na górze czarny pas ze wszystkimi pakietami
- * (cena + krótki opis + czas), pod nim karty kategorii z twardą kreską i
- * przerywanymi liniami — pełny cennik pozycja po pozycji.
+ * Cennik 1:1 z makietą „kreskówka": karty kategorii z twardą kreską i
+ * przerywanymi liniami — pełny cennik pozycja po pozycji, pod nimi czarny pas
+ * ze wszystkimi pakietami (cena + krótki opis + czas).
  *
  * Makieta nie ma akordeonu, filtrów ani tabeli „pełny cennik" (poprzednia
  * wersja miała wszystkie trzy), więc sekcja jest w całości serwerowa — jedyny
@@ -18,9 +18,9 @@ import { BookingLink } from "./phone-link";
  */
 
 /**
- * Pakiety idą do czarnego pasa NAD kartami (nie jako czwarta kolumna) — to
- * wejście w ofertę: całe auto w jednej wizycie. Cały cennik pozycja po pozycji
- * jest pod nim, w kartach kategorii.
+ * Pakiety idą do czarnego pasa POD kartami kategorii (nie jako czwarta
+ * kolumna) — to podsumowanie oferty po przejrzeniu pełnego cennika: całe auto
+ * w jednej wizycie.
  */
 const PAKIETY_CATEGORY_ID = "pakiety";
 
@@ -166,6 +166,39 @@ export function UslugiCennik({ cennik }: { cennik: CennikData }) {
           ) : null}
         </Reveal>
 
+        <RevealStagger className="grid items-start gap-[22px] lg:grid-cols-3">
+          {cardCategories.map((category) => {
+            const rows = items
+              .filter((item) => item.categoryId === category.id)
+              .sort((a, b) => a.order - b.order);
+            if (!rows.length) return null;
+            const filar = category.id === "wnetrze";
+            return (
+              <RevealItem key={category.id}>
+                <article
+                  className={`overflow-hidden rounded-2xl border-[3px] border-ink bg-background ${
+                    filar ? "cien-zolty-6" : "cien-6"
+                  }`}
+                >
+                  <div
+                    className={`flex items-center justify-between gap-3 border-b-[3px] border-ink px-5 py-[18px] ${
+                      filar ? "bg-zolty" : ""
+                    }`}
+                  >
+                    <h3 className="text-xl font-bold">{category.name}</h3>
+                    <OzdobaNaglowka categoryId={category.id} />
+                  </div>
+                  <ul className="flex flex-col">
+                    {rows.map((item) => (
+                      <PozycjaCennika key={item.id} item={item} />
+                    ))}
+                  </ul>
+                </article>
+              </RevealItem>
+            );
+          })}
+        </RevealStagger>
+
         {pakiety.length ? (
           <Reveal>
             <div className="cien-zolty-6 flex flex-col gap-[22px] rounded-2xl border-[3px] border-ink bg-ink px-[26px] py-6 text-background">
@@ -200,39 +233,6 @@ export function UslugiCennik({ cennik }: { cennik: CennikData }) {
             </div>
           </Reveal>
         ) : null}
-
-        <RevealStagger className="grid items-start gap-[22px] lg:grid-cols-3">
-          {cardCategories.map((category) => {
-            const rows = items
-              .filter((item) => item.categoryId === category.id)
-              .sort((a, b) => a.order - b.order);
-            if (!rows.length) return null;
-            const filar = category.id === "wnetrze";
-            return (
-              <RevealItem key={category.id}>
-                <article
-                  className={`overflow-hidden rounded-2xl border-[3px] border-ink bg-background ${
-                    filar ? "cien-zolty-6" : "cien-6"
-                  }`}
-                >
-                  <div
-                    className={`flex items-center justify-between gap-3 border-b-[3px] border-ink px-5 py-[18px] ${
-                      filar ? "bg-zolty" : ""
-                    }`}
-                  >
-                    <h3 className="text-xl font-bold">{category.name}</h3>
-                    <OzdobaNaglowka categoryId={category.id} />
-                  </div>
-                  <ul className="flex flex-col">
-                    {rows.map((item) => (
-                      <PozycjaCennika key={item.id} item={item} />
-                    ))}
-                  </ul>
-                </article>
-              </RevealItem>
-            );
-          })}
-        </RevealStagger>
       </div>
     </section>
   );

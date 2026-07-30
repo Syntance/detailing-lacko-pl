@@ -3,15 +3,81 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { motion, useReducedMotion, AnimatePresence } from "motion/react";
-import { Check, Cookie, Settings2 } from "lucide-react";
-import {
-  useConsent,
-  useConsentOpenListener,
-} from "@moduly/legal-consent";
+import { Check } from "lucide-react";
+import { useConsent, useConsentOpenListener } from "@moduly/legal-consent";
 
 type Mode = "hidden" | "banner" | "preferences";
 
-/** Checkbox kategorii zgody — kwadrat z widocznym ptaszkiem, gdy zaznaczony. */
+/**
+ * Ciastko rysowane ręcznie w języku makiety „kreskówka" (twarda kreska 3px,
+ * żółte wypełnienie, ink jako okruchy) — zamiast ikony ze stocka. Nadgryzienie
+ * robi maska, żeby brzeg ugryzienia miał tę samą kreskę co reszta.
+ */
+function Ciastko() {
+  return (
+    <svg
+      viewBox="0 0 44 44"
+      className="size-11 shrink-0 -rotate-6"
+      aria-hidden
+      focusable="false"
+    >
+      <mask id="ciastko-nadgryzienie">
+        <rect width="44" height="44" fill="white" />
+        <circle cx="40" cy="8" r="8" fill="black" />
+      </mask>
+      <g mask="url(#ciastko-nadgryzienie)">
+        <circle
+          cx="22"
+          cy="22"
+          r="18"
+          fill="var(--zolty)"
+          stroke="var(--ink)"
+          strokeWidth="3"
+        />
+      </g>
+      {/* Kreska wzdłuż nadgryzienia — domyka kontur po odjęciu koła maską. */}
+      <path
+        d="M 33.9 12.6 A 8 8 0 0 1 32.6 3.7"
+        fill="none"
+        stroke="var(--ink)"
+        strokeWidth="3"
+        strokeLinecap="round"
+      />
+      <circle cx="16" cy="17" r="2.6" fill="var(--ink)" />
+      <circle cx="27" cy="26" r="2.2" fill="var(--ink)" />
+      <circle cx="15" cy="28" r="1.8" fill="var(--ink)" />
+    </svg>
+  );
+}
+
+/**
+ * Przycisk banera — kreskówkowy klawisz: twarda kreska, offsetowy cień i
+ * podskok w hover. `glowny` tylko zmienia wypełnienie na żółte; geometria
+ * wszystkich trzech jest identyczna (patrz komentarz przy grupie przycisków).
+ */
+function Klawisz({
+  onClick,
+  glowny,
+  children,
+}: {
+  onClick: () => void;
+  glowny?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`cien-3 inline-flex min-h-11 items-center justify-center rounded-xl border-[3px] border-ink px-4 py-2.5 text-[15px] font-bold transition-transform hover:-translate-y-0.5 focus-visible:ring-3 focus-visible:ring-ink/40 focus-visible:outline-none active:translate-y-0 motion-reduce:transition-none ${
+        glowny ? "bg-zolty" : "bg-background"
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
+/** Checkbox kategorii zgody — kwadrat z twardą kreską, żółty po zaznaczeniu. */
 function ConsentCheckbox({
   checked,
   onCheckedChange,
@@ -28,27 +94,57 @@ function ConsentCheckbox({
       aria-checked={checked}
       aria-label={ariaLabel}
       onClick={() => onCheckedChange(!checked)}
-      className={`mt-0.5 inline-flex size-5 shrink-0 items-center justify-center rounded-md border transition-colors focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none ${
-        checked
-          ? "border-primary bg-primary"
-          : "border-input bg-background hover:border-primary-strong/60"
+      // `before:-inset-2.5` powiększa pole kliknięcia do ~44px bez zmiany
+      // wyglądu kwadratu — sam kwadrat ma 24px, czyli minimum WCAG 2.2, a to
+      // za mało na wygodne trafienie kciukiem.
+      className={`relative mt-0.5 inline-flex size-6 shrink-0 items-center justify-center rounded-md border-[3px] border-ink transition-colors before:absolute before:-inset-2.5 before:content-[''] focus-visible:ring-3 focus-visible:ring-ink/40 focus-visible:outline-none ${
+        checked ? "bg-zolty" : "bg-background hover:bg-piasek"
       }`}
     >
       {checked ? (
-        <Check className="size-3.5 text-primary-foreground" strokeWidth={3} aria-hidden />
+        <Check className="size-3.5 text-ink" strokeWidth={4} aria-hidden />
       ) : null}
     </button>
   );
 }
 
+/** Wiersz kategorii w ustawieniach — przerywana kreska jak w kartach cennika. */
+function KategoriaWiersz({
+  nazwa,
+  opis,
+  kontrolka,
+}: {
+  nazwa: string;
+  opis: string;
+  kontrolka: React.ReactNode;
+}) {
+  return (
+    <li className="flex items-start justify-between gap-4 border-t-2 border-dashed border-kreska p-4 first:border-t-0">
+      <div className="flex flex-col gap-1">
+        <p className="text-[15px] font-semibold">{nazwa}</p>
+        <p className="text-[13px] leading-[1.5] text-pretty text-tekst">
+          {opis}
+        </p>
+      </div>
+      {kontrolka}
+    </li>
+  );
+}
+
 /**
- * Baner cookies przemalowany pod markę Detailing Łącko — ten sam hook
- * useConsent() z @moduly/legal-consent (logika/storage bez zmian), ale
- * własny markup: żółty akcent, karty spójne z resztą strony.
+ * Baner cookies w języku makiety „kreskówka": naklejka z twardą kreską 3px,
+ * żółtym offsetowym cieniem i lekkim przekrzywieniem, ręcznie rysowanym
+ * ciastkiem zamiast ikony ze stocka. Logika/storage bez zmian — ten sam hook
+ * useConsent() z @moduly/legal-consent.
  *
- * Panel jest w scrollowalnym kontenerze (nie sztywnym `fixed bottom-0`),
- * żeby na niskich viewportach (małe okno, telefon poziomo) nigdy nie obcinał
- * przycisków poza ekran — w oryginalnym komponencie to się zdarzało.
+ * Trzy równorzędne przyciski (zgoda / odmowa / ustawienia) o identycznej
+ * geometrii to wymóg, nie decyzja estetyczna: prawo telekomunikacyjne art. 173
+ * i DSA zakazują dark patternów, a „Ustawienia" jako drobny link pod spodem
+ * (tak było wcześniej) demotuje wybór inny niż zgoda.
+ *
+ * Panel jest w scrollowalnym kontenerze (nie sztywnym `fixed bottom-0`), żeby
+ * na niskich viewportach nigdy nie obcinał przycisków poza ekran, i nie blokuje
+ * przewijania strony (`pointer-events` tylko na samej naklejce).
  */
 export function CookieConsent() {
   const { consent, hasDecision, acceptAll, rejectAll, saveSelection, config } =
@@ -108,154 +204,135 @@ export function CookieConsent() {
   return (
     <AnimatePresence>
       {open ? (
-        <div
-          className="fixed inset-0 z-[9999] flex items-end justify-center p-4 sm:p-6"
-          style={{ pointerEvents: "none" }}
-        >
+        <div className="pointer-events-none fixed inset-0 z-[9999] flex items-end justify-center p-4 sm:p-6">
           <motion.div
             role="dialog"
             aria-modal="false"
             aria-labelledby="cookie-consent-title"
-            initial={reduced ? undefined : { opacity: 0, y: 24 }}
+            initial={reduced ? undefined : { opacity: 0, y: 28 }}
             animate={reduced ? undefined : { opacity: 1, y: 0 }}
-            exit={reduced ? undefined : { opacity: 0, y: 24 }}
+            exit={reduced ? undefined : { opacity: 0, y: 28 }}
             transition={{ type: "spring", stiffness: 260, damping: 26 }}
-            className="pointer-events-auto max-h-full w-full max-w-3xl overflow-y-auto rounded-2xl border border-border bg-card p-5 shadow-xl shadow-black/10 sm:p-6"
+            // p-4 to zapas na cień naklejki (6px offset + 2px kreski) — kontener
+            // scrolluje, więc `overflow` przyciąłby cień wychodzący poza padding.
+            className="pointer-events-auto max-h-full w-full max-w-3xl overflow-y-auto p-4"
           >
-            {mode === "banner" ? (
-              <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex max-w-xl gap-3.5">
-                  <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary-strong">
-                    <Cookie className="size-5" aria-hidden />
-                  </span>
-                  <div>
-                    <h2
-                      id="cookie-consent-title"
-                      className="font-serif text-lg font-medium"
-                    >
-                      Ciasteczka w {config.siteName}
-                    </h2>
-                    <p className="mt-1 text-sm leading-snug text-muted-foreground">
-                      Używamy plików cookie, żeby strona działała poprawnie,
-                      a za Twoją zgodą — także do analizy ruchu. Możesz
-                      zaakceptować wszystkie albo wybrać tylko te, których
-                      potrzebujesz.{" "}
-                      <Link
-                        href={config.privacyPolicyHref}
-                        className="text-primary-strong underline-offset-2 hover:underline"
-                      >
-                        Polityka prywatności
-                      </Link>
-                      .
-                    </p>
+            {/* Przekrzywienie tylko dla banera: naklejka. Ustawienia to dłuższy
+                formularz — tam karta siada prosto, żeby nie utrudniać czytania.
+                Transform siedzi tu, a nie w motion, więc przetrwa reduced-motion. */}
+            <div
+              className={`naklejka ${mode === "banner" ? "-rotate-[0.5deg]" : ""}`}
+            >
+              <div className="rounded-2xl border-[3px] border-ink bg-background p-4 sm:p-5">
+                {mode === "banner" ? (
+                  <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between sm:gap-7">
+                    <div className="flex max-w-xl gap-4">
+                      <Ciastko />
+                      <div className="flex flex-col gap-1.5">
+                        <h2
+                          id="cookie-consent-title"
+                          className="text-xl leading-[1.15] font-bold"
+                        >
+                          Ciasteczka w {config.siteName}
+                        </h2>
+                        <p className="text-sm leading-[1.5] text-pretty text-tekst">
+                          Używamy plików cookie, żeby strona działała poprawnie,
+                          a za Twoją zgodą — także do analizy ruchu. Możesz
+                          zaakceptować wszystkie albo wybrać tylko te, których
+                          potrzebujesz.{" "}
+                          <Link
+                            href={config.privacyPolicyHref}
+                            className="font-semibold text-ink underline decoration-zolty decoration-[3px] underline-offset-2 hover:decoration-ink focus-visible:ring-3 focus-visible:ring-ink/40 focus-visible:outline-none"
+                          >
+                            Polityka prywatności
+                          </Link>
+                          .
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Trzy klawisze o identycznej geometrii — patrz komentarz
+                      nad komponentem (art. 173 prawa telekom. + DSA). */}
+                    <div className="flex flex-col gap-2.5 sm:w-56 sm:shrink-0">
+                      <Klawisz onClick={handleAcceptAll} glowny>
+                        Akceptuję wszystkie
+                      </Klawisz>
+                      <Klawisz onClick={handleRejectAll}>
+                        Tylko niezbędne
+                      </Klawisz>
+                      <Klawisz onClick={() => setMode("preferences")}>
+                        Ustawienia
+                      </Klawisz>
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="flex flex-col gap-4">
+                    <div className="flex items-start gap-4">
+                      <Ciastko />
+                      <div className="flex flex-col gap-1.5">
+                        <h2
+                          id="cookie-consent-title"
+                          className="text-xl leading-[1.15] font-bold"
+                        >
+                          Ustawienia cookies
+                        </h2>
+                        <p className="text-sm leading-[1.5] text-tekst">
+                          Wybierz kategorie, na które wyrażasz zgodę.
+                        </p>
+                      </div>
+                    </div>
 
-                <div className="flex flex-col gap-2 sm:w-52 sm:shrink-0">
-                  <button
-                    type="button"
-                    onClick={handleAcceptAll}
-                    className="inline-flex min-h-11 items-center justify-center rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-transform hover:scale-[1.02] focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none motion-reduce:transition-none"
-                  >
-                    Akceptuję wszystkie
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleRejectAll}
-                    className="inline-flex min-h-11 items-center justify-center rounded-xl border border-border px-4 py-2.5 text-sm font-medium transition-colors hover:border-primary-strong/60 hover:text-primary-strong focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
-                  >
-                    Tylko niezbędne
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setMode("preferences")}
-                    className="inline-flex items-center justify-center gap-1.5 py-1 text-xs font-medium tracking-[0.08em] text-muted-foreground uppercase underline-offset-4 hover:text-foreground hover:underline"
-                  >
-                    <Settings2 className="size-3.5" aria-hidden />
-                    Ustawienia
-                  </button>
-                </div>
+                    <ul className="flex flex-col rounded-xl border-[3px] border-ink">
+                      <KategoriaWiersz
+                        nazwa="Niezbędne"
+                        opis="Wymagane do działania strony i bezpieczeństwa. Nie można wyłączyć."
+                        kontrolka={
+                          <span className="etykieta-sm mt-1 rounded-full bg-ink px-2.5 py-[5px] whitespace-nowrap text-zolty">
+                            zawsze aktywne
+                          </span>
+                        }
+                      />
+                      <KategoriaWiersz
+                        nazwa="Analityka"
+                        opis={config.analyticsDescription}
+                        kontrolka={
+                          <ConsentCheckbox
+                            checked={analytics}
+                            onCheckedChange={setAnalytics}
+                            ariaLabel="Zgoda na analitykę"
+                          />
+                        }
+                      />
+                      <KategoriaWiersz
+                        nazwa="Marketing"
+                        opis={config.marketingDescription}
+                        kontrolka={
+                          <ConsentCheckbox
+                            checked={marketing}
+                            onCheckedChange={setMarketing}
+                            ariaLabel="Zgoda na marketing"
+                          />
+                        }
+                      />
+                    </ul>
+
+                    <div className="flex flex-col-reverse gap-2.5 sm:flex-row sm:justify-end">
+                      <Klawisz onClick={handleRejectAll}>
+                        Odrzuć wszystko
+                      </Klawisz>
+                      <Klawisz
+                        onClick={() => persist({ analytics, marketing })}
+                      >
+                        Zapisz wybór
+                      </Klawisz>
+                      <Klawisz onClick={handleAcceptAll} glowny>
+                        Akceptuję wszystkie
+                      </Klawisz>
+                    </div>
+                  </div>
+                )}
               </div>
-            ) : (
-              <div>
-                <h2
-                  id="cookie-consent-title"
-                  className="font-serif text-lg font-medium"
-                >
-                  Ustawienia cookies
-                </h2>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Wybierz kategorie, na które wyrażasz zgodę.
-                </p>
-
-                <ul className="mt-4 divide-y divide-border rounded-xl border border-border">
-                  <li className="flex items-start justify-between gap-4 p-4">
-                    <div>
-                      <p className="text-sm font-semibold">Niezbędne</p>
-                      <p className="mt-0.5 text-xs text-muted-foreground">
-                        Wymagane do działania strony i bezpieczeństwa. Nie
-                        można wyłączyć.
-                      </p>
-                    </div>
-                    <span className="mt-1 text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                      zawsze aktywne
-                    </span>
-                  </li>
-
-                  <li className="flex items-start justify-between gap-4 p-4">
-                    <div>
-                      <p className="text-sm font-semibold">Analityka</p>
-                      <p className="mt-0.5 text-xs text-muted-foreground">
-                        {config.analyticsDescription}
-                      </p>
-                    </div>
-                    <ConsentCheckbox
-                      checked={analytics}
-                      onCheckedChange={setAnalytics}
-                      ariaLabel="Zgoda na analitykę"
-                    />
-                  </li>
-
-                  <li className="flex items-start justify-between gap-4 p-4">
-                    <div>
-                      <p className="text-sm font-semibold">Marketing</p>
-                      <p className="mt-0.5 text-xs text-muted-foreground">
-                        {config.marketingDescription}
-                      </p>
-                    </div>
-                    <ConsentCheckbox
-                      checked={marketing}
-                      onCheckedChange={setMarketing}
-                      ariaLabel="Zgoda na marketing"
-                    />
-                  </li>
-                </ul>
-
-                <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-                  <button
-                    type="button"
-                    onClick={handleRejectAll}
-                    className="inline-flex min-h-11 items-center justify-center rounded-xl border border-border px-4 py-2.5 text-sm font-medium transition-colors hover:border-primary-strong/60 hover:text-primary-strong focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
-                  >
-                    Odrzuć wszystko
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => persist({ analytics, marketing })}
-                    className="inline-flex min-h-11 items-center justify-center rounded-xl border border-border px-4 py-2.5 text-sm font-semibold transition-colors hover:border-primary-strong/60 hover:text-primary-strong focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
-                  >
-                    Zapisz wybór
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleAcceptAll}
-                    className="inline-flex min-h-11 items-center justify-center rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-transform hover:scale-[1.02] focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none motion-reduce:transition-none"
-                  >
-                    Akceptuję wszystkie
-                  </button>
-                </div>
-              </div>
-            )}
+            </div>
           </motion.div>
         </div>
       ) : null}

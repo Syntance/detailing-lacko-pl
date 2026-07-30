@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { computeSlots, resolveUslugi } from "@/lib/rezerwacje";
+import { getBusyFromCalendar } from "@/lib/google-calendar";
 import { getCennik } from "@/lib/site-data";
 import { getDostepnosc, listPraceAktywne } from "@/lib/rezerwacje-store";
 
@@ -26,10 +27,14 @@ export async function GET(request: Request) {
     .filter(Boolean)
     .slice(0, 20);
 
-  const [config, cennik, prace] = await Promise.all([
+  // Zajętość = nasze rezerwacje z bazy + wydarzenia z Kalendarza Google
+  // (prywatne wpisy właściciela też blokują godziny). Praca może przelać się
+  // na kolejne dni, więc kalendarz czytamy z zapasem tygodnia w przód.
+  const [config, cennik, prace, kalendarz] = await Promise.all([
     getDostepnosc(),
     getCennik(),
     listPraceAktywne(date),
+    getBusyFromCalendar(date, date),
   ]);
 
   // Bez usług (stary klient / ręczny URL) liczymy jak dla jednego slotu.
@@ -48,6 +53,6 @@ export async function GET(request: Request) {
   return NextResponse.json({
     enabled: config.enabled,
     durationMinutes,
-    slots: computeSlots(config, date, durationMinutes, prace),
+    slots: computeSlots(config, date, durationMinutes, [...prace, ...kalendarz]),
   });
 }

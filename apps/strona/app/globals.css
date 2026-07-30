@@ -135,6 +135,41 @@
 @utility cien-zolty-6 {
   box-shadow: 6px 6px 0 var(--zolty);
 }
+/* Naklejka die-cut: falowana krawędź (półkoliste wcięcia jak w znaczku) +
+   gruba biała otoczka wokół grafiki + kreska i żółty cień idące ZA falą.
+   `box-shadow`/`border` rysują prostokąt i maski nie widzą, więc kreska
+   i cień lecą łańcuchem `drop-shadow` — ten bierze alfę po masce, czyli
+   obrysowuje realną sylwetkę naklejki. Wcięcie (9px) jest płytsze niż
+   otoczka (14px), żeby fala nigdy nie dojechała do grafiki w środku. */
+@utility naklejka {
+  --naklejka-fala: 9px;
+  --naklejka-otoczka: 14px;
+  padding: var(--naklejka-otoczka);
+  background: var(--background);
+  /* Bez wsparcia dla masek zostaje zwykła zaokrąglona naklejka z otoczką. */
+  border-radius: 24px;
+  filter: drop-shadow(2px 0 0 var(--ink)) drop-shadow(-2px 0 0 var(--ink))
+    drop-shadow(0 2px 0 var(--ink)) drop-shadow(0 -2px 0 var(--ink))
+    drop-shadow(6px 6px 0 var(--zolty));
+
+  @supports (mask-composite: intersect) {
+    border-radius: 0;
+    /* Cztery pasy półkoli — po jednym na krawędź; `intersect` składa je w
+       jedną sylwetkę. Skrót `mask` resetuje kompozycję, więc
+       `mask-composite` MUSI iść po nim. */
+    mask:
+      radial-gradient(var(--naklejka-fala) at 50% 0, #0000 98%, #000) 0 0 /
+        calc(2 * var(--naklejka-fala)) 100%,
+      radial-gradient(var(--naklejka-fala) at 50% 100%, #0000 98%, #000) 0 0 /
+        calc(2 * var(--naklejka-fala)) 100%,
+      radial-gradient(var(--naklejka-fala) at 0 50%, #0000 98%, #000) 0 0 / 100%
+        calc(2 * var(--naklejka-fala)),
+      radial-gradient(var(--naklejka-fala) at 100% 50%, #0000 98%, #000) 0 0 /
+        100% calc(2 * var(--naklejka-fala));
+    mask-composite: intersect;
+  }
+}
+
 /* Warianty półprzezroczyste — cień na ciemnym/żółtym tle w hero i kontakcie. */
 @utility cien-mgla-5 {
   box-shadow: 5px 5px 0 color-mix(in srgb, var(--ink) 25%, transparent);

@@ -2,8 +2,10 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireAdminSessionForPanel } from "@/lib/auth";
 import { REZERWACJA_STATUSY } from "@/lib/rezerwacje";
+import { deleteCalendarEvent } from "@/lib/google-calendar";
 import {
   deleteRezerwacja,
+  getCalendarEventId,
   listRezerwacje,
   updateRezerwacjaStatus,
 } from "@/lib/rezerwacje-store";
@@ -43,6 +45,13 @@ export async function PATCH(request: Request) {
       { status: 400 },
     );
   }
+  // Odrzucenie zwalnia slot w bazie — musi zwolnić też termin w Kalendarzu
+  // Google, inaczej wydarzenie blokowałoby godziny w widgecie na zawsze.
+  if (parsed.data.status === "odrzucona") {
+    const eventId = await getCalendarEventId(parsed.data.id);
+    if (eventId) await deleteCalendarEvent(eventId);
+  }
+
   await updateRezerwacjaStatus(parsed.data.id, parsed.data.status);
   return NextResponse.json({ ok: true });
 }
@@ -57,6 +66,9 @@ export async function DELETE(request: Request) {
       { status: 400 },
     );
   }
+  const eventId = await getCalendarEventId(id);
+  if (eventId) await deleteCalendarEvent(eventId);
+
   await deleteRezerwacja(id);
   return NextResponse.json({ ok: true });
 }

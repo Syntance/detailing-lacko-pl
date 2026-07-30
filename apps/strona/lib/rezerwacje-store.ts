@@ -43,6 +43,7 @@ type ReservationRow = {
   note: string;
   status: string;
   created_at: string;
+  calendar_event_id: string | null;
 };
 
 function parseServices(raw: unknown): RezerwacjaUsluga[] {
@@ -71,6 +72,7 @@ function mapRow(row: ReservationRow): Rezerwacja {
     note: row.note,
     status: (row.status as RezerwacjaStatus) ?? "nowa",
     createdAt: row.created_at,
+    calendarEventId: row.calendar_event_id ?? "",
   };
 }
 
@@ -117,28 +119,50 @@ export type NowaRezerwacja = {
  */
 export async function createRezerwacja(
   input: NowaRezerwacja,
-): Promise<{ ok: true } | { ok: false; reason: "taken" }> {
+): Promise<{ ok: true; id: string } | { ok: false; reason: "taken" }> {
   const { sql } = getPostgresClient();
   const serviceText = input.services.map((s) => s.name).join(", ");
   try {
-    await sql`
+    // ::text::jsonb — bez wymuszenia tekstu postgres.js sam serializuje
+    // stringa i w jsonb ląduje JSON-w-stringu (szczegóły w lib/blobs.ts).
+    const rows = await sql<{ id: string }[]>`
       insert into reservations (
         date, time, name, phone, email, service, services,
         duration_minutes, pickup_date, pickup_time, note, status
       )
       values (
         ${input.date}, ${input.time}, ${input.name}, ${input.phone},
-        ${input.email}, ${serviceText}, ${JSON.stringify(input.services)}::jsonb,
+        ${input.email}, ${serviceText},
+        ${JSON.stringify(input.services)}::text::jsonb,
         ${input.durationMinutes}, ${input.pickupDate}, ${input.pickupTime},
         ${input.note}, 'nowa'
       )
+      returning id
     `;
-    return { ok: true };
+    return { ok: true, id: rows[0]?.id ?? "" };
   } catch (error) {
     const code = (error as { code?: string }).code;
     if (code === "23505") return { ok: false, reason: "taken" };
     throw error;
   }
+}
+
+/** Podpięcie wydarzenia Kalendarza Google do rezerwacji (po jego utworzeniu). */
+export async function setCalendarEventId(
+  id: string,
+  eventId: string,
+): Promise<void> {
+  const { sql } = getPostgresClient();
+  await sql`update reservations set calendar_event_id = ${eventId} where id = ${id}`;
+}
+
+/** Id wydarzenia w kalendarzu — do usunięcia przy odrzuceniu/skasowaniu. */
+export async function getCalendarEventId(id: string): Promise<string> {
+  const { sql } = getPostgresClient();
+  const rows = await sql<{ calendar_event_id: string | null }[]>`
+    select calendar_event_id from reservations where id = ${id} limit 1
+  `;
+  return rows[0]?.calendar_event_id ?? "";
 }
 
 export async function listRezerwacje(): Promise<Rezerwacja[]> {
@@ -147,7 +171,7 @@ export async function listRezerwacje(): Promise<Rezerwacja[]> {
   const rows = await sql<ReservationRow[]>`
     select id, date::text as date, time, name, phone, email, service, services,
            duration_minutes, pickup_date::text as pickup_date, pickup_time,
-           note, status, created_at
+           note, status, created_at, calendar_event_id
     from reservations
     order by
       case status when 'nowa' then 0 when 'potwierdzona' then 1 else 2 end,

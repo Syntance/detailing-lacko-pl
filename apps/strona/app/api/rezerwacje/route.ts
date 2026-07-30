@@ -1,11 +1,15 @@
 import { NextResponse } from "next/server";
 import { computeSlots, resolveUslugi, rezerwacjaInputSchema } from "@/lib/rezerwacje";
 import { enforceRateLimit, requestIp } from "@/lib/rate-limit";
+import { createCalendarEvent, getBusyFromCalendar } from "@/lib/google-calendar";
+import { formatDuration } from "@/lib/cennik";
+import { sendRezerwacjaNotification } from "@/lib/rezerwacja-mail";
 import { getCennik } from "@/lib/site-data";
 import {
   createRezerwacja,
   getDostepnosc,
   listPraceAktywne,
+  setCalendarEventId,
 } from "@/lib/rezerwacje-store";
 
 export const dynamic = "force-dynamic";
@@ -74,8 +78,14 @@ export async function POST(request: Request) {
 
   // Slot musi być realnie dostępny wg konfiguracji, zajętości i czasu usług
   // (nie tylko „niezajęty") — stąd pełne przeliczenie propozycji dla dnia.
-  const prace = await listPraceAktywne(input.date);
-  const available = computeSlots(config, input.date, resolved.durationMinutes, prace);
+  const [prace, kalendarz] = await Promise.all([
+    listPraceAktywne(input.date),
+    getBusyFromCalendar(input.date, input.date),
+  ]);
+  const available = computeSlots(config, input.date, resolved.durationMinutes, [
+    ...prace,
+    ...kalendarz,
+  ]);
   const slot = available.find((s) => s.time === input.time);
   if (!slot) {
     return NextResponse.json(
@@ -107,6 +117,52 @@ export async function POST(request: Request) {
       },
       { status: 409 },
     );
+  }
+
+  // Powiadomienie do właściciela — nie blokuje odpowiedzi dla klienta.
+  await sendRezerwacjaNotification({
+    date: input.date,
+    time: input.time,
+    name: input.name,
+    phone: input.phone,
+    email: input.email,
+    note: input.note,
+    services: resolved.services,
+    durationMinutes: resolved.durationMinutes,
+    pickupDate: slot.pickupDate,
+    pickupTime: slot.pickupTime,
+  });
+
+  // Wydarzenie „auto w warsztacie" w Kalendarzu Google: od przyjęcia do
+  // odbioru. Fail-soft — gdy Google nie odpowie, rezerwacja i tak jest przyjęta
+  // (widać ją w panelu), a kalendarz zsynchronizuje się przy kolejnej zmianie.
+  if (result.id) {
+    const eventId = await createCalendarEvent({
+      reservationId: result.id,
+      summary: `Rezerwacja: ${resolved.services.map((s) => s.name).join(", ")}`,
+      description: [
+        `${input.name} · ${input.phone}${input.email ? ` · ${input.email}` : ""}`,
+        `Usługi: ${resolved.services.map((s) => `${s.name} (${s.priceLabel})`).join(", ")}`,
+        `Czas pracy: ok. ${formatDuration(resolved.durationMinutes)}`,
+        `Odbiór: ${slot.pickupDate} ${slot.pickupTime}`,
+        input.note ? `Uwagi: ${input.note}` : "",
+        "",
+        "Wstępna rezerwacja ze strony — do potwierdzenia telefonicznie.",
+      ]
+        .filter(Boolean)
+        .join("\n"),
+      startDate: input.date,
+      startTime: input.time,
+      endDate: slot.pickupDate,
+      endTime: slot.pickupTime,
+    });
+    if (eventId) {
+      try {
+        await setCalendarEventId(result.id, eventId);
+      } catch (error) {
+        console.error("[rezerwacje] Zapis id wydarzenia:", error);
+      }
+    }
   }
 
   return NextResponse.json(

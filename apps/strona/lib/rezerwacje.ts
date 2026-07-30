@@ -97,6 +97,8 @@ export type Rezerwacja = {
   note: string;
   status: RezerwacjaStatus;
   createdAt: string;
+  /** Id wydarzenia w Kalendarzu Google (puste, gdy sync wyłączony). */
+  calendarEventId: string;
 };
 
 /** Dane wysyłane przez klienta przy rezerwacji (POST /api/rezerwacje). */

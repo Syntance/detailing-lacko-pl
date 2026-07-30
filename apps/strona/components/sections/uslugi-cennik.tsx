@@ -39,7 +39,13 @@ function stripBullet(name: string): string {
 function OzdobaNaglowka({ categoryId }: { categoryId: string }) {
   if (categoryId === "wnetrze") {
     return (
-      <span className="etykieta-sm rounded-full bg-ink px-2.5 py-[5px] text-zolty">
+      // border-background, nie border-zolty: ta plakietka (bg-ink) siedzi na
+      // żółtym nagłówku karty — obwódka w kolorze tła rodzica zlewa się z nim
+      // i znika. Paleta ma tylko ink/zolty/background, więc jedyny kolor,
+      // który kontrastuje JEDNOCZEŚNIE z czarnym wypełnieniem i żółtym
+      // otoczeniem, to biel (ten sam problem w „online 24/7" i „najczęściej
+      // wybierane" niżej — tam odwrotna kombinacja wypełnienia i tła).
+      <span className="etykieta-sm rounded-full border-2 border-background bg-ink px-2.5 py-[5px] text-zolty">
         filar
       </span>
     );
@@ -107,7 +113,7 @@ function PakietPozycja({ item }: { item: CennikItem }) {
       {item.timeLabel || item.popular ? (
         <span className="etykieta-sm flex flex-wrap items-center gap-2">
           {item.popular ? (
-            <span className="rounded-full bg-zolty px-2 py-[3px] text-ink">
+            <span className="rounded-full border-2 border-background bg-zolty px-2 py-[3px] text-ink">
               najczęściej wybierane
             </span>
           ) : null}

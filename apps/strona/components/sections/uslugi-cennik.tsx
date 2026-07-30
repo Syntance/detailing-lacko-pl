@@ -87,15 +87,24 @@ function PozycjaCennika({ item }: { item: CennikItem }) {
   );
 }
 
-/** Pakiet w czarnym pasie: nazwa, cena, mały opis i czas trwania. */
+/**
+ * Pakiet w czarnym pasie: nazwa, cena, mały opis i czas trwania.
+ *
+ * `min-w-0` na `li` i na wierszu, a cena bez `whitespace-nowrap`: pozycje
+ * cennika mogą mieć dopisek przy kwocie („1000–1300 zł wg rozmiaru auta").
+ * Nierozrywalny ciąg tej długości rozpychał kolumnę gridu (grid-item ma
+ * domyślnie `min-width: auto`), przez co na telefonie CAŁA strona robiła się
+ * szersza od ekranu — a `position: fixed` podglądu Efektów dziedziczył tę
+ * zawyżoną szerokość i ucinał zdjęcia.
+ */
 function PakietPozycja({ item }: { item: CennikItem }) {
   return (
-    <li className="flex flex-col gap-1.5 border-t-2 border-dashed border-noc-szary/40 pt-3.5">
-      <div className="flex items-baseline justify-between gap-3">
-        <span className="text-[15px] font-semibold">
+    <li className="flex min-w-0 flex-col gap-1.5 border-t-2 border-dashed border-noc-szary/40 pt-3.5">
+      <div className="flex min-w-0 items-baseline justify-between gap-3">
+        <span className="min-w-0 text-[15px] font-semibold">
           {stripBullet(item.name)}
         </span>
-        <span className="text-lg font-bold whitespace-nowrap text-zolty tabular-nums">
+        <span className="text-lg font-bold text-balance text-zolty tabular-nums">
           {formatItemPrice(item)}
         </span>
       </div>

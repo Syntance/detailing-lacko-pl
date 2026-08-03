@@ -5,6 +5,7 @@ import Image from "next/image";
 import { X } from "lucide-react";
 import {
   paraZdjecia,
+  plakietkaZdjecia,
   podgladMaxSzerokosc,
   siatkaKolumny,
   type MetamorfozyData,
@@ -27,16 +28,19 @@ import { Reveal, RevealItem, RevealStagger } from "@/components/motion/reveal";
 /** Przekrzywienia kafelków — wartości z makiety, cyklicznie po indeksie. */
 const ROTACJE = ["-rotate-[1.2deg]", "rotate-[1deg]", "-rotate-[0.8deg]"];
 
-/** Plakietka „przed" (biała) / „po!" (żółta) — narożnik zdjęcia. */
-function Plakietka({ po }: { po?: boolean }) {
+/**
+ * Plakietka w narożniku zdjęcia. Treść z panelu (własna) albo automatyczne
+ * „przed"/„po!" dla pary — patrz `plakietkaZdjecia`. Żółte tło = akcent.
+ */
+function Plakietka({ tekst, akcent }: { tekst: string; akcent: boolean }) {
   return (
     <span
       aria-hidden
-      className={`etykieta-sm pointer-events-none absolute top-2.5 left-2.5 rounded-full border-2 border-ink px-[9px] py-1 ${
-        po ? "bg-zolty" : "bg-background"
+      className={`etykieta-sm pointer-events-none absolute top-2.5 left-2.5 max-w-[calc(100%-20px)] truncate rounded-full border-2 border-ink px-[9px] py-1 ${
+        akcent ? "bg-zolty" : "bg-background"
       }`}
     >
-      {po ? "po!" : "przed"}
+      {tekst}
     </span>
   );
 }
@@ -79,10 +83,6 @@ function ParaZdjec({
   const reszta = widoczne.length % kolumny;
   const dopelnienie = reszta === 0 ? 1 : kolumny - reszta + 1;
 
-  // Plakietki „przed/po" tylko dla klasycznej pary — przy trzech i więcej
-  // zdjęciach nie da się powiedzieć, które jest „przed".
-  const paraPrzedPo = wszystkie.length === 2;
-
   if (pelny) {
     // Podgląd idzie na flexa, nie na grid: niepełny ostatni wiersz ma się
     // WYŚRODKOWAĆ, a nie zostać domknięty rozciągniętym zdjęciem. Rozciągnięta
@@ -90,24 +90,29 @@ function ParaZdjec({
     // wysokości liczony w `podgladMaxSzerokosc`.
     return (
       <div className="flex flex-wrap justify-center gap-[3px] bg-ink">
-        {wszystkie.map((zdjecie, i) => (
-          <div
-            key={zdjecie.id}
-            className="relative aspect-[3/4] min-w-0 shrink-0 grow-0 overflow-hidden bg-piasek"
-            style={{
-              flexBasis: `calc((100% - ${(kolumny - 1) * 3}px) / ${kolumny})`,
-            }}
-          >
-            <Image
-              src={zdjecie.url}
-              alt={zdjecie.alt}
-              fill
-              sizes={sizes}
-              className="object-cover"
-            />
-            {paraPrzedPo ? <Plakietka po={i === 1} /> : null}
-          </div>
-        ))}
+        {wszystkie.map((zdjecie, i) => {
+          const plakietka = plakietkaZdjecia(wszystkie, i);
+          return (
+            <div
+              key={zdjecie.id}
+              className="relative aspect-[3/4] min-w-0 shrink-0 grow-0 overflow-hidden bg-piasek"
+              style={{
+                flexBasis: `calc((100% - ${(kolumny - 1) * 3}px) / ${kolumny})`,
+              }}
+            >
+              <Image
+                src={zdjecie.url}
+                alt={zdjecie.alt}
+                fill
+                sizes={sizes}
+                className="object-cover"
+              />
+              {plakietka ? (
+                <Plakietka tekst={plakietka.tekst} akcent={plakietka.akcent} />
+              ) : null}
+            </div>
+          );
+        })}
       </div>
     );
   }
@@ -126,6 +131,7 @@ function ParaZdjec({
     >
       {widoczne.map((zdjecie, i) => {
         const ostatnie = i === widoczne.length - 1;
+        const plakietka = plakietkaZdjecia(wszystkie, i);
         return (
           <div
             key={zdjecie.id}
@@ -145,7 +151,9 @@ function ParaZdjec({
               sizes={sizes}
               className="object-cover"
             />
-            {paraPrzedPo ? <Plakietka po={i === 1} /> : null}
+            {plakietka ? (
+              <Plakietka tekst={plakietka.tekst} akcent={plakietka.akcent} />
+            ) : null}
             {ostatnie && ukryte > 0 ? (
               <span className="absolute inset-0 grid place-items-center bg-ink/65 text-xl font-bold text-background">
                 +{ukryte}

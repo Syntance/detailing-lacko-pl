@@ -18,6 +18,12 @@ export const metamorfozyZdjecieSchema = z.object({
   id: z.string().min(1),
   url: z.string().min(1),
   alt: z.string(),
+  /**
+   * Własny napis na plakietce w rogu zdjęcia, np. „PRZED", „PO!", „ZBLIŻENIE".
+   * Puste = plakietki nie ma, chyba że grupa ma dokładnie dwa zdjęcia — wtedy
+   * wchodzą automatyczne „przed"/„po!" (patrz `Plakietka` w sekcji).
+   */
+  badge: z.string().optional(),
 });
 
 export const metamorfozyParaSchema = z.object({
@@ -83,6 +89,28 @@ export function paraZdjecia(para: MetamorfozyPara): MetamorfozyZdjecie[] {
       alt: para.afterAlt ?? "",
     });
   return stare;
+}
+
+/**
+ * Napis na plakietce zdjęcia: własny z panelu, a gdy go nie ma — automatyczne
+ * „przed"/„po!" dla klasycznej pary. Null = bez plakietki.
+ *
+ * `akcent` (żółte tło) zostaje przy pozycji w parze, nie przy treści: własny
+ * napis podmienia słowa, nie kolorystykę, więc kontrast przed/po nie znika,
+ * gdy ktoś wpisze „STAN WYJŚCIOWY" i „EFEKT".
+ */
+export function plakietkaZdjecia(
+  zdjecia: MetamorfozyZdjecie[],
+  index: number,
+): { tekst: string; akcent: boolean } | null {
+  const zdjecie = zdjecia[index];
+  if (!zdjecie) return null;
+  const wlasny = zdjecie.badge?.trim();
+  const paraPrzedPo = zdjecia.length === 2;
+  const akcent = paraPrzedPo && index === 1;
+  if (wlasny) return { tekst: wlasny, akcent };
+  if (!paraPrzedPo) return null;
+  return { tekst: index === 0 ? "przed" : "po!", akcent };
 }
 
 /**

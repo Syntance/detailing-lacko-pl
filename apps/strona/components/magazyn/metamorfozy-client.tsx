@@ -24,6 +24,7 @@ import { Button, Input, PageHeader, cn } from "@moduly/ui";
 import { ArrowDown, ArrowUp, GripVertical, Plus, Trash2 } from "lucide-react";
 import {
   paraZdjecia,
+  plakietkaZdjecia,
   siatkaKolumny,
   type MetamorfozyData,
   type MetamorfozyPara,
@@ -196,32 +197,35 @@ function ZdjeciaGrupy({
           className="grid gap-1 overflow-hidden rounded-lg"
           style={{ gridTemplateColumns: `repeat(${kolumny}, minmax(0, 1fr))` }}
         >
-          {zdjecia.map((z, i) => (
-            <div key={z.id} className="relative aspect-[3/4] bg-muted">
-              {z.url ? (
-                <Image
-                  src={z.url}
-                  alt=""
-                  fill
-                  sizes="200px"
-                  className="object-cover"
-                />
-              ) : null}
-              <span className="absolute top-1 left-1 rounded bg-black/60 px-1.5 py-0.5 text-[10px] font-semibold text-white">
-                {zdjecia.length === 2 ? (i === 0 ? "PRZED" : "PO") : i + 1}
-              </span>
-            </div>
-          ))}
+          {zdjecia.map((z, i) => {
+            // Miniatura pokazuje dokładnie to, co wyjdzie na stronie — inaczej
+            // panel obiecywałby „PRZED", a strona pokazywała własny napis.
+            const plakietka = plakietkaZdjecia(zdjecia, i);
+            return (
+              <div key={z.id} className="relative aspect-[3/4] bg-muted">
+                {z.url ? (
+                  <Image
+                    src={z.url}
+                    alt=""
+                    fill
+                    sizes="200px"
+                    className="object-cover"
+                  />
+                ) : null}
+                <span className="absolute top-1 left-1 max-w-[calc(100%-8px)] truncate rounded bg-black/60 px-1.5 py-0.5 text-[10px] font-semibold text-white uppercase">
+                  {plakietka ? plakietka.tekst : i + 1}
+                </span>
+              </div>
+            );
+          })}
         </div>
       ) : null}
 
-      {zdjecia.length === 2 ? (
-        <p className="text-xs text-muted-foreground">
-          Dwa zdjęcia = klasyczne przed/po — na stronie dostaną plakietki
-          „przed" i „po!". Przy jednym albo trzech i więcej plakietek nie ma, bo
-          nie da się powiedzieć, które jest „przed".
-        </p>
-      ) : null}
+      <p className="text-xs text-muted-foreground">
+        {zdjecia.length === 2
+          ? "Dwa zdjęcia = klasyczne przed/po: bez wpisanej plakietki strona sama doda „przed” i „po!”."
+          : "Plakietka pojawi się tylko tam, gdzie ją wpiszesz — automatyczne „przed/po” działa wyłącznie przy dwóch zdjęciach."}
+      </p>
 
       <div className="flex flex-col gap-4">
         {zdjecia.map((z, i) => (
@@ -266,6 +270,19 @@ function ZdjeciaGrupy({
               value={z.url}
               onChange={(url) => zmien(z.id, { url })}
             />
+            <Field
+              label={`Plakietka na zdjęciu ${i + 1}`}
+              hint={
+                zdjecia.length === 2
+                  ? "puste = automatycznie „przed” i „po!”"
+                  : "puste = bez plakietki, np. „zbliżenie”, „po 2 tygodniach”"
+              }
+            >
+              <Input
+                value={z.badge ?? ""}
+                onChange={(e) => zmien(z.id, { badge: e.target.value })}
+              />
+            </Field>
             <Field label={`Alt zdjęcia ${i + 1} (SEO)`}>
               <Input
                 value={z.alt}

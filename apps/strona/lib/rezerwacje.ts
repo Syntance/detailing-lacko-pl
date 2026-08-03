@@ -61,7 +61,11 @@ export const dostepnoscSchema = z.object({
 export type DayWindow = z.infer<typeof dayWindowSchema>;
 export type DostepnoscData = z.infer<typeof dostepnoscSchema>;
 
-export const REZERWACJA_STATUSY = ["nowa", "potwierdzona", "odrzucona"] as const;
+export const REZERWACJA_STATUSY = [
+  "nowa",
+  "potwierdzona",
+  "odrzucona",
+] as const;
 export type RezerwacjaStatus = (typeof REZERWACJA_STATUSY)[number];
 
 export const REZERWACJA_STATUS_LABEL: Record<RezerwacjaStatus, string> = {
@@ -129,7 +133,13 @@ export const WEEKDAY_LABEL: Record<number, string> = {
 /** Dni tygodnia w kolejności Pon→Nd (do wyświetlania w panelu). */
 export function weeklyInDisplayOrder(weekly: DayWindow[]): DayWindow[] {
   return WEEKDAY_ORDER.map(
-    (day) => weekly.find((w) => w.day === day) ?? { day, enabled: false, from: "09:00", to: "17:00" },
+    (day) =>
+      weekly.find((w) => w.day === day) ?? {
+        day,
+        enabled: false,
+        from: "09:00",
+        to: "17:00",
+      },
   );
 }
 
@@ -184,6 +194,11 @@ export type RezerwacjaPozycja = {
   priceFrom: number;
   durationMinutes: number;
   popular: boolean;
+  /**
+   * Składowe pakietu — widget na ich podstawie blokuje dobieranie usług już
+   * zawartych w cenie. Same id, bez nazw: nazwy widget ma w swojej liście.
+   */
+  includedItemIds?: string[];
 };
 
 export type RezerwacjaKategoria = {
@@ -193,7 +208,9 @@ export type RezerwacjaKategoria = {
 };
 
 /** Cennik → grupy do multi-selecta w widgecie (bez opisów — lżejszy payload). */
-export function buildRezerwacjaCennik(cennik: CennikData): RezerwacjaKategoria[] {
+export function buildRezerwacjaCennik(
+  cennik: CennikData,
+): RezerwacjaKategoria[] {
   const categories = cennik.categories
     .filter((c) => !c.disabled)
     .sort((a, b) => a.order - b.order);
@@ -211,6 +228,7 @@ export function buildRezerwacjaCennik(cennik: CennikData): RezerwacjaKategoria[]
           priceFrom: i.priceHidden ? 0 : i.priceFrom,
           durationMinutes: i.durationMinutes,
           popular: i.popular,
+          includedItemIds: i.includedItemIds,
         })),
     }))
     .filter((c) => c.pozycje.length > 0);
@@ -287,7 +305,10 @@ function dayWindow(
 }
 
 /** Pojemność dnia w minutach: okno przycięte dziennym limitem (0 = bez limitu). */
-function dayCapacity(config: DostepnoscData, window: { from: number; to: number }): number {
+function dayCapacity(
+  config: DostepnoscData,
+  window: { from: number; to: number },
+): number {
   const windowLen = window.to - window.from;
   return config.maxDailyMinutes > 0
     ? Math.min(windowLen, config.maxDailyMinutes)
@@ -339,7 +360,8 @@ export function planPracy(
 ): PlanPracy | null {
   const startWindow = dayWindow(config, startDate);
   if (!startWindow) return null;
-  if (startMinute < startWindow.from || startMinute >= startWindow.to) return null;
+  if (startMinute < startWindow.from || startMinute >= startWindow.to)
+    return null;
 
   const startDay = planDnia(occupancy, startDate);
   if (minuteTaken(startDay.przedzialy, startMinute)) return null;
@@ -361,7 +383,11 @@ export function planPracy(
           if (remaining <= 0 || capLeft <= 0) break;
           const take = Math.min(gap.to - gap.from, capLeft, remaining);
           if (take <= 0) continue;
-          segmenty.push({ date: cursorDate, from: gap.from, to: gap.from + take });
+          segmenty.push({
+            date: cursorDate,
+            from: gap.from,
+            to: gap.from + take,
+          });
           remaining -= take;
           capLeft -= take;
         }
@@ -412,10 +438,15 @@ export function buildObciazenie(
 ): Obciazenie {
   const occupancy: Obciazenie = new Map();
   const sorted = [...prace].sort((a, b) =>
-    a.date === b.date ? toMinutes(a.time) - toMinutes(b.time) : a.date < b.date ? -1 : 1,
+    a.date === b.date
+      ? toMinutes(a.time) - toMinutes(b.time)
+      : a.date < b.date
+        ? -1
+        : 1,
   );
   for (const praca of sorted) {
-    const duration = praca.durationMinutes > 0 ? praca.durationMinutes : config.slotMinutes;
+    const duration =
+      praca.durationMinutes > 0 ? praca.durationMinutes : config.slotMinutes;
     const start = toMinutes(praca.time);
     const plan = planPracy(config, occupancy, praca.date, start, duration);
     if (plan) {
@@ -423,7 +454,11 @@ export function buildObciazenie(
     } else {
       applyPlan(occupancy, {
         segmenty: [
-          { date: praca.date, from: start, to: Math.min(start + duration, 1440) },
+          {
+            date: praca.date,
+            from: start,
+            to: Math.min(start + duration, 1440),
+          },
         ],
         koniecDate: praca.date,
         koniecMinute: Math.min(start + duration, 1440),
@@ -479,7 +514,11 @@ export function computeSlots(
   const duration = durationMinutes > 0 ? durationMinutes : config.slotMinutes;
 
   const slots: SlotPropozycja[] = [];
-  for (let m = window.from; m + config.slotMinutes <= window.to; m += config.slotMinutes) {
+  for (
+    let m = window.from;
+    m + config.slotMinutes <= window.to;
+    m += config.slotMinutes
+  ) {
     if (dayOffset * 1440 + m < cutoff) continue;
     const plan = planPracy(config, occupancy, dateStr, m, duration);
     if (!plan) continue;

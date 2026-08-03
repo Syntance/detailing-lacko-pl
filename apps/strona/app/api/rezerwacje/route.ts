@@ -1,8 +1,15 @@
 import { NextResponse } from "next/server";
-import { computeSlots, resolveUslugi, rezerwacjaInputSchema } from "@/lib/rezerwacje";
+import {
+  computeSlots,
+  resolveUslugi,
+  rezerwacjaInputSchema,
+} from "@/lib/rezerwacje";
 import { enforceRateLimit, requestIp } from "@/lib/rate-limit";
-import { createCalendarEvent, getBusyFromCalendar } from "@/lib/google-calendar";
-import { formatDuration } from "@/lib/cennik";
+import {
+  createCalendarEvent,
+  getBusyFromCalendar,
+} from "@/lib/google-calendar";
+import { findSelectionConflict, formatDuration } from "@/lib/cennik";
 import { sendRezerwacjaNotification } from "@/lib/rezerwacja-mail";
 import { getCennik } from "@/lib/site-data";
 import {
@@ -71,7 +78,24 @@ export async function POST(request: Request) {
   const resolved = resolveUslugi(cennik, input.serviceIds);
   if (!resolved) {
     return NextResponse.json(
-      { error: "Wybrana usługa nie istnieje. Odśwież stronę.", code: "bad_services" },
+      {
+        error: "Wybrana usługa nie istnieje. Odśwież stronę.",
+        code: "bad_services",
+      },
+      { status: 400 },
+    );
+  }
+
+  // Pakiet razem ze swoją składową = podwójna płatność za tę samą robotę
+  // i podwójny czas w kalendarzu. Widget na to nie pozwala, ale payload
+  // przychodzi od klienta, więc reguła musi obowiązywać też tutaj.
+  const conflict = findSelectionConflict(cennik.items, input.serviceIds);
+  if (conflict) {
+    return NextResponse.json(
+      {
+        error: `„${conflict.included.name}" jest już w cenie „${conflict.owner.name}". Odśwież stronę i wybierz ponownie.`,
+        code: "services_conflict",
+      },
       { status: 400 },
     );
   }

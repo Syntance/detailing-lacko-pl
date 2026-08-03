@@ -49,6 +49,20 @@ export const cennikItemSchema = z.object({
   unit: z.string(),
   /** Ukrycie kwoty — zamiast ceny pokazujemy „Zapytaj o cenę". */
   priceHidden: z.boolean().optional(),
+  /**
+   * Id pozycji, które ta pozycja ZAWIERA w cenie (pakiet → jego składowe).
+   * W rezerwacji wybór tej pozycji blokuje i zdejmuje zaznaczone składowe —
+   * inaczej klient płaci dwa razy za mycie, które pakiet już obejmuje, a
+   * harmonogram rezerwuje podwójny czas pracy.
+   *
+   * Relacja jest JEDNOKIERUNKOWA i przechodnia: pakiet może zawierać pozycję,
+   * która sama zawiera kolejne (patrz `zablokowanePozycje`).
+   *
+   * `.optional()` (a nie `.default([])`) tak jak `priceHidden` — stare blob-y
+   * w bazie nie mają tego pola, a domyślka wymusiłaby dopisanie go do każdej
+   * pozycji w DEFAULT_CENNIK. Czytamy przez `?? []`.
+   */
+  includedItemIds: z.array(z.string()).optional(),
   popular: z.boolean(),
   order: z.number().int(),
   disabled: z.boolean(),
@@ -100,12 +114,132 @@ export function formatDuration(minutes: number): string {
   return `${String(rounded).replace(".", ",")} h`;
 }
 
+/* ------------------- Zawieranie się pozycji (pakiety) ------------------- */
+
+/**
+ * Minimum, jakiego potrzebuje liczenie blokad. Typowane strukturalnie, bo tę
+ * samą logikę uruchamia panel (na `CennikItem`), widget rezerwacji (na
+ * odchudzonym `RezerwacjaPozycja`) i walidacja w API — jedno źródło prawdy
+ * zamiast trzech kopii, które rozjadą się przy pierwszej zmianie reguł.
+ */
+export type PozycjaZeSkladowymi = {
+  id: string;
+  name: string;
+  includedItemIds?: string[];
+};
+
+/** Składowe pozycji, odporne na brak pola w starych blob-ach z bazy. */
+export function itemIncludes(item: PozycjaZeSkladowymi): string[] {
+  return item.includedItemIds ?? [];
+}
+
+/**
+ * Mapa: id zablokowanej pozycji → pozycja, która ją zawiera. Pozycja jest
+ * zablokowana, gdy któraś z WYBRANYCH już ją obejmuje w cenie.
+ *
+ * Przechodnie: pakiet zawierający „Mycie + dekontaminacja + wosk" blokuje też
+ * składowe tego mycia. `seen` pilnuje cykli — panel pozwala zaznaczyć dowolne
+ * pozycje, więc ktoś może omyłkowo zapętlić A→B→A; bez tej straży byłaby
+ * nieskończona rekurencja i zawieszona strona.
+ */
+export function blockedItemIds<T extends PozycjaZeSkladowymi>(
+  items: T[],
+  selectedIds: string[],
+): Map<string, T> {
+  const byId = new Map(items.map((i) => [i.id, i]));
+  const blocked = new Map<string, T>();
+
+  const walk = (owner: T, current: T, seen: Set<string>) => {
+    for (const childId of itemIncludes(current)) {
+      if (seen.has(childId)) continue;
+      seen.add(childId);
+      if (!blocked.has(childId)) blocked.set(childId, owner);
+      const child = byId.get(childId);
+      if (child) walk(owner, child, seen);
+    }
+  };
+
+  for (const id of selectedIds) {
+    const item = byId.get(id);
+    if (item) walk(item, item, new Set([id]));
+  }
+  return blocked;
+}
+
+/** Skutek kliknięcia w pozycję: nowy wybór + co z niego wypadło i dlaczego. */
+export type SelectionChange<T> = {
+  selected: string[];
+  /** Zdjęte z wyboru, bo świeżo wybrana pozycja już je zawiera. */
+  removed: T[];
+  /** Ustawione, gdy kliknięto pozycję zawartą w już wybranym pakiecie. */
+  blockedBy: T | null;
+};
+
+/**
+ * Jedyne miejsce, które zmienia wybór usług w rezerwacji — dzięki temu panel,
+ * widget i walidacja serwera liczą to samo.
+ *
+ * Odznaczenie zawsze przechodzi. Zaznaczenie pozycji zawartej w wybranym
+ * pakiecie NIE przechodzi (zwracamy `blockedBy`, wybór bez zmian). Zaznaczenie
+ * pakietu przechodzi i zdejmuje jego składowe.
+ */
+export function toggleServiceSelection<T extends PozycjaZeSkladowymi>(
+  items: T[],
+  selectedIds: string[],
+  id: string,
+): SelectionChange<T> {
+  const byId = new Map(items.map((i) => [i.id, i]));
+
+  if (selectedIds.includes(id)) {
+    return {
+      selected: selectedIds.filter((x) => x !== id),
+      removed: [],
+      blockedBy: null,
+    };
+  }
+
+  const blockedBy = blockedItemIds(items, selectedIds).get(id) ?? null;
+  if (blockedBy) return { selected: selectedIds, removed: [], blockedBy };
+
+  const zawarte = blockedItemIds(items, [id]);
+  const removed = selectedIds
+    .filter((x) => zawarte.has(x))
+    .map((x) => byId.get(x))
+    .filter((x): x is T => Boolean(x));
+
+  return {
+    selected: [...selectedIds.filter((x) => !zawarte.has(x)), id],
+    removed,
+    blockedBy: null,
+  };
+}
+
+/**
+ * Kolizja w gotowym zamówieniu: pakiet i jego składowa naraz. UI na to nie
+ * pozwala, ale payload przychodzi od klienta — bez tej kontroli dałoby się
+ * zamówić pakiet + mycie i zapłacić podwójnie za tę samą robotę, a harmonogram
+ * zarezerwowałby podwójny czas. Zwraca pierwszą kolizję albo null.
+ */
+export function findSelectionConflict<T extends PozycjaZeSkladowymi>(
+  items: T[],
+  ids: string[],
+): { owner: T; included: T } | null {
+  const byId = new Map(items.map((i) => [i.id, i]));
+  const blocked = blockedItemIds(items, ids);
+  for (const id of ids) {
+    const owner = blocked.get(id);
+    const included = byId.get(id);
+    if (owner && included && owner.id !== id) return { owner, included };
+  }
+  return null;
+}
+
 /** Domyślny cennik — 1:1 z Notion „Cennik i zakres usług". */
 export const DEFAULT_CENNIK: CennikData = {
   settings: {
-    heading: "Ceny z góry, bez haczyków",
+    heading: "Zobacz, ile to kosztuje",
     subheading:
-      "Jedyny pełny cennik w promieniu 20 km. Rozliczamy dokładnie według niego.",
+      "Czas realizacji otrzymasz po wybraniu usług, które Cię interesują",
     noteTitle: "Sprzedajesz auto?",
     // Podpis w czarnym pasie pakietu (makieta „kreskówka").
     noteText:
@@ -131,10 +265,12 @@ export const DEFAULT_CENNIK: CennikData = {
       id: "zewnatrz",
       // Nazwa kolumny 1:1 z makietą „kreskówka".
       name: "Mycie i wosk",
-      description: "Mycie detailingowe, dekontaminacja, wosk i dodatki chroniące lakier.",
+      description:
+        "Mycie detailingowe, dekontaminacja, wosk i dodatki chroniące lakier.",
       priceFrom: 150,
       timeLabel: "30 min – 2,5 h",
-      highlight: "Najczęściej wybierane: Mycie + dekontaminacja + wosk syntetyczny — 250 zł",
+      highlight:
+        "Najczęściej wybierane: Mycie + dekontaminacja + wosk syntetyczny — 250 zł",
       order: 1,
       disabled: false,
     },
@@ -144,7 +280,8 @@ export const DEFAULT_CENNIK: CennikData = {
       description: "Sprzątanie, pranie tapicerki, skóra i usuwanie zapachów.",
       priceFrom: 150,
       timeLabel: "30 min – 5 h",
-      highlight: "Najczęściej wybierane: Kompleksowe czyszczenie wnętrza — 500 zł",
+      highlight:
+        "Najczęściej wybierane: Kompleksowe czyszczenie wnętrza — 500 zł",
       order: 2,
       disabled: false,
     },
@@ -154,7 +291,8 @@ export const DEFAULT_CENNIK: CennikData = {
       description: "Polerowanie jednoetapowe (one step) i reflektory.",
       priceFrom: 250,
       timeLabel: "1,5 h – 1 dzień",
-      highlight: "One step: 600 / 750 / 900 zł wg rozmiaru auta — usuwa 50–70% rys",
+      highlight:
+        "One step: 600 / 750 / 900 zł wg rozmiaru auta — usuwa 50–70% rys",
       order: 3,
       disabled: false,
     },
@@ -189,6 +327,13 @@ export const DEFAULT_CENNIK: CennikData = {
       priceTo: 0,
       pricePrefix: "",
       unit: "",
+      // Wprost z opisu pakietu. Mycie/dekontaminacja/wosk lecą przez zestaw
+      // „Mycie + dekontaminacja + wosk", który sam je zawiera — blokady liczą
+      // się przechodnio, więc nie trzeba ich tu powtarzać.
+      includedItemIds: [
+        "mycie-dekontaminacja-wosk",
+        "kompleksowe-czyszczenie-wnetrza",
+      ],
       popular: true,
       order: 1,
       disabled: false,
@@ -302,6 +447,12 @@ export const DEFAULT_CENNIK: CennikData = {
       priceTo: 0,
       pricePrefix: "",
       unit: "",
+      // Zestaw = suma trzech pozycji z tej samej kategorii, wprost z nazwy.
+      includedItemIds: [
+        "mycie-detailingowe-baza",
+        "dekontaminacja-lakieru",
+        "wosk-syntetyczny-adbl-ssw",
+      ],
       popular: true,
       order: 6,
       disabled: false,
@@ -373,7 +524,8 @@ export const DEFAULT_CENNIK: CennikData = {
       id: "ozonowanie",
       categoryId: "wnetrze",
       name: "• Ozonowanie / usuwanie zapachów",
-      description: "Papierosy, zwierzęta, stęchlizna + odświeżenie układu klimatyzacji.",
+      description:
+        "Papierosy, zwierzęta, stęchlizna + odświeżenie układu klimatyzacji.",
       timeLabel: "30 min",
       durationMinutes: 30,
       priceFrom: 80,
@@ -508,6 +660,9 @@ export const DEFAULT_CENNIK: CennikData = {
       priceTo: 0,
       pricePrefix: "",
       unit: "",
+      // Zawiera cały pakiet IN+OUT, a przez niego — przechodnio — wszystkie
+      // jego składowe. Wystarczy jedno id.
+      includedItemIds: ["detailing-kompletny-in-out"],
       popular: false,
       order: 2,
       disabled: false,

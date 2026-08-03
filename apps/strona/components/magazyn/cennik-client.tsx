@@ -255,6 +255,7 @@ export function CennikClient({ initial }: { initial: CennikData }) {
                       category={category}
                       rows={rows}
                       allCategories={sortedCategories}
+                      allItems={items}
                       onChangeCategory={(patch) =>
                         setCategories(
                           categories.map((c) =>
@@ -504,6 +505,7 @@ function CategoryPozycjeCard({
   category,
   rows,
   allCategories,
+  allItems,
   onChangeCategory,
   onRemoveCategory,
   onReorderItems,
@@ -515,6 +517,8 @@ function CategoryPozycjeCard({
   category: CennikCategory;
   rows: CennikItem[];
   allCategories: CennikCategory[];
+  /** Cały cennik — do wyboru składowych pakietu (przez kategorie). */
+  allItems: CennikItem[];
   onChangeCategory: (patch: Partial<CennikCategory>) => void;
   onRemoveCategory: () => void;
   onReorderItems: (next: CennikItem[]) => void;
@@ -573,6 +577,7 @@ function CategoryPozycjeCard({
               item={item}
               index={index + 1}
               categories={allCategories}
+              allItems={allItems}
               onChange={(patch) => onChangeItem(item.id, patch)}
               onRemove={() => onRemoveItem(item.id)}
               onMoveToCategory={(newCategoryId) =>
@@ -602,20 +607,138 @@ function itemSummary(item: CennikItem): string {
   if (item.timeLabel) parts.push(item.timeLabel);
   if (item.durationMinutes > 0)
     parts.push(`rezerwacje: ${formatDuration(item.durationMinutes)}`);
+  const zawiera = item.includedItemIds?.length ?? 0;
+  if (zawiera > 0) parts.push(`zawiera ${zawiera}`);
   if (item.popular) parts.push("najczęściej wybierane");
   if (item.disabled) parts.push("ukryta na stronie");
   return parts.join(" · ");
+}
+
+/**
+ * Czy od tej pozycji da się wrócić do niej samej po łańcuchu składowych.
+ * Panel pozwala zaznaczyć cokolwiek, więc A→B→A jest do zrobienia jednym
+ * kliknięciem; wyliczanie blokad jest na to odporne (ma strażnika cykli), ale
+ * dla właściciela to konfiguracja bez sensu i lepiej ją pokazać.
+ */
+function maPetle(item: CennikItem, allItems: CennikItem[]): boolean {
+  const byId = new Map(allItems.map((i) => [i.id, i]));
+  const seen = new Set<string>();
+  const stack = [...(item.includedItemIds ?? [])];
+  while (stack.length > 0) {
+    const id = stack.pop() as string;
+    if (id === item.id) return true;
+    if (seen.has(id)) continue;
+    seen.add(id);
+    const next = byId.get(id);
+    if (next) stack.push(...(next.includedItemIds ?? []));
+  }
+  return false;
+}
+
+/**
+ * „Ta pozycja zawiera w cenie…" — składowe pakietu. Przy rezerwacji wybór tej
+ * pozycji zdejmie i zablokuje zaznaczone tu usługi, żeby klient nie płacił
+ * dwa razy za tę samą robotę ani nie blokował podwójnego czasu w kalendarzu.
+ *
+ * Grupowane po kategoriach, bo płaska lista kilkudziesięciu checkboxów jest
+ * nie do przejrzenia.
+ */
+function SkladowePakietu({
+  item,
+  allItems,
+  categories,
+  onChange,
+}: {
+  item: CennikItem;
+  allItems: CennikItem[];
+  categories: CennikCategory[];
+  onChange: (patch: Partial<CennikItem>) => void;
+}) {
+  const wybrane = item.includedItemIds ?? [];
+
+  const toggle = (id: string) =>
+    onChange({
+      includedItemIds: wybrane.includes(id)
+        ? wybrane.filter((x) => x !== id)
+        : [...wybrane, id],
+    });
+
+  const grupy = categories
+    .map((c) => ({
+      kategoria: c,
+      pozycje: allItems
+        .filter((i) => i.categoryId === c.id && i.id !== item.id)
+        .sort((a, b) => a.order - b.order),
+    }))
+    .filter((g) => g.pozycje.length > 0);
+
+  return (
+    <div className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4">
+      <div className="flex flex-col gap-1">
+        <p className="text-sm font-medium text-foreground">
+          Zawiera w cenie{wybrane.length > 0 ? ` (${wybrane.length})` : ""}
+        </p>
+        <p className="text-xs text-muted-foreground">
+          Zaznacz usługi, które ta pozycja już obejmuje. W rezerwacji klient nie
+          dobierze ich osobno — zobaczy komunikat, że są w cenie, a jeśli miał
+          je zaznaczone, zostaną zdjęte z wyboru.
+        </p>
+      </div>
+
+      {maPetle(item, allItems) ? (
+        <p
+          role="alert"
+          className="rounded-md border border-destructive px-3 py-2 text-xs text-destructive"
+        >
+          Pętla: po łańcuchu składowych ta pozycja wraca do samej siebie.
+          Rozepnij jedną ze stron — inaczej te pozycje będą blokować się
+          nawzajem i klient nie wybierze żadnej.
+        </p>
+      ) : null}
+
+      <div className="flex flex-col gap-3">
+        {grupy.map(({ kategoria, pozycje }) => (
+          <div key={kategoria.id} className="flex flex-col gap-2">
+            <p className="text-xs font-medium text-muted-foreground">
+              {kategoria.name || "(bez nazwy)"}
+            </p>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {pozycje.map((p) => (
+                <label
+                  key={p.id}
+                  className="flex items-start gap-2 text-sm text-foreground"
+                >
+                  <Checkbox
+                    checked={wybrane.includes(p.id)}
+                    onCheckedChange={() => toggle(p.id)}
+                    ariaLabel={`${item.name || "Ta pozycja"} zawiera ${
+                      p.name || "pozycję bez nazwy"
+                    }`}
+                  />
+                  <span className="leading-snug">
+                    {p.name || "(bez nazwy)"}
+                  </span>
+                </label>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 function ItemRow({
   item,
   index,
   categories,
+  allItems,
   onChange,
   onRemove,
   onMoveToCategory,
 }: {
   item: CennikItem;
+  allItems: CennikItem[];
   /** Numer pozycji w obrębie kategorii (1-based). */
   index: number;
   categories: CennikCategory[];
@@ -715,7 +838,10 @@ function ItemRow({
             </Field>
             {/* Źródło prawdy dla kalendarza rezerwacji (opis wyżej jest tylko
                 dla ludzi) — z tego liczy się godzina odbioru i dzienny limit. */}
-            <Field label="Czas realizacji (min)" hint="0 = nie wlicza się do rezerwacji">
+            <Field
+              label="Czas realizacji (min)"
+              hint="0 = nie wlicza się do rezerwacji"
+            >
               <Input
                 type="number"
                 inputMode="numeric"
@@ -723,7 +849,9 @@ function ItemRow({
                 step={15}
                 value={item.durationMinutes}
                 onChange={(e) =>
-                  onChange({ durationMinutes: Math.max(0, Number(e.target.value) || 0) })
+                  onChange({
+                    durationMinutes: Math.max(0, Number(e.target.value) || 0),
+                  })
                 }
               />
             </Field>
@@ -807,6 +935,13 @@ function ItemRow({
               Ukryj cenę
             </label>
           </div>
+
+          <SkladowePakietu
+            item={item}
+            allItems={allItems}
+            categories={categories}
+            onChange={onChange}
+          />
         </div>
       </div>
     </Reorder.Item>

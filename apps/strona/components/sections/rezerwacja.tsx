@@ -2,11 +2,25 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { Check, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
-import { formatDuration } from "@/lib/cennik";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import {
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  Loader2,
+  PackageCheck,
+  Undo2,
+  X,
+} from "lucide-react";
+import {
+  blockedItemIds,
+  formatDuration,
+  toggleServiceSelection,
+} from "@/lib/cennik";
 import type {
   DostepnoscData,
   RezerwacjaKategoria,
+  RezerwacjaPozycja,
   SlotPropozycja,
 } from "@/lib/rezerwacje";
 import { trackReservationSubmit } from "@/lib/track";
@@ -35,8 +49,115 @@ function formatDatePl(dateStr: string): string {
   }
 }
 
+/** Lista nazw po polsku: „A", „A i B", „A, B i C". */
+function wymien(nazwy: string[]): string {
+  if (nazwy.length <= 1) return nazwy[0] ?? "";
+  return `${nazwy.slice(0, -1).join(", ")} i ${nazwy[nazwy.length - 1]}`;
+}
+
+/**
+ * Co widget ma powiedzieć o skutku ostatniego kliknięcia.
+ *
+ * `usuniete` — wybrany pakiet zdjął z wyboru usługi, które zawiera w cenie.
+ * `zablokowane` — klient kliknął usługę, którą już obejmuje wybrany pakiet.
+ */
+type Callout =
+  | {
+      rodzaj: "usuniete";
+      pakiet: RezerwacjaPozycja;
+      usuniete: RezerwacjaPozycja[];
+      /** Wybór sprzed kliknięcia — do „Cofnij". */
+      poprzedni: string[];
+    }
+  | {
+      rodzaj: "zablokowane";
+      pozycja: RezerwacjaPozycja;
+      pakiet: RezerwacjaPozycja;
+    };
+
+/**
+ * Callout nad listą usług: tłumaczy, co zmieniło się w wyborze i pozwala to
+ * odkręcić jednym kliknięciem.
+ *
+ * Świadomie NIE jest modalem: zmiana już się wydarzyła i jest widoczna na
+ * pigułkach, więc blokowanie ekranu byłoby karą za normalne kliknięcie.
+ * `aria-live` sprawia, że czytnik ekranu ogłasza zmianę, której użytkownik
+ * nie wywołał wprost (zdjęcie usługi z wyboru).
+ */
+function WyborCallout({
+  callout,
+  onCofnij,
+  onZamien,
+  onZamknij,
+}: {
+  callout: Callout;
+  onCofnij: () => void;
+  onZamien: () => void;
+  onZamknij: () => void;
+}) {
+  const zablokowane = callout.rodzaj === "zablokowane";
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      className="cien-3 flex flex-col gap-2.5 rounded-xl border-2 border-ink bg-zolty px-4 py-3.5"
+    >
+      <div className="flex items-start gap-2.5">
+        <PackageCheck className="mt-0.5 size-[18px] shrink-0" aria-hidden />
+        <p className="text-[14px] leading-[1.5] text-pretty">
+          {zablokowane ? (
+            <>
+              <strong className="font-bold">{callout.pozycja.name}</strong> jest
+              już w cenie pakietu{" "}
+              <strong className="font-bold">{callout.pakiet.name}</strong> — nie
+              trzeba dobierać osobno.
+            </>
+          ) : (
+            <>
+              Pakiet{" "}
+              <strong className="font-bold">{callout.pakiet.name}</strong>{" "}
+              zawiera już{" "}
+              <strong className="font-bold">
+                {wymien(callout.usuniete.map((u) => u.name))}
+              </strong>
+              , więc{" "}
+              {callout.usuniete.length > 1 ? "zdjęliśmy je" : "zdjęliśmy ją"} z
+              wyboru. Nie płacisz dwa razy za to samo.
+            </>
+          )}
+        </p>
+        <button
+          type="button"
+          onClick={onZamknij}
+          aria-label="Zamknij komunikat"
+          className="-mt-1 -mr-1.5 ml-auto grid size-8 shrink-0 place-items-center rounded-lg hover:bg-ink/10 focus-visible:ring-3 focus-visible:ring-ink/40 focus-visible:outline-none"
+        >
+          <X className="size-4" aria-hidden />
+        </button>
+      </div>
+
+      <button
+        type="button"
+        onClick={zablokowane ? onZamien : onCofnij}
+        className="cien-3 inline-flex w-max items-center gap-1.5 rounded-lg border-2 border-ink bg-background px-3 py-1.5 text-[13px] font-bold transition-transform hover:-translate-y-0.5 focus-visible:ring-3 focus-visible:ring-ink/40 focus-visible:outline-none active:translate-y-0 motion-reduce:transition-none"
+      >
+        <Undo2 className="size-3.5" aria-hidden />
+        {zablokowane
+          ? `Wolę osobno — usuń ${callout.pakiet.name}`
+          : "Cofnij tę zmianę"}
+      </button>
+    </div>
+  );
+}
+
 /** Etykieta kroku — numer w żółtym kółku + mono uppercase, jak plakietki sekcji. */
-function Krok({ numer, children }: { numer: number; children: React.ReactNode }) {
+function Krok({
+  numer,
+  children,
+}: {
+  numer: number;
+  children: React.ReactNode;
+}) {
   return (
     <span className="flex items-center gap-2.5">
       <span
@@ -151,7 +272,10 @@ function Kalendarz({
 
       <div aria-hidden className="grid grid-cols-7 gap-1 pb-1.5">
         {DNI_TYGODNIA.map((d) => (
-          <span key={d} className="etykieta-sm text-center text-muted-foreground">
+          <span
+            key={d}
+            className="etykieta-sm text-center text-muted-foreground"
+          >
             {d}
           </span>
         ))}
@@ -167,7 +291,9 @@ function Kalendarz({
           const dostepny =
             iso >= minStr &&
             iso <= maxStr &&
-            enabledWeekdays.has(new Date(view.year, view.month, day).getDay()) &&
+            enabledWeekdays.has(
+              new Date(view.year, view.month, day).getDay(),
+            ) &&
             !config.blockedDates.includes(iso);
           const active = iso === value;
           return (
@@ -213,6 +339,8 @@ const POLE =
  */
 export function Rezerwacja({ config, kategorie }: Props) {
   const [selected, setSelected] = useState<string[]>([]);
+  const [callout, setCallout] = useState<Callout | null>(null);
+  const reduced = useReducedMotion();
   const [date, setDate] = useState("");
   const [slots, setSlots] = useState<SlotPropozycja[]>([]);
   const [slotsLoading, setSlotsLoading] = useState(false);
@@ -228,7 +356,10 @@ export function Rezerwacja({ config, kategorie }: Props) {
   const [done, setDone] = useState<SlotPropozycja | null>(null);
   const submitting = useRef(false);
 
-  const pozycje = useMemo(() => kategorie.flatMap((k) => k.pozycje), [kategorie]);
+  const pozycje = useMemo(
+    () => kategorie.flatMap((k) => k.pozycje),
+    [kategorie],
+  );
   const wybrane = useMemo(
     () => pozycje.filter((p) => selected.includes(p.id)),
     [pozycje, selected],
@@ -237,10 +368,57 @@ export function Rezerwacja({ config, kategorie }: Props) {
   const razemCena = wybrane.reduce((sum, p) => sum + p.priceFrom, 0);
   const servicesKey = selected.join(",");
 
-  const toggle = (id: string) =>
-    setSelected((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+  /**
+   * Pozycje objęte już wybranym pakietem: id → pakiet, który je zawiera.
+   * Sterują wyglądem pigułek i treścią calloutu.
+   */
+  const zablokowane = useMemo(
+    () => blockedItemIds(pozycje, selected),
+    [pozycje, selected],
+  );
+
+  /**
+   * Cała reguła siedzi w `toggleServiceSelection` (wspólnej z panelem i API) —
+   * tutaj zostaje wyłącznie zamiana wyniku na komunikat dla klienta.
+   */
+  const toggle = (id: string) => {
+    const pozycja = pozycje.find((p) => p.id === id);
+    if (!pozycja) return;
+
+    const zmiana = toggleServiceSelection(pozycje, selected, id);
+
+    if (zmiana.blockedBy) {
+      setCallout({
+        rodzaj: "zablokowane",
+        pozycja,
+        pakiet: zmiana.blockedBy,
+      });
+      return;
+    }
+
+    const poprzedni = selected;
+    setSelected(zmiana.selected);
+    setCallout(
+      zmiana.removed.length > 0
+        ? {
+            rodzaj: "usuniete",
+            pakiet: pozycja,
+            usuniete: zmiana.removed,
+            poprzedni,
+          }
+        : null,
     );
+  };
+
+  /** „Wolę osobno": zdejmuje pakiet i wstawia klikniętą składową. */
+  const zamienPakietNaPozycje = () => {
+    if (!callout || callout.rodzaj !== "zablokowane") return;
+    setSelected((prev) => [
+      ...prev.filter((x) => x !== callout.pakiet.id),
+      callout.pozycja.id,
+    ]);
+    setCallout(null);
+  };
 
   useEffect(() => {
     if (!date || !servicesKey) {
@@ -301,9 +479,10 @@ export function Rezerwacja({ config, kategorie }: Props) {
         );
         return;
       }
-      const body = (await res.json().catch(() => null)) as
-        | { error?: string; code?: string }
-        | null;
+      const body = (await res.json().catch(() => null)) as {
+        error?: string;
+        code?: string;
+      } | null;
       setError(body?.error ?? "Nie udało się zarezerwować. Spróbuj ponownie.");
       // Slot zniknął w międzyczasie — odśwież listę godzin.
       if (body?.code === "slot_taken" || body?.code === "slot_unavailable") {
@@ -336,8 +515,9 @@ export function Rezerwacja({ config, kategorie }: Props) {
         <div className="flex flex-col gap-2">
           <h3 className="text-xl font-bold">Termin zaklepany!</h3>
           <p className="text-[15px] text-pretty">
-            Zapisałem <strong className="font-bold">{formatDatePl(date)}</strong>{" "}
-            na <strong className="font-bold">{done.time}</strong>
+            Zapisałem{" "}
+            <strong className="font-bold">{formatDatePl(date)}</strong> na{" "}
+            <strong className="font-bold">{done.time}</strong>
             {wybrane.length ? (
               <> — {wybrane.map((p) => p.name).join(", ")}</>
             ) : null}
@@ -383,36 +563,67 @@ export function Rezerwacja({ config, kategorie }: Props) {
                 <div className="grid gap-2.5 sm:grid-cols-2">
                   {kategoria.pozycje.map((p) => {
                     const active = selected.includes(p.id);
+                    // Pozycja w cenie wybranego pakietu: zostaje klikalna,
+                    // żeby dało się dopytać „dlaczego nie mogę?" — martwy,
+                    // wyszarzony przycisk bez wyjaśnienia jest gorszy.
+                    const wPakiecie = !active
+                      ? zablokowane.get(p.id)
+                      : undefined;
                     return (
                       <button
                         key={p.id}
                         type="button"
                         onClick={() => toggle(p.id)}
                         aria-pressed={active}
-                        className={`flex items-start justify-between gap-3 rounded-xl border-2 border-ink px-3.5 py-3 text-left transition-transform focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none motion-reduce:transition-none ${
+                        aria-describedby={
+                          wPakiecie ? `w-pakiecie-${p.id}` : undefined
+                        }
+                        className={`flex items-start justify-between gap-3 rounded-xl border-2 px-3.5 py-3 text-left transition-transform focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none motion-reduce:transition-none ${
                           active
-                            ? "cien-3 bg-zolty"
-                            : "bg-background hover:-translate-y-0.5"
+                            ? "cien-3 border-ink bg-zolty"
+                            : wPakiecie
+                              ? "border-dashed border-kreska bg-piasek"
+                              : "border-ink bg-background hover:-translate-y-0.5"
                         }`}
                       >
                         <span className="flex min-w-0 flex-col gap-1">
-                          <span className="text-[14px] leading-snug font-semibold">
+                          <span
+                            className={`text-[14px] leading-snug font-semibold ${
+                              wPakiecie ? "text-muted-foreground" : ""
+                            }`}
+                          >
                             {p.name}
                           </span>
-                          <span className="etykieta-sm text-muted-foreground">
-                            {p.priceLabel}
-                            {p.durationMinutes > 0
-                              ? ` · ${formatDuration(p.durationMinutes)}`
-                              : ""}
-                          </span>
+                          {wPakiecie ? (
+                            <span
+                              id={`w-pakiecie-${p.id}`}
+                              className="etykieta-sm text-muted-foreground"
+                            >
+                              w cenie: {wPakiecie.name}
+                            </span>
+                          ) : (
+                            <span className="etykieta-sm text-muted-foreground">
+                              {p.priceLabel}
+                              {p.durationMinutes > 0
+                                ? ` · ${formatDuration(p.durationMinutes)}`
+                                : ""}
+                            </span>
+                          )}
                         </span>
                         <span
                           aria-hidden
-                          className={`mt-0.5 grid size-5 shrink-0 place-items-center rounded-md border-2 border-ink ${
-                            active ? "bg-ink text-zolty" : "bg-background"
+                          className={`mt-0.5 grid size-5 shrink-0 place-items-center rounded-md border-2 ${
+                            active
+                              ? "border-ink bg-ink text-zolty"
+                              : wPakiecie
+                                ? "border-kreska bg-background text-muted-foreground"
+                                : "border-ink bg-background"
                           }`}
                         >
                           {active ? <Check className="size-3.5" /> : null}
+                          {wPakiecie ? (
+                            <PackageCheck className="size-3.5" />
+                          ) : null}
                         </span>
                       </button>
                     );
@@ -420,6 +631,33 @@ export function Rezerwacja({ config, kategorie }: Props) {
                 </div>
               </fieldset>
             ))}
+
+            <AnimatePresence initial={false}>
+              {callout ? (
+                <motion.div
+                  key={
+                    callout.rodzaj === "zablokowane"
+                      ? `blok-${callout.pozycja.id}`
+                      : `usun-${callout.pakiet.id}`
+                  }
+                  initial={reduced ? undefined : { opacity: 0, y: -8 }}
+                  animate={reduced ? undefined : { opacity: 1, y: 0 }}
+                  exit={reduced ? undefined : { opacity: 0, y: -8 }}
+                  transition={{ type: "spring", stiffness: 320, damping: 28 }}
+                >
+                  <WyborCallout
+                    callout={callout}
+                    onCofnij={() => {
+                      if (callout.rodzaj === "usuniete")
+                        setSelected(callout.poprzedni);
+                      setCallout(null);
+                    }}
+                    onZamien={zamienPakietNaPozycje}
+                    onZamknij={() => setCallout(null)}
+                  />
+                </motion.div>
+              ) : null}
+            </AnimatePresence>
 
             {wybrane.length > 0 ? (
               <p className="flex flex-wrap items-baseline gap-x-3 gap-y-1 rounded-xl border-2 border-dashed border-kreska px-4 py-3">

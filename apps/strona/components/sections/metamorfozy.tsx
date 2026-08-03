@@ -5,6 +5,7 @@ import Image from "next/image";
 import { X } from "lucide-react";
 import {
   paraZdjecia,
+  podgladMaxSzerokosc,
   siatkaKolumny,
   type MetamorfozyData,
   type MetamorfozyPara,
@@ -83,6 +84,35 @@ function ParaZdjec({
   // Plakietki „przed/po" tylko dla klasycznej pary — przy trzech i więcej
   // zdjęciach nie da się powiedzieć, które jest „przed".
   const paraPrzedPo = wszystkie.length === 2;
+
+  if (pelny) {
+    // Podgląd idzie na flexa, nie na grid: niepełny ostatni wiersz ma się
+    // WYŚRODKOWAĆ, a nie zostać domknięty rozciągniętym zdjęciem. Rozciągnięta
+    // komórka przy proporcji 3:4 byłaby dwa razy wyższa i rozwalała sufit
+    // wysokości liczony w `podgladMaxSzerokosc`.
+    return (
+      <div className="flex flex-wrap justify-center gap-[3px] bg-ink">
+        {wszystkie.map((zdjecie, i) => (
+          <div
+            key={zdjecie.id}
+            className="relative aspect-[3/4] min-w-0 shrink-0 grow-0 overflow-hidden bg-piasek"
+            style={{
+              flexBasis: `calc((100% - ${(kolumny - 1) * 3}px) / ${kolumny})`,
+            }}
+          >
+            <Image
+              src={zdjecie.url}
+              alt={zdjecie.alt}
+              fill
+              sizes={sizes}
+              className="object-cover"
+            />
+            {paraPrzedPo ? <Plakietka po={i === 1} /> : null}
+          </div>
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div
@@ -251,11 +281,17 @@ export function Metamorfozy({ data }: { data: MetamorfozyData }) {
             <div className="flex flex-col gap-8 px-5 py-6 md:px-8 md:py-8">
               {temat.pary.map((para) => (
                 <figure key={para.id} className="flex flex-col items-center">
-                  {/* max-w = sufit wysokości: przy szerokości pary 90vh + 3px
-                      jedno zdjęcie 3:4 ma dokładnie 60vh. `w-full` sprawia, że
-                      na telefonie para zwęża się do modala, zamiast z niego
+                  {/* Sufit szerokości liczony z liczby zdjęć — to on pilnuje,
+                      żeby grupa zawsze zmieściła się na wysokość ekranu
+                      (patrz `podgladMaxSzerokosc`). `w-full` sprawia, że na
+                      telefonie grupa zwęża się do modala zamiast z niego
                       wychodzić. */}
-                  <div className="w-full max-w-[calc(90vh+3px)] overflow-hidden rounded-xl border-[3px] border-ink">
+                  <div
+                    className="w-full overflow-hidden rounded-xl border-[3px] border-ink"
+                    style={{
+                      maxWidth: podgladMaxSzerokosc(paraZdjecia(para).length),
+                    }}
+                  >
                     <ParaZdjec
                       para={para}
                       sizes="(max-width: 768px) 45vw, 400px"

@@ -98,6 +98,28 @@ export function siatkaKolumny(ile: number, maxKolumn: number): number {
   return maxKolumn;
 }
 
+/** Ile wysokości ekranu wolno zająć jednej grupie w podglądzie. */
+const PODGLAD_WYSOKOSC_VH = 70;
+
+/**
+ * Sufit szerokości ramki podglądu — grupa ma ZAWSZE mieścić się na wysokość
+ * ekranu, niezależnie od liczby zdjęć.
+ *
+ * Ograniczamy szerokość, bo wysokość wynika z niej: komórki mają proporcję 3:4,
+ * więc `wysokość = (szerokość / kolumny) * 4/3 * wiersze`. Po przekształceniu
+ * `szerokość = kolumny * wysokość * 3 / (4 * wiersze)`.
+ *
+ * Wcześniej ramka miała sztywne `90vh` dobrane pod dwa zdjęcia w rzędzie —
+ * przy jednym zdjęciu (jedna kolumna) dawało to 120vh i podgląd wychodził
+ * poza ekran.
+ */
+export function podgladMaxSzerokosc(ile: number): string {
+  const kolumny = siatkaKolumny(ile, 3);
+  const wiersze = Math.max(1, Math.ceil(ile / kolumny));
+  const vh = (kolumny * PODGLAD_WYSOKOSC_VH * 3) / (4 * wiersze);
+  return `${Math.round(vh * 100) / 100}vh`;
+}
+
 export const DEFAULT_METAMORFOZY: MetamorfozyData = {
   // Nagłówek 1:1 z makietą „kreskówka"; podtytułu makieta nie ma.
   heading: "Przed i po — zobacz różnicę",

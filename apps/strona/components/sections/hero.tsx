@@ -73,7 +73,7 @@ export function Hero({
       <div className="mx-auto grid max-w-[1140px] items-center gap-10 px-5 pt-12 pb-14 md:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:pt-16 lg:pb-[72px]">
         <div className="flex flex-col gap-[22px]">
           <p className="etykieta hero-enter cien-3 w-max -rotate-2 rounded-full border-2 border-ink bg-background px-4 py-[7px]">
-            {kontakt.addressLine} · gmina {kontakt.city}
+            {kontakt.addressLine} · {kontakt.postalCode} {kontakt.city}
           </p>
 
           <h1 className="hero-enter max-w-[12ch] text-[2.4rem] leading-[1.04] font-bold tracking-[-0.015em] sm:text-5xl lg:text-[60px]">

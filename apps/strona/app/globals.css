@@ -135,39 +135,38 @@
 @utility cien-zolty-6 {
   box-shadow: 6px 6px 0 var(--zolty);
 }
-/* Naklejka die-cut: falowana krawędź (półkoliste wcięcia jak w znaczku) +
-   gruba biała otoczka wokół grafiki + kreska i żółty cień idące ZA falą.
-   `box-shadow`/`border` rysują prostokąt i maski nie widzą, więc kreska
-   i cień lecą łańcuchem `drop-shadow` — ten bierze alfę po masce, czyli
-   obrysowuje realną sylwetkę naklejki. Wcięcie (9px) jest płytsze niż
-   otoczka (14px), żeby fala nigdy nie dojechała do grafiki w środku. */
-@utility naklejka {
-  --naklejka-fala: 9px;
-  --naklejka-otoczka: 14px;
-  padding: var(--naklejka-otoczka);
-  background: var(--background);
-  /* Bez wsparcia dla masek zostaje zwykła zaokrąglona naklejka z otoczką. */
-  border-radius: 24px;
-  filter: drop-shadow(2px 0 0 var(--ink)) drop-shadow(-2px 0 0 var(--ink))
-    drop-shadow(0 2px 0 var(--ink)) drop-shadow(0 -2px 0 var(--ink))
-    drop-shadow(6px 6px 0 var(--zolty));
+/* Naklejka: żółty cień przylega do karty, a biała obwódka opływa CAŁĄ sylwetkę
+   (kartę razem z cieniem) — czyli biel jest na zewnątrz żółtego, nie na nim.
+   Ten sam chwyt co w znaku lancy z brandingu; obwódka odcina naklejkę od tego,
+   co leży pod nią (baner wypada na kartach cennika z własnymi kreskami).
+   Obwódka w --piasek (#f4f3f1), nie w czystej bieli ze znaku: na białym tle
+   strony czysta biel jest niewidoczna, a ciemniejsza szarość (próbowaliśmy
+   #d8d6d2) zaczyna czytać się jak rozmycie krawędzi przy czarnej kresce
+   i brudzi się przy żółci. Ciepła prawie-biel odcina naklejkę od treści pod
+   spodem, pozostając osobną warstwą, a nie drugą kreską.
 
-  @supports (mask-composite: intersect) {
-    border-radius: 0;
-    /* Cztery pasy półkoli — po jednym na krawędź; `intersect` składa je w
-       jedną sylwetkę. Skrót `mask` resetuje kompozycję, więc
-       `mask-composite` MUSI iść po nim. */
-    mask:
-      radial-gradient(var(--naklejka-fala) at 50% 0, #0000 98%, #000) 0 0 /
-        calc(2 * var(--naklejka-fala)) 100%,
-      radial-gradient(var(--naklejka-fala) at 50% 100%, #0000 98%, #000) 0 0 /
-        calc(2 * var(--naklejka-fala)) 100%,
-      radial-gradient(var(--naklejka-fala) at 0 50%, #0000 98%, #000) 0 0 / 100%
-        calc(2 * var(--naklejka-fala)),
-      radial-gradient(var(--naklejka-fala) at 100% 50%, #0000 98%, #000) 0 0 /
-        100% calc(2 * var(--naklejka-fala));
-    mask-composite: intersect;
-  }
+   Kolejność jest tu całą mechaniką: w `box-shadow` pierwsza warstwa leży na
+   wierzchu, więc żółty musi iść PRZED bielami, inaczej biała obwódka przykryje
+   cień. Dwie biele, bo obrys sylwetki składa się z dwóch przesuniętych
+   prostokątów: wokół karty (góra/lewo) i wokół cienia (dół/prawo). */
+@utility cien-naklejka {
+  box-shadow:
+    7px 7px 0 0 var(--zolty),
+    0 0 0 7px var(--piasek),
+    7px 7px 0 7px var(--piasek);
+}
+
+/* Biała obwódka naklejki dla RASTRA (PNG) — odpowiednik obwódki wypalonej
+   w SVG lancy z hero, której w pliku PNG nie da się dorysować.
+   `box-shadow` rysuje prostokąt, więc obrys idzie przez `drop-shadow`: filtr
+   działa na kanale alfa, czyli podąża za sylwetką grafiki. Cztery warstwy
+   w stronach świata dają zwarty obrys; 3px przy szerokości 144–168 px
+   odpowiada grubości keyline'a lancy w hero. */
+@utility obwodka-naklejki {
+  filter: drop-shadow(3px 0 0 var(--background))
+    drop-shadow(-3px 0 0 var(--background))
+    drop-shadow(0 3px 0 var(--background))
+    drop-shadow(0 -3px 0 var(--background));
 }
 
 /* Warianty półprzezroczyste — cień na ciemnym/żółtym tle w hero i kontakcie. */

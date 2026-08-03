@@ -213,125 +213,120 @@ export function CookieConsent() {
             animate={reduced ? undefined : { opacity: 1, y: 0 }}
             exit={reduced ? undefined : { opacity: 0, y: 28 }}
             transition={{ type: "spring", stiffness: 260, damping: 26 }}
-            // p-4 to zapas na cień naklejki (6px offset + 2px kreski) — kontener
-            // scrolluje, więc `overflow` przyciąłby cień wychodzący poza padding.
-            className="pointer-events-auto max-h-full w-full max-w-3xl overflow-y-auto p-4"
+            // p-5 to zapas na obwódkę (7px) + żółty cień, który schodzi o kolejne
+            // 7px w dół i w prawo, plus na to, co przekrzywienie wypycha poza
+            // obrys — kontener scrolluje, więc `overflow` przyciąłby resztę.
+            className="pointer-events-auto max-h-full w-full max-w-3xl overflow-y-auto p-5"
           >
             {/* Przekrzywienie tylko dla banera: naklejka. Ustawienia to dłuższy
                 formularz — tam karta siada prosto, żeby nie utrudniać czytania.
                 Transform siedzi tu, a nie w motion, więc przetrwa reduced-motion. */}
             <div
-              className={`naklejka ${mode === "banner" ? "-rotate-[0.5deg]" : ""}`}
+              className={`cien-naklejka rounded-2xl border-[3px] border-ink bg-background p-5 sm:p-6 ${
+                mode === "banner" ? "-rotate-[0.5deg]" : ""
+              }`}
             >
-              <div className="rounded-2xl border-[3px] border-ink bg-background p-4 sm:p-5">
-                {mode === "banner" ? (
-                  <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between sm:gap-7">
-                    <div className="flex max-w-xl gap-4">
-                      <Ciastko />
-                      <div className="flex flex-col gap-1.5">
-                        <h2
-                          id="cookie-consent-title"
-                          className="text-xl leading-[1.15] font-bold"
-                        >
-                          Ciasteczka w {config.siteName}
-                        </h2>
-                        <p className="text-sm leading-[1.5] text-pretty text-tekst">
-                          Używamy plików cookie, żeby strona działała poprawnie,
-                          a za Twoją zgodą — także do analizy ruchu. Możesz
-                          zaakceptować wszystkie albo wybrać tylko te, których
-                          potrzebujesz.{" "}
-                          <Link
-                            href={config.privacyPolicyHref}
-                            className="font-semibold text-ink underline decoration-zolty decoration-[3px] underline-offset-2 hover:decoration-ink focus-visible:ring-3 focus-visible:ring-ink/40 focus-visible:outline-none"
-                          >
-                            Polityka prywatności
-                          </Link>
-                          .
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Trzy klawisze o identycznej geometrii — patrz komentarz
-                      nad komponentem (art. 173 prawa telekom. + DSA). */}
-                    <div className="flex flex-col gap-2.5 sm:w-56 sm:shrink-0">
-                      <Klawisz onClick={handleAcceptAll} glowny>
-                        Akceptuję wszystkie
-                      </Klawisz>
-                      <Klawisz onClick={handleRejectAll}>
-                        Tylko niezbędne
-                      </Klawisz>
-                      <Klawisz onClick={() => setMode("preferences")}>
-                        Ustawienia
-                      </Klawisz>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex flex-col gap-4">
-                    <div className="flex items-start gap-4">
-                      <Ciastko />
-                      <div className="flex flex-col gap-1.5">
-                        <h2
-                          id="cookie-consent-title"
-                          className="text-xl leading-[1.15] font-bold"
-                        >
-                          Ustawienia cookies
-                        </h2>
-                        <p className="text-sm leading-[1.5] text-tekst">
-                          Wybierz kategorie, na które wyrażasz zgodę.
-                        </p>
-                      </div>
-                    </div>
-
-                    <ul className="flex flex-col rounded-xl border-[3px] border-ink">
-                      <KategoriaWiersz
-                        nazwa="Niezbędne"
-                        opis="Wymagane do działania strony i bezpieczeństwa. Nie można wyłączyć."
-                        kontrolka={
-                          <span className="etykieta-sm mt-1 rounded-full bg-ink px-2.5 py-[5px] whitespace-nowrap text-zolty">
-                            zawsze aktywne
-                          </span>
-                        }
-                      />
-                      <KategoriaWiersz
-                        nazwa="Analityka"
-                        opis={config.analyticsDescription}
-                        kontrolka={
-                          <ConsentCheckbox
-                            checked={analytics}
-                            onCheckedChange={setAnalytics}
-                            ariaLabel="Zgoda na analitykę"
-                          />
-                        }
-                      />
-                      <KategoriaWiersz
-                        nazwa="Marketing"
-                        opis={config.marketingDescription}
-                        kontrolka={
-                          <ConsentCheckbox
-                            checked={marketing}
-                            onCheckedChange={setMarketing}
-                            ariaLabel="Zgoda na marketing"
-                          />
-                        }
-                      />
-                    </ul>
-
-                    <div className="flex flex-col-reverse gap-2.5 sm:flex-row sm:justify-end">
-                      <Klawisz onClick={handleRejectAll}>
-                        Odrzuć wszystko
-                      </Klawisz>
-                      <Klawisz
-                        onClick={() => persist({ analytics, marketing })}
+              {mode === "banner" ? (
+                <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between sm:gap-7">
+                  <div className="flex max-w-xl gap-4">
+                    <Ciastko />
+                    <div className="flex flex-col gap-1.5">
+                      <h2
+                        id="cookie-consent-title"
+                        className="text-xl leading-[1.15] font-bold"
                       >
-                        Zapisz wybór
-                      </Klawisz>
-                      <Klawisz onClick={handleAcceptAll} glowny>
-                        Akceptuję wszystkie
-                      </Klawisz>
+                        Ciasteczka w {config.siteName}
+                      </h2>
+                      <p className="text-sm leading-[1.5] text-pretty text-tekst">
+                        Używamy plików cookie, żeby strona działała poprawnie, a
+                        za Twoją zgodą — także do analizy ruchu. Możesz
+                        zaakceptować wszystkie albo wybrać tylko te, których
+                        potrzebujesz.{" "}
+                        <Link
+                          href={config.privacyPolicyHref}
+                          className="font-semibold text-ink underline decoration-zolty decoration-[3px] underline-offset-2 hover:decoration-ink focus-visible:ring-3 focus-visible:ring-ink/40 focus-visible:outline-none"
+                        >
+                          Polityka prywatności
+                        </Link>
+                        .
+                      </p>
                     </div>
                   </div>
-                )}
-              </div>
+
+                  {/* Trzy klawisze o identycznej geometrii — patrz komentarz
+                      nad komponentem (art. 173 prawa telekom. + DSA). */}
+                  <div className="flex flex-col gap-2.5 sm:w-56 sm:shrink-0">
+                    <Klawisz onClick={handleAcceptAll} glowny>
+                      Akceptuję wszystkie
+                    </Klawisz>
+                    <Klawisz onClick={handleRejectAll}>Tylko niezbędne</Klawisz>
+                    <Klawisz onClick={() => setMode("preferences")}>
+                      Ustawienia
+                    </Klawisz>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-4">
+                  <div className="flex items-start gap-4">
+                    <Ciastko />
+                    <div className="flex flex-col gap-1.5">
+                      <h2
+                        id="cookie-consent-title"
+                        className="text-xl leading-[1.15] font-bold"
+                      >
+                        Ustawienia cookies
+                      </h2>
+                      <p className="text-sm leading-[1.5] text-tekst">
+                        Wybierz kategorie, na które wyrażasz zgodę.
+                      </p>
+                    </div>
+                  </div>
+
+                  <ul className="flex flex-col rounded-xl border-[3px] border-ink">
+                    <KategoriaWiersz
+                      nazwa="Niezbędne"
+                      opis="Wymagane do działania strony i bezpieczeństwa. Nie można wyłączyć."
+                      kontrolka={
+                        <span className="etykieta-sm mt-1 rounded-full bg-ink px-2.5 py-[5px] whitespace-nowrap text-zolty">
+                          zawsze aktywne
+                        </span>
+                      }
+                    />
+                    <KategoriaWiersz
+                      nazwa="Analityka"
+                      opis={config.analyticsDescription}
+                      kontrolka={
+                        <ConsentCheckbox
+                          checked={analytics}
+                          onCheckedChange={setAnalytics}
+                          ariaLabel="Zgoda na analitykę"
+                        />
+                      }
+                    />
+                    <KategoriaWiersz
+                      nazwa="Marketing"
+                      opis={config.marketingDescription}
+                      kontrolka={
+                        <ConsentCheckbox
+                          checked={marketing}
+                          onCheckedChange={setMarketing}
+                          ariaLabel="Zgoda na marketing"
+                        />
+                      }
+                    />
+                  </ul>
+
+                  <div className="flex flex-col-reverse gap-2.5 sm:flex-row sm:justify-end">
+                    <Klawisz onClick={handleRejectAll}>Odrzuć wszystko</Klawisz>
+                    <Klawisz onClick={() => persist({ analytics, marketing })}>
+                      Zapisz wybór
+                    </Klawisz>
+                    <Klawisz onClick={handleAcceptAll} glowny>
+                      Akceptuję wszystkie
+                    </Klawisz>
+                  </div>
+                </div>
+              )}
             </div>
           </motion.div>
         </div>

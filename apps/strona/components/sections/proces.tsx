@@ -1,28 +1,38 @@
 import { Reveal, RevealItem, RevealStagger } from "@/components/motion/reveal";
 
 /**
- * Zastępuje dawną „Trzy kroki i po sprawie" (proces współpracy) — zamiast
- * procedury rezerwacji, uczciwie mówimy, czego dana usługa NIE naprawi.
- * Cztery karty zamiast trzech (jedna usługa więcej niż w starej makiecie),
- * więc grid rośnie do 2×2 / 4 kolumn zamiast 1×3.
+ * „Co wyjdzie, a co zostanie" — uczciwie o granicach usług, zamiast dawnej
+ * procedury rezerwacji „Trzy kroki i po sprawie". Każda karta rozbija dawne
+ * jedno zdanie na dwie połówki (efekt / granica) — ta sama treść, czytelniej
+ * rozdzielona. Pod kartami dymek z żółtą kreską: obietnica, że nie wezmę
+ * nie wezmę zlecenia, którego efekt nie będzie wart ceny.
  */
 export function Proces() {
   const limity = [
     {
       title: "One step",
-      text: "znika 50–70% rys. Te wyczuwalne paznokciem zostają.",
+      subtitle: "Jednoetapowa polerka",
+      wyjdzie: "Znika 50–70% rys.",
+      zostaje:
+        "Te wyczuwalne paznokciem zostają — na nie trzeba szlifu, a szlifu nie robię.",
     },
     {
       title: "Pranie tapicerki",
-      text: "kawa, błoto, sierść i zapach schodzą. Przypalenia, rozdarcia i stary olej zostają.",
+      subtitle: "",
+      wyjdzie: "Kawa, błoto, sierść i zapach schodzą.",
+      zostaje: "Przypalenia, rozdarcia i stary olej zostają.",
     },
     {
       title: "Dekontaminacja",
-      text: "opiłki z hamulców i smoła schodzą w całości. Rysy, które były pod nimi, zostają — to robota dla polerki.",
+      subtitle: "",
+      wyjdzie: "Opiłki z hamulców i smoła schodzą w całości.",
+      zostaje: "Rysy, które były pod nimi, zostają — to robota dla polerki.",
     },
     {
       title: "Ozonowanie",
-      text: "likwiduje zapach, nie maskuje go. Wraca, jeśli źródło zostaje w aucie.",
+      subtitle: "",
+      wyjdzie: "Likwiduje zapach, nie maskuje go.",
+      zostaje: "Wraca, jeśli źródło zostaje w aucie.",
     },
   ];
 
@@ -37,7 +47,7 @@ export function Proces() {
             id="jak-heading"
             className="text-3xl leading-[1.05] font-bold tracking-[-0.02em] md:text-[40px]"
           >
-            Czego nie naprawię
+            Co wyjdzie, a co zostanie
           </h2>
         </Reveal>
 
@@ -45,14 +55,42 @@ export function Proces() {
           {limity.map((limit) => (
             <RevealItem key={limit.title} className="h-full">
               <div className="cien-zolty-6 flex h-full flex-col gap-3 rounded-2xl border-[3px] border-ink p-[22px]">
-                <h3 className="text-lg font-bold">{limit.title}</h3>
-                <p className="text-[14.5px] leading-[1.55] text-pretty text-tekst">
-                  {limit.text}
-                </p>
+                <div>
+                  <h3 className="text-lg font-bold">{limit.title}</h3>
+                  {limit.subtitle ? (
+                    <p className="etykieta-sm mt-1 text-muted-foreground">
+                      {limit.subtitle}
+                    </p>
+                  ) : null}
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <p className="text-[14.5px] leading-[1.55] text-pretty text-tekst">
+                    {limit.wyjdzie}
+                  </p>
+                </div>
+
+                <div className="flex flex-col gap-1.5 border-t-2 border-dashed border-kreska pt-3">
+                  <p className="etykieta-sm text-muted-foreground">zostaje</p>
+                  <p className="text-[14.5px] leading-[1.55] text-pretty text-tekst">
+                    {limit.zostaje}
+                  </p>
+                </div>
               </div>
             </RevealItem>
           ))}
         </RevealStagger>
+
+        <Reveal className="border-l-4 border-zolty pl-3.5">
+          <p className="text-lg leading-[1.4] font-bold text-pretty">
+            Jeśli po zdjęciu zobaczę, że efekt nie będzie wart ceny — odradzę
+            i nie wezmę zlecenia.
+          </p>
+          <p className="mt-2 text-sm text-pretty text-muted-foreground">
+            Zdjęcie dorzucasz opcjonalnie przy rezerwacji — przy plamach
+            i rysach przyspiesza potwierdzenie.
+          </p>
+        </Reveal>
       </div>
     </section>
   );

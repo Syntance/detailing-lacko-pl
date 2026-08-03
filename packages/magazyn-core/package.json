@@ -29,7 +29,7 @@
     "@moduly/types": "workspace:*",
     "@moduly/ui": "workspace:*",
     "server-only": "^0.0.1",
-    "sharp": "^0.34.5",
+    "sharp": "^0.35.0",
     "zod": "^3.25.76"
   },
   "peerDependencies": {
@@ -37,7 +37,7 @@
   },
   "devDependencies": {
     "@types/react": "^19.2.7",
-    "next": "^16.2.4",
+    "next": "^16.2.12",
     "react": "^19.2.0",
     "typescript": "^5.9.3"
   }

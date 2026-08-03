@@ -1,4 +1,4 @@
-import { getImageProps } from "next/image";
+import Image, { getImageProps } from "next/image";
 import type { HeroImages } from "@/lib/cms-content";
 import type { KontaktData } from "@/lib/site";
 import { BookingLink, PhoneLink } from "./phone-link";
@@ -142,13 +142,21 @@ export function Hero({
               Dlatego PNG, nie SVG: obwódka wymaga rastra z kanałem alfa.
               Bez obrotu: grafika leży poziomo tak, jak w pliku.
               Na wąskich ekranach mniejszy zwis, żeby sekcja (overflow-hidden)
-              nie ucięła pistoletu. */}
-          <img
+              nie ucięła pistoletu.
+              next/image, nie surowy <img>: plik ma 1600 px szerokości, a lanca
+              wyświetla się w ~190–210 px — surowe 128 KB PNG ładowało się obok
+              zdjęcia hero i odbierało mu pasmo. `sizes` idzie za `w-[46%]`
+              kolumny: do lg kolumna jest pełnej szerokości (≈46vw), od lg to
+              0,95fr ze 1140 px siatki, czyli ~210 px. Domyślny `loading="lazy"`
+              zostaje świadomie: lanca jest w viewporcie, więc przeglądarka i tak
+              pobierze ją w pierwszej turze, ale z niższym priorytetem niż LCP. */}
+          <Image
             src="/brand/lw-kolor-naklejka.png"
             alt="Lanca z pianą"
             width={1600}
             height={628}
-            className="absolute top-[-3%] right-[-2%] z-[2] w-[46%] sm:right-[-10%] sm:w-[42%]"
+            sizes="(max-width: 1023px) 46vw, 210px"
+            className="absolute top-[-3%] right-[-2%] z-[2] h-auto w-[46%] sm:right-[-10%] sm:w-[42%]"
           />
 
           <div aria-hidden className="absolute -bottom-2.5 left-0 flex">

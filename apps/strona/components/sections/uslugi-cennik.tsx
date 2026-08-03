@@ -1,3 +1,4 @@
+import Image from "next/image";
 import {
   formatItemPrice,
   type CennikData,
@@ -58,6 +59,12 @@ const NAKLEJKI: Record<
     height: number;
     alt: string;
     szerokosc: string;
+    /**
+     * Maksymalna szerokość WYŚWIETLANIA (nie pliku) — z niej next/image liczy
+     * srcset. Musi iść w parze z `szerokosc`: zaniżona da rozmyty raster,
+     * zawyżona pobiera nadmiarowe piksele.
+     */
+    sizes: string;
     obrot: string;
     /** Dodatkowe przesunięcie względem domyślnego rogu — `translate-x/y`. */
     przesuniecie: string;
@@ -69,6 +76,7 @@ const NAKLEJKI: Record<
     height: 860,
     alt: "Odkurzacz — sprzątanie i pranie tapicerki",
     szerokosc: "w-36 sm:w-[168px]",
+    sizes: "168px",
     obrot: "rotate-0",
     przesuniecie: "-translate-x-[30px]",
   },
@@ -78,6 +86,7 @@ const NAKLEJKI: Record<
     height: 1280,
     alt: "Lanca z pianą aktywną — mycie detailingowe",
     szerokosc: "w-24 sm:w-28",
+    sizes: "112px",
     obrot: "rotate-0",
     przesuniecie: "-translate-x-[50px] -translate-y-5",
   },
@@ -87,6 +96,7 @@ const NAKLEJKI: Record<
     height: 988,
     alt: "Maszyna polerska — polerowanie usuwa 50–70% rys",
     szerokosc: "w-36 sm:w-[168px]",
+    sizes: "168px",
     obrot: "rotate-[30deg]",
     przesuniecie: "",
   },
@@ -240,17 +250,27 @@ export function UslugiCennik({ cennik }: { cennik: CennikData }) {
                   </ul>
                 </article>
                 {naklejka ? (
-                  <img
+                  // next/image, nie surowy <img>: pliki źródłowe mają 1360–1789
+                  // px szerokości (obwódki wypalane w dużym rastrze), a na
+                  // ekranie schodzą do 96–168 px. Surowe PNG-i szły w całości —
+                  // 686 KB pobierane EAGER, zanim jeszcze ktokolwiek doscrollował
+                  // do cennika, konkurując pasmem ze zdjęciem hero (LCP).
+                  // Optymalizator skaluje do srcsetu z `sizes` i podaje AVIF/WebP,
+                  // a domyślny `loading="lazy"` zdejmuje je ze ścieżki krytycznej.
+                  // `h-auto`: szerokość narzuca klasa, więc wysokość musi zostać
+                  // policzona z proporcji pliku, nie z atrybutu `height`.
+                  <Image
                     src={naklejka.src}
                     alt={naklejka.alt}
                     width={naklejka.width}
                     height={naklejka.height}
+                    sizes={naklejka.sizes}
                     // Zwis w prawo dopiero od `sm`: obrót o 30° rozszerza
                     // prostokąt otaczający o ~10–16 px z każdej strony, więc na
                     // 375 px sam zwis 28 px wypychał stronę do 399 px. Poziome
                     // przepełnienie rozciąga layout viewport, przez co
                     // `position: fixed` podglądu Efektów wychodzi poza ekran.
-                    className={`pointer-events-none absolute -top-[14px] right-0 z-10 sm:-right-[28px] ${naklejka.szerokosc} ${naklejka.obrot} ${naklejka.przesuniecie}`}
+                    className={`pointer-events-none absolute -top-[14px] right-0 z-10 h-auto sm:-right-[28px] ${naklejka.szerokosc} ${naklejka.obrot} ${naklejka.przesuniecie}`}
                   />
                 ) : null}
               </RevealItem>

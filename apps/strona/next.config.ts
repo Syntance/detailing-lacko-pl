@@ -73,6 +73,11 @@ const nextConfig: NextConfig = {
   // q70 mieści LCP w budżecie 120 KB bez widocznej straty jakości.
   images: {
     qualities: [70, 75],
+    // Next domyślnie wydaje tylko WebP. AVIF idzie pierwszy w negocjacji przez
+    // `Accept`, daje ~25% mniej przy tej samej jakości i ma kanał alfa, którego
+    // wymagają naklejki marki (wypalone obwódki); przeglądarki bez AVIF dostają
+    // WebP, więc to czysty zysk bez fallbacku po naszej stronie.
+    formats: ["image/avif", "image/webp"],
     // Zdjęcia wgrane przez panel (Metamorfozy itp.) trafiają na R2 — bez
     // jawnego hosta next/image odrzuca render z „hostname not configured".
     remotePatterns: [

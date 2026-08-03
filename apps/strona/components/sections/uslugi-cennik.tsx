@@ -32,35 +32,65 @@ function stripBullet(name: string): string {
 }
 
 /**
- * Ozdoby nagłówków kart z makiety — dekoracja, nie treść z panelu:
- * Wnętrze ma żółty nagłówek z plakietką „filar", Mycie i wosk dwa bąble piany,
- * Polerowanie podpis mono. Kategoria dodana w panelu dostaje nagłówek bez ozdób.
+ * Naklejki narzędzi wychodzące poza prawy górny róg karty — jedna na
+ * kategorię, w języku hero (grafika z wypaloną białą obwódką + czarna kreska
+ * marki dookoła, obie w pliku PNG, zero filtrów CSS).
+ *
+ * Zastąpiły ozdoby w nagłówkach (plakietka „filar", bąble piany, podpis
+ * „50–70% rys") — naklejka zajmuje dokładnie ten róg, więc obie rzeczy naraz
+ * by na siebie nachodziły.
+ *
+ * `szerokosc` jest per pozycja, bo proporcje się różnią: odkurzacz i polerka
+ * są szerokie (~1,86:1), sygnet niemal kwadratowy (1,07:1). Przy jednakowej
+ * szerokości sygnet byłby dwa razy wyższy od reszty, więc dostaje mniejszą —
+ * wyrównujemy WYSOKOŚĆ, czyli realny ciężar wizualny.
+ *
+ * Konsekwencja dla obwódek wypalonych w plikach: skoro sygnet wyświetla się
+ * w 96 px, a pozostałe w 144 px, to jego pierścienie musiały być GRUBSZE
+ * w źródle, żeby po przeskalowaniu dać na ekranie te same ~2,7 px. Liczone
+ * są więc z docelowej szerokości wyświetlania, nie z szerokości pliku.
  */
-function OzdobaNaglowka({ categoryId }: { categoryId: string }) {
-  if (categoryId === "wnetrze") {
-    return (
-      <span className="etykieta-sm rounded-full bg-ink px-2.5 py-[5px] text-zolty">
-        filar
-      </span>
-    );
+const NAKLEJKI: Record<
+  string,
+  {
+    src: string;
+    width: number;
+    height: number;
+    alt: string;
+    szerokosc: string;
+    obrot: string;
+    /** Dodatkowe przesunięcie względem domyślnego rogu — `translate-x/y`. */
+    przesuniecie: string;
   }
-  if (categoryId === "zewnatrz") {
-    return (
-      <span aria-hidden className="flex">
-        <span className="size-4 rounded-full border-2 border-ink bg-zolty" />
-        <span className="mt-2 -ml-[5px] size-[11px] rounded-full border-2 border-ink bg-background" />
-      </span>
-    );
-  }
-  if (categoryId === "polerowanie-korekta") {
-    return (
-      <span className="etykieta-sm whitespace-nowrap text-muted-foreground">
-        50–70% rys
-      </span>
-    );
-  }
-  return null;
-}
+> = {
+  wnetrze: {
+    src: "/brand/odkurzacz.png",
+    width: 1547,
+    height: 860,
+    alt: "Odkurzacz — sprzątanie i pranie tapicerki",
+    szerokosc: "w-36 sm:w-[168px]",
+    obrot: "rotate-0",
+    przesuniecie: "-translate-x-[30px]",
+  },
+  zewnatrz: {
+    src: "/brand/sygnet-naklejka.png",
+    width: 1360,
+    height: 1280,
+    alt: "Lanca z pianą aktywną — mycie detailingowe",
+    szerokosc: "w-24 sm:w-28",
+    obrot: "rotate-0",
+    przesuniecie: "-translate-x-[50px] -translate-y-5",
+  },
+  "polerowanie-korekta": {
+    src: "/brand/maszyna-polerska.png",
+    width: 1789,
+    height: 988,
+    alt: "Maszyna polerska — polerowanie usuwa 50–70% rys",
+    szerokosc: "w-36 sm:w-[168px]",
+    obrot: "rotate-[30deg]",
+    przesuniecie: "",
+  },
+};
 
 function PozycjaCennika({ item }: { item: CennikItem }) {
   return (
@@ -182,20 +212,26 @@ export function UslugiCennik({ cennik }: { cennik: CennikData }) {
               .sort((a, b) => a.order - b.order);
             if (!rows.length) return null;
             const filar = category.id === "wnetrze";
+            const naklejka = NAKLEJKI[category.id];
             return (
-              <RevealItem key={category.id}>
+              // relative: kotwica dla naklejki narzędzia — SIBLING <article>,
+              // nie jego dziecko, bo <article> ma overflow-hidden (potrzebne
+              // dla zaokrąglonych rogów nagłówka) i przyciąłby naklejkę
+              // wychodzącą poza kartę. Ten sam wzorzec co lanca w hero:
+              // sekcja nadrzędna (bez overflow-hidden) jest jedynym
+              // ograniczeniem, karta go nie ma.
+              <RevealItem key={category.id} className="relative">
                 <article
                   className={`overflow-hidden rounded-2xl border-[3px] border-ink bg-background ${
                     filar ? "cien-zolty-6" : "cien-6"
                   }`}
                 >
                   <div
-                    className={`flex items-center justify-between gap-3 border-b-[3px] border-ink px-5 py-[18px] ${
+                    className={`flex items-center gap-3 border-b-[3px] border-ink px-5 py-[18px] ${
                       filar ? "bg-zolty" : ""
                     }`}
                   >
                     <h3 className="text-xl font-bold">{category.name}</h3>
-                    <OzdobaNaglowka categoryId={category.id} />
                   </div>
                   <ul className="flex flex-col">
                     {rows.map((item) => (
@@ -203,6 +239,20 @@ export function UslugiCennik({ cennik }: { cennik: CennikData }) {
                     ))}
                   </ul>
                 </article>
+                {naklejka ? (
+                  <img
+                    src={naklejka.src}
+                    alt={naklejka.alt}
+                    width={naklejka.width}
+                    height={naklejka.height}
+                    // Zwis w prawo dopiero od `sm`: obrót o 30° rozszerza
+                    // prostokąt otaczający o ~10–16 px z każdej strony, więc na
+                    // 375 px sam zwis 28 px wypychał stronę do 399 px. Poziome
+                    // przepełnienie rozciąga layout viewport, przez co
+                    // `position: fixed` podglądu Efektów wychodzi poza ekran.
+                    className={`pointer-events-none absolute -top-[14px] right-0 z-10 sm:-right-[28px] ${naklejka.szerokosc} ${naklejka.obrot} ${naklejka.przesuniecie}`}
+                  />
+                ) : null}
               </RevealItem>
             );
           })}
@@ -213,11 +263,7 @@ export function UslugiCennik({ cennik }: { cennik: CennikData }) {
             <div className="cien-zolty-6 flex flex-col gap-[22px] rounded-2xl border-[3px] border-ink bg-ink px-[26px] py-6 text-background">
               <div className="flex flex-wrap items-end justify-between gap-5">
                 <div className="flex flex-col gap-1.5">
-                  <p className="etykieta-sm text-zolty">
-                    {pakietyKategoria?.timeLabel
-                      ? `pakiety · ${pakietyKategoria.timeLabel}`
-                      : "pakiety"}
-                  </p>
+                  <p className="etykieta-sm text-zolty">pakiety</p>
                   <h3 className="text-[22px] leading-[1.1] font-bold">
                     {pakietyKategoria?.name ?? "Pakiety"}
                   </h3>

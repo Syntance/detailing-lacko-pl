@@ -134,18 +134,20 @@ export function Hero({
             </div>
           </div>
 
-          {/* Lanca wystaje z narożnika karty i „pryska" na auto. Wariant
-              z brandingu z białą obwódką („czarne tło") — obwódka odcina znak
-              od zdjęcia pod nim, więc żaden cień CSS nie jest potrzebny.
+          {/* Lanca wystaje z narożnika karty i „pryska" na auto. Dwie
+              wypalone obwódki jak naklejki w cenniku: biała ze źródłowego
+              SVG (stroke 78px przy viewBox 1944 = 2,006% szerokości), a wokół
+              niej dołożona czarna w tej samej proporcji (dylatacja sylwetki
+              po kanale alfa — ten sam skrypt co odkurzacz/sygnet/polerka).
+              Dlatego PNG, nie SVG: obwódka wymaga rastra z kanałem alfa.
               Bez obrotu: grafika leży poziomo tak, jak w pliku.
-              Wymiary = viewBox pliku (obwódka dodaje po 11 px do 1866×637).
               Na wąskich ekranach mniejszy zwis, żeby sekcja (overflow-hidden)
-              nie ucięła pistoletu. SVG przez <img> — Next nie optymalizuje SVG. */}
+              nie ucięła pistoletu. */}
           <img
-            src="/brand/lw-kolor.svg"
+            src="/brand/lw-kolor-naklejka.png"
             alt="Lanca z pianą"
-            width={1888}
-            height={659}
+            width={1600}
+            height={628}
             className="absolute top-[-3%] right-[-2%] z-[2] w-[46%] sm:right-[-10%] sm:w-[42%]"
           />
 

@@ -115,6 +115,10 @@ const nextConfig: NextConfig = {
     serverActions: {
       bodySizeLimit: "25mb",
     },
+    // Arkusz strony (~12 KB) blokował render przez ~150 ms jako osobne żądanie.
+    // Wstawiony w <style> jedzie razem z HTML-em, więc znika z krytycznej
+    // ścieżki. Działa tylko w App Routerze na produkcji.
+    inlineCss: true,
   },
 };
 

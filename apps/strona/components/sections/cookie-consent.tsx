@@ -2,9 +2,12 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { motion, useReducedMotion, AnimatePresence } from "motion/react";
 import { Check } from "lucide-react";
 import { useConsent, useConsentOpenListener } from "@moduly/legal-consent";
+import { usePresence } from "@/components/motion/presence";
+
+/** Zgodne z `presence-out` w globals.css. */
+const EXIT_MS = 200;
 
 type Mode = "hidden" | "banner" | "preferences";
 
@@ -154,7 +157,6 @@ export function CookieConsent() {
   const [analytics, setAnalytics] = useState(true);
   const [marketing, setMarketing] = useState(true);
   const [canShow, setCanShow] = useState(false);
-  const reduced = useReducedMotion();
 
   useEffect(() => {
     const delayTimer = setTimeout(() => setCanShow(true), 2000);
@@ -200,23 +202,23 @@ export function CookieConsent() {
   }, [rejectAll]);
 
   const open = canShow && mode !== "hidden";
+  // Baner musi dojechać animacją wyjścia po kliknięciu zgody — bez tego znika
+  // skokowo w tej samej klatce, w której użytkownik trafia w przycisk.
+  const { mounted, state } = usePresence(open, EXIT_MS);
 
   return (
-    <AnimatePresence>
-      {open ? (
+    <>
+      {mounted ? (
         <div className="pointer-events-none fixed inset-0 z-[9999] flex items-end justify-center p-4 sm:p-6">
-          <motion.div
+          <div
             role="dialog"
             aria-modal="false"
             aria-labelledby="cookie-consent-title"
-            initial={reduced ? undefined : { opacity: 0, y: 28 }}
-            animate={reduced ? undefined : { opacity: 1, y: 0 }}
-            exit={reduced ? undefined : { opacity: 0, y: 28 }}
-            transition={{ type: "spring", stiffness: 260, damping: 26 }}
+            data-state={state}
             // p-5 to zapas na obwódkę (7px) + żółty cień, który schodzi o kolejne
             // 7px w dół i w prawo, plus na to, co przekrzywienie wypycha poza
             // obrys — kontener scrolluje, więc `overflow` przyciąłby resztę.
-            className="pointer-events-auto max-h-full w-full max-w-3xl overflow-y-auto p-5"
+            className="presence pointer-events-auto max-h-full w-full max-w-3xl overflow-y-auto p-5"
           >
             {/* Przekrzywienie tylko dla banera: naklejka. Ustawienia to dłuższy
                 formularz — tam karta siada prosto, żeby nie utrudniać czytania.
@@ -328,9 +330,9 @@ export function CookieConsent() {
                 </div>
               )}
             </div>
-          </motion.div>
+          </div>
         </div>
       ) : null}
-    </AnimatePresence>
+    </>
   );
 }

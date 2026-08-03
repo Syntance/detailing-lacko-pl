@@ -1,42 +1,77 @@
 "use client";
 
-import type { ReactNode } from "react";
-import { motion, useReducedMotion } from "motion/react";
+import { useEffect, useRef, type ReactNode } from "react";
 
 /**
  * Sygnaturowy reveal projektu: miękkie uniesienie + fade przy wejściu
- * w viewport (spring, raz). Przy prefers-reduced-motion — bez ruchu.
- * Animujemy wyłącznie transform/opacity.
+ * w viewport (raz). Animujemy wyłącznie transform/opacity.
+ *
+ * Cała animacja siedzi w CSS (`.reveal`/`.reveal-item` w globals.css) — tutaj
+ * zostaje wyłącznie IntersectionObserver, który przełącza `data-reveal`.
+ * Wcześniej robił to `motion`: ~120 KB JS w bundlu homepage'a na przesunięcie
+ * elementu o 28 px. Krzywa CSS jest wizualnym odpowiednikiem tamtego springa
+ * i tą samą, której używa już `.hero-enter`, więc ruch na stronie się ujednolica.
+ *
+ * `prefers-reduced-motion` obsługuje media query w CSS, nie gałąź w JS —
+ * dzięki temu reaguje na zmianę ustawienia bez ponownego renderu.
  */
+function useRevealOnView<T extends HTMLElement>(rootMargin: string) {
+  const ref = useRef<T>(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+
+    // Brak IntersectionObserver (bardzo stare przeglądarki): pokazujemy od
+    // razu. Lepiej bez animacji niż z treścią, która nigdy się nie pojawi.
+    if (typeof IntersectionObserver === "undefined") {
+      el.dataset.reveal = "in";
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          el.dataset.reveal = "in";
+          // Odpowiednik `viewport: { once: true }` — element nie chowa się
+          // przy wyjściu z ekranu i nie animuje drugi raz.
+          observer.disconnect();
+        }
+      },
+      { rootMargin },
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [rootMargin]);
+
+  return ref;
+}
+
 export function Reveal({
   children,
-  delay = 0,
   className,
 }: {
   children: ReactNode;
-  delay?: number;
   className?: string;
 }) {
-  const reduced = useReducedMotion();
-
-  if (reduced) {
-    return <div className={className}>{children}</div>;
-  }
+  const ref = useRevealOnView<HTMLDivElement>("-80px");
 
   return (
-    <motion.div
-      className={className}
-      initial={{ opacity: 0, y: 28 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-80px" }}
-      transition={{ type: "spring", stiffness: 90, damping: 18, delay }}
-    >
+    <div ref={ref} className={className ? `reveal ${className}` : "reveal"}>
       {children}
-    </motion.div>
+    </div>
   );
 }
 
-/** Kontener stagger dla kart — dzieci pojawiają się kolejno. */
+/**
+ * Kontener stagger dla kart — dzieci pojawiają się kolejno.
+ *
+ * Obserwowany jest sam kontener, a opóźnienia dzieci liczy CSS z `nth-child`.
+ * Dzięki temu `RevealItem` nie musi znać swojego indeksu ani mieć własnego
+ * observera — jeden na całą siatkę zamiast jednego na kartę.
+ */
 export function RevealStagger({
   children,
   className,
@@ -44,25 +79,15 @@ export function RevealStagger({
   children: ReactNode;
   className?: string;
 }) {
-  const reduced = useReducedMotion();
-
-  if (reduced) {
-    return <div className={className}>{children}</div>;
-  }
+  const ref = useRevealOnView<HTMLDivElement>("-60px");
 
   return (
-    <motion.div
-      className={className}
-      initial="hidden"
-      whileInView="visible"
-      viewport={{ once: true, margin: "-60px" }}
-      variants={{
-        hidden: {},
-        visible: { transition: { staggerChildren: 0.12 } },
-      }}
+    <div
+      ref={ref}
+      className={className ? `reveal-stagger ${className}` : "reveal-stagger"}
     >
       {children}
-    </motion.div>
+    </div>
   );
 }
 
@@ -73,25 +98,9 @@ export function RevealItem({
   children: ReactNode;
   className?: string;
 }) {
-  const reduced = useReducedMotion();
-
-  if (reduced) {
-    return <div className={className}>{children}</div>;
-  }
-
   return (
-    <motion.div
-      className={className}
-      variants={{
-        hidden: { opacity: 0, y: 24 },
-        visible: {
-          opacity: 1,
-          y: 0,
-          transition: { type: "spring", stiffness: 90, damping: 18 },
-        },
-      }}
-    >
+    <div className={className ? `reveal-item ${className}` : "reveal-item"}>
       {children}
-    </motion.div>
+    </div>
   );
 }

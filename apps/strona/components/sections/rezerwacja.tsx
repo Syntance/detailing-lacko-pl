@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { usePresence } from "@/components/motion/presence";
 import {
   Check,
   ChevronLeft,
@@ -325,6 +325,9 @@ function Kalendarz({
 const POLE =
   "h-12 w-full rounded-xl border-2 border-ink bg-background px-3.5 text-[15px] font-medium focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none";
 
+/** Zgodne z `presence-out` w globals.css. */
+const EXIT_MS = 200;
+
 /**
  * Widget rezerwacji online: usługi z cennika (multi-select) → dzień →
  * wolna godzina z wyliczonym odbiorem auta → dane kontaktowe.
@@ -340,7 +343,6 @@ const POLE =
 export function Rezerwacja({ config, kategorie }: Props) {
   const [selected, setSelected] = useState<string[]>([]);
   const [callout, setCallout] = useState<Callout | null>(null);
-  const reduced = useReducedMotion();
   const [date, setDate] = useState("");
   const [slots, setSlots] = useState<SlotPropozycja[]>([]);
   const [slotsLoading, setSlotsLoading] = useState(false);
@@ -409,6 +411,20 @@ export function Rezerwacja({ config, kategorie }: Props) {
         : null,
     );
   };
+
+  /**
+   * Callout ma animację wyjścia, więc musi przeżyć wyzerowanie `callout`
+   * o czas `EXIT_MS` — przez tę chwilę renderujemy ostatnią widoczną treść.
+   */
+  const { mounted: calloutMounted, state: calloutState } = usePresence(
+    callout !== null,
+    EXIT_MS,
+  );
+  const [ostatniCallout, setOstatniCallout] = useState<Callout | null>(null);
+  useEffect(() => {
+    if (callout) setOstatniCallout(callout);
+  }, [callout]);
+  const widocznyCallout = callout ?? ostatniCallout;
 
   /** „Wolę osobno": zdejmuje pakiet i wstawia klikniętą składową. */
   const zamienPakietNaPozycje = () => {
@@ -632,32 +648,30 @@ export function Rezerwacja({ config, kategorie }: Props) {
               </fieldset>
             ))}
 
-            <AnimatePresence initial={false}>
-              {callout ? (
-                <motion.div
-                  key={
-                    callout.rodzaj === "zablokowane"
-                      ? `blok-${callout.pozycja.id}`
-                      : `usun-${callout.pakiet.id}`
-                  }
-                  initial={reduced ? undefined : { opacity: 0, y: -8 }}
-                  animate={reduced ? undefined : { opacity: 1, y: 0 }}
-                  exit={reduced ? undefined : { opacity: 0, y: -8 }}
-                  transition={{ type: "spring", stiffness: 320, damping: 28 }}
-                >
-                  <WyborCallout
-                    callout={callout}
-                    onCofnij={() => {
-                      if (callout.rodzaj === "usuniete")
-                        setSelected(callout.poprzedni);
-                      setCallout(null);
-                    }}
-                    onZamien={zamienPakietNaPozycje}
-                    onZamknij={() => setCallout(null)}
-                  />
-                </motion.div>
-              ) : null}
-            </AnimatePresence>
+            {calloutMounted && widocznyCallout ? (
+              // `key` przeładowuje element przy podmianie treści, więc animacja
+              // wejścia gra od nowa — tak jak robił to <AnimatePresence>.
+              <div
+                key={
+                  widocznyCallout.rodzaj === "zablokowane"
+                    ? `blok-${widocznyCallout.pozycja.id}`
+                    : `usun-${widocznyCallout.pakiet.id}`
+                }
+                data-state={calloutState}
+                className="presence presence-z-gory"
+              >
+                <WyborCallout
+                  callout={widocznyCallout}
+                  onCofnij={() => {
+                    if (widocznyCallout.rodzaj === "usuniete")
+                      setSelected(widocznyCallout.poprzedni);
+                    setCallout(null);
+                  }}
+                  onZamien={zamienPakietNaPozycje}
+                  onZamknij={() => setCallout(null)}
+                />
+              </div>
+            ) : null}
 
             {wybrane.length > 0 ? (
               <p className="flex flex-wrap items-baseline gap-x-3 gap-y-1 rounded-xl border-2 border-dashed border-kreska px-4 py-3">

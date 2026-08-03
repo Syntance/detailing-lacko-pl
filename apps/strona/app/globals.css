@@ -218,3 +218,123 @@
     animation: none;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Reveal sekcji — ten sam język ruchu co .hero-enter (uniesienie + fade na
+   krzywej 0.22/1/0.36/1), tylko odpalany wejściem w viewport.
+   Wcześniej robił to `motion` (spring 90/18) — biblioteka wchodziła do bundla
+   homepage'a za ~120 KB JS wyłącznie po to, żeby przesunąć element o 28 px.
+   Krzywa jest wizualnym odpowiednikiem tamtego springa: przy stiffness 90
+   i damping 18 tłumienie wynosi ζ≈0,95, czyli ruch praktycznie bez odbicia.
+   Stan trzyma atrybut `data-reveal`, ustawiany przez IntersectionObserver.
+--------------------------------------------------------------------------- */
+.reveal,
+.reveal-item {
+  opacity: 0;
+  transition:
+    opacity 0.62s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.62s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.reveal {
+  transform: translateY(28px);
+}
+
+.reveal-item {
+  transform: translateY(24px);
+}
+
+.reveal[data-reveal="in"],
+.reveal-stagger[data-reveal="in"] .reveal-item {
+  opacity: 1;
+  transform: none;
+}
+
+/* Stagger kart: krok 120 ms (tyle miał `staggerChildren`), ale ucięty na
+   ósmym dziecku. Galeria i Metamorfozy renderują listy o nieznanej długości —
+   bez limitu dwudzieste zdjęcie czekałoby 2,4 s na pojawienie się. */
+.reveal-stagger .reveal-item:nth-child(2) {
+  transition-delay: 120ms;
+}
+.reveal-stagger .reveal-item:nth-child(3) {
+  transition-delay: 240ms;
+}
+.reveal-stagger .reveal-item:nth-child(4) {
+  transition-delay: 360ms;
+}
+.reveal-stagger .reveal-item:nth-child(5) {
+  transition-delay: 480ms;
+}
+.reveal-stagger .reveal-item:nth-child(6) {
+  transition-delay: 600ms;
+}
+.reveal-stagger .reveal-item:nth-child(7) {
+  transition-delay: 720ms;
+}
+.reveal-stagger .reveal-item:nth-child(n + 8) {
+  transition-delay: 840ms;
+}
+
+/* ---------------------------------------------------------------------------
+   Wejście/wyjście elementów sterowanych stanem (baner cookies, callout
+   rezerwacji) — odpowiednik <AnimatePresence>. Element zostaje w DOM na czas
+   animacji wyjścia; steruje tym hook usePresence.
+--------------------------------------------------------------------------- */
+@keyframes presence-in {
+  from {
+    opacity: 0;
+    transform: translateY(var(--presence-y));
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes presence-out {
+  from {
+    opacity: 1;
+    transform: none;
+  }
+  to {
+    opacity: 0;
+    transform: translateY(var(--presence-y));
+  }
+}
+
+.presence {
+  --presence-y: 28px;
+  animation: presence-in 0.34s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Callout wchodzi od góry (wsuwa się nad listę usług), nie od dołu. */
+.presence-z-gory {
+  --presence-y: -8px;
+}
+
+.presence[data-state="out"] {
+  animation: presence-out 0.2s cubic-bezier(0.5, 0, 0.75, 0) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal,
+  .reveal-item,
+  .presence,
+  .presence[data-state="out"] {
+    opacity: 1;
+    transform: none;
+    transition: none;
+    animation: none;
+  }
+}
+
+/* Bez JS IntersectionObserver nigdy nie ustawi `data-reveal`, więc sekcje
+   zostałyby na `opacity: 0`. Poprzednia wersja na `motion` miała dokładnie tę
+   wadę (stan początkowy szedł do HTML jako inline style) — tu ją domykamy. */
+@media (scripting: none) {
+  .reveal,
+  .reveal-item {
+    opacity: 1;
+    transform: none;
+  }
+}

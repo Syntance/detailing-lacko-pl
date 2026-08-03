@@ -21,11 +21,14 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Button, Input, PageHeader, cn } from "@moduly/ui";
-import { GripVertical, Plus, Trash2 } from "lucide-react";
-import type {
-  MetamorfozyData,
-  MetamorfozyPara,
-  MetamorfozyTemat,
+import { ArrowDown, ArrowUp, GripVertical, Plus, Trash2 } from "lucide-react";
+import {
+  paraZdjecia,
+  siatkaKolumny,
+  type MetamorfozyData,
+  type MetamorfozyPara,
+  type MetamorfozyTemat,
+  type MetamorfozyZdjecie,
 } from "@/lib/metamorfozy";
 import { useMagazynHistory } from "@/hooks/use-magazyn-history";
 import { ImageField } from "./image-dropzone";
@@ -40,9 +43,12 @@ import {
 
 /**
  * Panel → Metamorfozy: edytor sekcji „Efekty — zobacz różnicę".
- * Temat = kafelek na stronie; pary przed/po układa się przeciąganiem —
- * PIERWSZA para jest okładką kafelka, wszystkie widać w podglądzie
+ * Temat = kafelek na stronie; grupy zdjęć układa się przeciąganiem —
+ * PIERWSZA grupa jest okładką kafelka, wszystkie widać w podglądzie
  * po kliknięciu kafelka (w tej kolejności).
+ *
+ * Grupa mieści dowolną liczbę zdjęć (nie tylko przed/po) — układ na stronie
+ * dobiera się sam, patrz `siatkaKolumny` w lib/metamorfozy.ts.
  */
 
 function reorderTematy(list: MetamorfozyTemat[]): MetamorfozyTemat[] {
@@ -65,8 +71,14 @@ function SortableParaCard({
   onChange: (next: MetamorfozyPara) => void;
   onRemove: () => void;
 }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
-    useSortable({ id: para.id });
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: para.id });
 
   return (
     <div
@@ -109,63 +121,168 @@ function SortableParaCard({
         </button>
       </div>
 
-      {/* Miniatury pary — szybki podgląd tego, co wybrano. Proporcja 3:4
-          jak na stronie (components/sections/metamorfozy.tsx) — inna
-          proporcja + object-cover przycinałaby prawdziwe zdjęcia. */}
-      {para.beforeUrl || para.afterUrl ? (
-        <div className="mb-3 grid grid-cols-2 gap-1 overflow-hidden rounded-lg">
-          {(
-            [
-              ["PRZED", para.beforeUrl],
-              ["PO", para.afterUrl],
-            ] as const
-          ).map(([label, url]) => (
-            <div key={label} className="relative aspect-[3/4] bg-muted">
-              {url ? (
-                <Image src={url} alt="" fill sizes="200px" className="object-cover" />
-              ) : null}
-              <span className="absolute top-1 left-1 rounded bg-black/60 px-1.5 py-0.5 text-[10px] font-semibold text-white">
-                {label}
-              </span>
-            </div>
-          ))}
-        </div>
-      ) : null}
+      <ZdjeciaGrupy para={para} onChange={onChange} />
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <ImageField
-          label={'Zdjęcie „przed"'}
-          value={para.beforeUrl}
-          onChange={(url) => onChange({ ...para, beforeUrl: url })}
-        />
-        <ImageField
-          label={'Zdjęcie „po"'}
-          value={para.afterUrl}
-          onChange={(url) => onChange({ ...para, afterUrl: url })}
-        />
-      </div>
-      <div className="mt-4 grid gap-4 md:grid-cols-2">
-        <Field label={'Alt „przed" (SEO)'}>
-          <Input
-            value={para.beforeAlt}
-            onChange={(e) => onChange({ ...para, beforeAlt: e.target.value })}
-          />
-        </Field>
-        <Field label={'Alt „po" (SEO)'}>
-          <Input
-            value={para.afterAlt}
-            onChange={(e) => onChange({ ...para, afterAlt: e.target.value })}
-          />
-        </Field>
-      </div>
       <div className="mt-4">
-        <Field label="Podpis pary w podglądzie" hint="np. „Wewnętrzna beczka felgi”">
+        <Field
+          label="Podpis grupy w podglądzie"
+          hint="np. „Wewnętrzna beczka felgi”"
+        >
           <Input
             value={para.podpis}
             onChange={(e) => onChange({ ...para, podpis: e.target.value })}
           />
         </Field>
       </div>
+    </div>
+  );
+}
+
+/**
+ * Zdjęcia jednej grupy — dowolna liczba, kolejność strzałkami.
+ *
+ * Zapisujemy WYŁĄCZNIE do `zdjecia`; stare `beforeUrl`/`afterUrl` czyścimy
+ * przy pierwszej edycji, żeby nie zostały dwa źródła prawdy dla tej samej
+ * grupy (czytanie i tak idzie przez `paraZdjecia`).
+ */
+function ZdjeciaGrupy({
+  para,
+  onChange,
+}: {
+  para: MetamorfozyPara;
+  onChange: (next: MetamorfozyPara) => void;
+}) {
+  const zdjecia = paraZdjecia(para);
+
+  const zapisz = (next: MetamorfozyZdjecie[]) =>
+    onChange({
+      ...para,
+      zdjecia: next,
+      beforeUrl: undefined,
+      beforeAlt: undefined,
+      afterUrl: undefined,
+      afterAlt: undefined,
+    });
+
+  const zmien = (id: string, patch: Partial<MetamorfozyZdjecie>) =>
+    zapisz(zdjecia.map((z) => (z.id === id ? { ...z, ...patch } : z)));
+
+  const usun = (id: string) => zapisz(zdjecia.filter((z) => z.id !== id));
+
+  const przesun = (index: number, delta: number) => {
+    const cel = index + delta;
+    if (cel < 0 || cel >= zdjecia.length) return;
+    const next = [...zdjecia];
+    const wyjete = next[index];
+    if (!wyjete) return;
+    next.splice(index, 1);
+    next.splice(cel, 0, wyjete);
+    zapisz(next);
+  };
+
+  const dodaj = () =>
+    zapisz([
+      ...zdjecia,
+      { id: `zdj-${Date.now()}-${zdjecia.length}`, url: "", alt: "" },
+    ]);
+
+  // Ta sama reguła co na stronie, żeby podgląd w panelu nie kłamał.
+  const kolumny = siatkaKolumny(zdjecia.length, 3);
+
+  return (
+    <div className="flex flex-col gap-4">
+      {zdjecia.length > 0 ? (
+        <div
+          className="grid gap-1 overflow-hidden rounded-lg"
+          style={{ gridTemplateColumns: `repeat(${kolumny}, minmax(0, 1fr))` }}
+        >
+          {zdjecia.map((z, i) => (
+            <div key={z.id} className="relative aspect-[3/4] bg-muted">
+              {z.url ? (
+                <Image
+                  src={z.url}
+                  alt=""
+                  fill
+                  sizes="200px"
+                  className="object-cover"
+                />
+              ) : null}
+              <span className="absolute top-1 left-1 rounded bg-black/60 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                {zdjecia.length === 2 ? (i === 0 ? "PRZED" : "PO") : i + 1}
+              </span>
+            </div>
+          ))}
+        </div>
+      ) : null}
+
+      {zdjecia.length === 2 ? (
+        <p className="text-xs text-muted-foreground">
+          Dwa zdjęcia = klasyczne przed/po — na stronie dostaną plakietki
+          „przed" i „po!". Przy jednym albo trzech i więcej plakietek nie ma, bo
+          nie da się powiedzieć, które jest „przed".
+        </p>
+      ) : null}
+
+      <div className="flex flex-col gap-4">
+        {zdjecia.map((z, i) => (
+          <div
+            key={z.id}
+            className="flex flex-col gap-3 rounded-lg border border-border p-3"
+          >
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-sm font-medium">Zdjęcie {i + 1}</span>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => przesun(i, -1)}
+                  disabled={i === 0}
+                  aria-label={`Przesuń zdjęcie ${i + 1} wcześniej`}
+                  className="inline-flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-40"
+                >
+                  <ArrowUp className="size-4" aria-hidden />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => przesun(i, 1)}
+                  disabled={i === zdjecia.length - 1}
+                  aria-label={`Przesuń zdjęcie ${i + 1} później`}
+                  className="inline-flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-40"
+                >
+                  <ArrowDown className="size-4" aria-hidden />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => usun(z.id)}
+                  aria-label={`Usuń zdjęcie ${i + 1}`}
+                  className="inline-flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-destructive focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                >
+                  <Trash2 className="size-4" aria-hidden />
+                </button>
+              </div>
+            </div>
+
+            <ImageField
+              label={`Plik zdjęcia ${i + 1}`}
+              value={z.url}
+              onChange={(url) => zmien(z.id, { url })}
+            />
+            <Field label={`Alt zdjęcia ${i + 1} (SEO)`}>
+              <Input
+                value={z.alt}
+                onChange={(e) => zmien(z.id, { alt: e.target.value })}
+              />
+            </Field>
+          </div>
+        ))}
+      </div>
+
+      <button
+        type="button"
+        onClick={dodaj}
+        className="inline-flex w-max items-center gap-1.5 rounded-md border border-border px-3 py-2 text-sm font-medium transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+      >
+        <Plus className="size-4" aria-hidden /> Dodaj zdjęcie
+      </button>
     </div>
   );
 }
@@ -236,7 +353,9 @@ export function MetamorfozyClient({ initial }: { initial: MetamorfozyData }) {
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
   );
 
   const sortedTematy = [...tematy].sort((a, b) => a.order - b.order);
@@ -250,7 +369,10 @@ export function MetamorfozyClient({ initial }: { initial: MetamorfozyData }) {
     setPending(true);
     setStatus(null);
     setError(false);
-    const result = await putEditorData("/api/magazyn/metamorfozy", history.state);
+    const result = await putEditorData(
+      "/api/magazyn/metamorfozy",
+      history.state,
+    );
     if (result.ok) {
       setStatus("Metamorfozy zapisane.");
       history.commitSaved();
@@ -286,7 +408,10 @@ export function MetamorfozyClient({ initial }: { initial: MetamorfozyData }) {
           <Input
             value={heading}
             onChange={(e) =>
-              history.setState((draft) => ({ ...draft, heading: e.target.value }))
+              history.setState((draft) => ({
+                ...draft,
+                heading: e.target.value,
+              }))
             }
           />
         </Field>
@@ -322,13 +447,12 @@ export function MetamorfozyClient({ initial }: { initial: MetamorfozyData }) {
                   }
                 />
               </Field>
-              <Field
-                label="Opis"
-                hint="1–2 zdania: co było i co zrobiliśmy"
-              >
+              <Field label="Opis" hint="1–2 zdania: co było i co zrobiliśmy">
                 <Input
                   value={temat.text}
-                  onChange={(e) => patchTemat(temat.id, { text: e.target.value })}
+                  onChange={(e) =>
+                    patchTemat(temat.id, { text: e.target.value })
+                  }
                 />
               </Field>
             </div>
@@ -368,10 +492,13 @@ export function MetamorfozyClient({ initial }: { initial: MetamorfozyData }) {
                       ...sortedPary,
                       {
                         id: `para-${Date.now()}`,
-                        beforeUrl: "",
-                        beforeAlt: "",
-                        afterUrl: "",
-                        afterAlt: "",
+                        // Nowa grupa startuje z dwoma slotami — przed/po jest
+                        // wciąż najczęstszym przypadkiem, a dołożenie
+                        // kolejnych to jeden przycisk.
+                        zdjecia: [
+                          { id: `zdj-${Date.now()}-0`, url: "", alt: "" },
+                          { id: `zdj-${Date.now()}-1`, url: "", alt: "" },
+                        ],
                         podpis: "",
                         order: sortedPary.length,
                       },
@@ -379,7 +506,7 @@ export function MetamorfozyClient({ initial }: { initial: MetamorfozyData }) {
                   )
                 }
               >
-                <Plus className="size-4" aria-hidden /> Dodaj parę przed/po
+                <Plus className="size-4" aria-hidden /> Dodaj grupę zdjęć
               </Button>
               <RowControls
                 onUp={() => {
@@ -396,7 +523,9 @@ export function MetamorfozyClient({ initial }: { initial: MetamorfozyData }) {
                 }}
                 onRemove={() =>
                   setTematy(
-                    reorderTematy(sortedTematy.filter((t) => t.id !== temat.id)),
+                    reorderTematy(
+                      sortedTematy.filter((t) => t.id !== temat.id),
+                    ),
                   )
                 }
                 upDisabled={tematIndex === 0}

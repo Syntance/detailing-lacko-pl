@@ -5,17 +5,37 @@ import { z } from "zod";
  * Edycja: panel Magazyn → Metamorfozy. Storage: `site_blobs`, klucz
  * `metamorfozy`. Zdjęcia: URL z uploadu CMS (R2) albo /images/metamorfozy/*.
  *
- * Model: temat (kafelek) → pary przed/po. PIERWSZA para tematu (po
- * przeciągnięciu na górę) jest okładką kafelka; wszystkie pary lądują
+ * Model: temat (kafelek) → grupy zdjęć. Grupa to DOWOLNA liczba zdjęć —
+ * jedno zajmuje całą szerokość, dwa dzielą ją na pół (i dostają plakietki
+ * „przed"/„po!"), więcej układa się w siatkę. PIERWSZA grupa tematu (po
+ * przeciągnięciu na górę) jest okładką kafelka; wszystkie lądują
  * w pełnoekranowym podglądzie w kolejności ustawionej w panelu.
+ *
+ * Pole nazywa się dalej `pary` (a typ `MetamorfozyPara`), bo tak leżą dane
+ * w bazie — zmiana nazwy wymagałaby migracji blob-ów bez zysku dla działania.
  */
+export const metamorfozyZdjecieSchema = z.object({
+  id: z.string().min(1),
+  url: z.string().min(1),
+  alt: z.string(),
+});
+
 export const metamorfozyParaSchema = z.object({
   id: z.string().min(1),
-  beforeUrl: z.string().min(1),
-  beforeAlt: z.string(),
-  afterUrl: z.string().min(1),
-  afterAlt: z.string(),
-  /** Podpis pod parą w podglądzie (opcjonalny). */
+  /**
+   * Dowolna liczba zdjęć w grupie. Czytaj ZAWSZE przez `paraZdjecia()` —
+   * blob-y zapisane przed tą zmianą mają zamiast tego `beforeUrl`/`afterUrl`.
+   */
+  zdjecia: z.array(metamorfozyZdjecieSchema).optional(),
+  /**
+   * Stary model: dokładnie dwa zdjęcia (przed/po). Pola zostają opcjonalne,
+   * żeby dane z bazy dalej się parsowały — panel zapisuje już `zdjecia`.
+   */
+  beforeUrl: z.string().optional(),
+  beforeAlt: z.string().optional(),
+  afterUrl: z.string().optional(),
+  afterAlt: z.string().optional(),
+  /** Podpis pod grupą w podglądzie (opcjonalny). */
   podpis: z.string(),
   order: z.number().int(),
 });
@@ -37,9 +57,46 @@ export const metamorfozyDataSchema = z.object({
   tematy: z.array(metamorfozyTematSchema),
 });
 
+export type MetamorfozyZdjecie = z.infer<typeof metamorfozyZdjecieSchema>;
 export type MetamorfozyPara = z.infer<typeof metamorfozyParaSchema>;
 export type MetamorfozyTemat = z.infer<typeof metamorfozyTematSchema>;
 export type MetamorfozyData = z.infer<typeof metamorfozyDataSchema>;
+
+/**
+ * Zdjęcia grupy w jednej postaci — nowe `zdjecia` albo przepisane ze starej
+ * pary przed/po. Jedyny sposób czytania zdjęć: dzięki temu strona i panel
+ * działają na blob-ach zapisanych przed i po zmianie modelu, bez migracji bazy.
+ */
+export function paraZdjecia(para: MetamorfozyPara): MetamorfozyZdjecie[] {
+  if (para.zdjecia && para.zdjecia.length > 0) return para.zdjecia;
+  const stare: MetamorfozyZdjecie[] = [];
+  if (para.beforeUrl)
+    stare.push({
+      id: `${para.id}-przed`,
+      url: para.beforeUrl,
+      alt: para.beforeAlt ?? "",
+    });
+  if (para.afterUrl)
+    stare.push({
+      id: `${para.id}-po`,
+      url: para.afterUrl,
+      alt: para.afterAlt ?? "",
+    });
+  return stare;
+}
+
+/**
+ * Liczba kolumn siatki dla N zdjęć.
+ *
+ * 1 → całą szerokość, 2 → pół na pół, więcej → siatka. Kolumny rosną WOLNIEJ
+ * niż liczba zdjęć (max 2 w kafelku, 3 w podglądzie): przy 6 zdjęciach w rzędzie
+ * każde byłoby paskiem, a zdjęcia mają się zmniejszać, nie zwężać.
+ */
+export function siatkaKolumny(ile: number, maxKolumn: number): number {
+  if (ile <= 1) return 1;
+  if (ile <= 4) return Math.min(2, maxKolumn);
+  return maxKolumn;
+}
 
 export const DEFAULT_METAMORFOZY: MetamorfozyData = {
   // Nagłówek 1:1 z makietą „kreskówka"; podtytułu makieta nie ma.
@@ -70,7 +127,8 @@ export const DEFAULT_METAMORFOZY: MetamorfozyData = {
           beforeAlt:
             "Zbliżenie ramion felgi przed czyszczeniem — ciemny nalot w załamaniach",
           afterUrl: "/images/metamorfozy/felgi-2-po.jpg",
-          afterAlt: "Te same ramiona po dekontaminacji — czysty metaliczny lakier",
+          afterAlt:
+            "Te same ramiona po dekontaminacji — czysty metaliczny lakier",
           podpis: "Załamania ramion — tam nalot siedzi najgłębiej",
           order: 1,
         },

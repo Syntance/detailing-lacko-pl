@@ -3,7 +3,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { X } from "lucide-react";
-import type { MetamorfozyData, MetamorfozyPara } from "@/lib/metamorfozy";
+import {
+  paraZdjecia,
+  siatkaKolumny,
+  type MetamorfozyData,
+  type MetamorfozyPara,
+} from "@/lib/metamorfozy";
 import { Reveal, RevealItem, RevealStagger } from "@/components/motion/reveal";
 
 /**
@@ -59,32 +64,68 @@ function ParaZdjec({
   sizes: string;
   pelny?: boolean;
 }) {
+  const wszystkie = paraZdjecia(para);
+  if (wszystkie.length === 0) return null;
+
+  // Kafelek to teaser o stałej wysokości — przy większej liczbie zdjęć rośnie
+  // liczba wierszy, a nie wysokość karty, więc pokazujemy najwyżej cztery
+  // (2×2) i zaznaczamy resztę licznikiem. Podgląd pokazuje wszystkie.
+  const widoczne = pelny ? wszystkie : wszystkie.slice(0, 4);
+  const ukryte = wszystkie.length - widoczne.length;
+
+  const kolumny = siatkaKolumny(widoczne.length, pelny ? 3 : 2);
+  const wiersze = Math.ceil(widoczne.length / kolumny);
+  // Ostatnie zdjęcie dopełnia niepełny wiersz, żeby w siatce nie została
+  // czarna dziura (tło `bg-ink` prześwituje przez puste komórki).
+  const reszta = widoczne.length % kolumny;
+  const dopelnienie = reszta === 0 ? 1 : kolumny - reszta + 1;
+
+  // Plakietki „przed/po" tylko dla klasycznej pary — przy trzech i więcej
+  // zdjęciach nie da się powiedzieć, które jest „przed".
+  const paraPrzedPo = wszystkie.length === 2;
+
   return (
     <div
-      className={`grid grid-cols-2 gap-[3px] bg-ink ${pelny ? "w-full" : ""}`}
+      className={`grid gap-[3px] bg-ink ${pelny ? "w-full" : "h-[180px]"}`}
+      style={{
+        gridTemplateColumns: `repeat(${kolumny}, minmax(0, 1fr))`,
+        // W kafelku wiersze dzielą stałe 180 px; w podglądzie wysokość
+        // wynika z proporcji zdjęć.
+        gridTemplateRows: pelny
+          ? undefined
+          : `repeat(${wiersze}, minmax(0, 1fr))`,
+      }}
     >
-      {(
-        [
-          ["przed", para.beforeUrl, para.beforeAlt],
-          ["po", para.afterUrl, para.afterAlt],
-        ] as const
-      ).map(([label, url, alt]) => (
-        <div
-          key={label}
-          className={`relative min-w-0 overflow-hidden bg-piasek ${
-            pelny ? "aspect-[3/4] w-full" : "h-[180px]"
-          }`}
-        >
-          <Image
-            src={url}
-            alt={alt}
-            fill
-            sizes={sizes}
-            className="object-cover"
-          />
-          <Plakietka po={label === "po"} />
-        </div>
-      ))}
+      {widoczne.map((zdjecie, i) => {
+        const ostatnie = i === widoczne.length - 1;
+        return (
+          <div
+            key={zdjecie.id}
+            className={`relative min-w-0 overflow-hidden bg-piasek ${
+              pelny ? "aspect-[3/4] w-full" : "h-full"
+            }`}
+            style={
+              ostatnie && dopelnienie > 1
+                ? { gridColumn: `span ${dopelnienie}` }
+                : undefined
+            }
+          >
+            <Image
+              src={zdjecie.url}
+              alt={zdjecie.alt}
+              fill
+              sizes={sizes}
+              className="object-cover"
+            />
+            {paraPrzedPo ? <Plakietka po={i === 1} /> : null}
+            {ostatnie && ukryte > 0 ? (
+              <span className="absolute inset-0 grid place-items-center bg-ink/65 text-xl font-bold text-background">
+                +{ukryte}
+              </span>
+            ) : null}
+          </div>
+        );
+      })}
     </div>
   );
 }

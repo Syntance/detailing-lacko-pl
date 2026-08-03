@@ -42,19 +42,17 @@ function Plakietka({ po }: { po?: boolean }) {
 }
 
 /**
- * Para zdjęć — kafelek i podgląd.
+ * Grupa zdjęć — kafelek i podgląd. Układ zależy od liczby zdjęć: jedno na
+ * całą szerokość, dwa po połowie, więcej w siatce (patrz `siatkaKolumny`).
  *
  * Kafelek (okładka): sztywne 180 px wysokości z makiety, więc pionowe kadry
- * 3:4 zostają przycięte do formatu z projektu — to teaser.
+ * 3:4 zostają przycięte do formatu z projektu — to teaser. Przy większej
+ * liczbie zdjęć rośnie liczba wierszy w tych 180 px, a nie wysokość karty.
  *
- * Podgląd (`pelny`): rozmiar liczony z SZEROKOŚCI (grid-cols-2 + aspect-[3/4]),
- * nie z wysokości ekranu. Wcześniej kadr miał `h-[min(60vh,70vw)]`, więc para
- * zajmowała `1,5 × 70vw = 105vw` — matematycznie zawsze więcej niż szerokość
- * ekranu, przez co na telefonie wychodziła poza modal i była ucinana.
- * Teraz para wypełnia dostępną szerokość, a proporcja 3:4 (zgodna ze
- * źródłem) daje zero przycięcia. Sufit wysokości pilnuje `max-w` na ramce
- * w podglądzie: przy szerokości pary `90vh + 3px` jedno zdjęcie ma dokładnie
- * 60vh, więc na wysokich ekranach para nadal mieści się bez przewijania.
+ * Podgląd (`pelny`): rozmiar liczony z SZEROKOŚCI (flex-basis + aspect-[3/4]),
+ * nie z wysokości ekranu — proporcja 3:4 zgodna ze źródłem daje zero
+ * przycięcia. O to, żeby grupa zawsze zmieściła się na wysokość, dba sufit
+ * szerokości ramki liczony w `podgladMaxSzerokosc` z liczby kolumn i wierszy.
  */
 function ParaZdjec({
   para,
@@ -240,10 +238,6 @@ export function Metamorfozy({ data }: { data: MetamorfozyData }) {
             </RevealItem>
           ))}
         </RevealStagger>
-
-        <p className="self-center text-center text-sm font-medium text-tekst">
-          Zdjęcia z realizacji — bez stocków.
-        </p>
       </div>
 
       {temat ? (

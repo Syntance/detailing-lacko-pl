@@ -49,9 +49,9 @@ const sql = postgres(databaseUrl, { max: 1, connect_timeout: 15 });
 
 /** Nagłówek sekcji, wstęp obok nagłówka i treść czarnego pasa pakietu. */
 const CENNIK_SETTINGS = {
-  heading: "Ceny z góry, bez haczyków",
+  heading: "Zobacz, ile to kosztuje",
   subheading:
-    "Jedyny pełny cennik w promieniu 20 km. Rozliczamy dokładnie według niego.",
+    "Czas realizacji otrzymasz po wybraniu usług, które Cię interesują",
   noteText:
     "100 zł taniej niż suma składowych · pakiet pod sprzedaż auta też 650 zł, ze zdjęciami do ogłoszenia",
   // CTA czarnego pasa prowadzi do sekcji rezerwacji (#rezerwacja), nie do SMS-a.

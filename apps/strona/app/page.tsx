@@ -69,7 +69,7 @@ export default async function HomePage() {
       <Navbar kontakt={kontakt} />
 
       {/* Kolejność sekcji z makiety „kreskówka": hero → cennik (01) →
-          efekty (02) → współpraca (03) → rezerwacja (04) → FAQ → kontakt.
+          efekty (02) → czego nie naprawimy (03) → rezerwacja (04) → FAQ → kontakt.
           Rezerwacja to cel wszystkich CTA „Zarezerwuj termin" i stoi po
           dowodach (ceny, efekty, przebieg), a przed FAQ domykającym obiekcje. */}
       <main>
@@ -79,7 +79,7 @@ export default async function HomePage() {
             CMS-owa Galeria z suwakami czeka w components/sections/galeria.tsx —
             wraca, gdy panel dostanie prawdziwe zdjęcia zamiast placeholderów. */}
         <Metamorfozy data={metamorfozy} />
-        <Proces kontakt={kontakt} />
+        <Proces />
         <RezerwacjaSekcja
           dostepnosc={dostepnosc}
           cennik={cennik}

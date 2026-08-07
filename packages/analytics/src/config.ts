@@ -1,6 +1,12 @@
-function readPublicEnv(name: string): string | undefined {
-	const value = process.env[name]?.trim();
-	return value || undefined;
+/**
+ * NEXT_PUBLIC_* musi być czytane statycznym wyrażeniem `process.env.NAZWA` —
+ * tylko takie Next inline'uje do bundla klienta. Dynamiczne `process.env[name]`
+ * w przeglądarce zawsze daje undefined, czyli wyłączoną analitykę mimo
+ * ustawionych kluczy.
+ */
+function clean(value: string | undefined): string | undefined {
+	const trimmed = value?.trim();
+	return trimmed || undefined;
 }
 
 function isProductionRuntime(): boolean {
@@ -9,22 +15,22 @@ function isProductionRuntime(): boolean {
 
 export const analyticsConfig = {
 	get ga4Id(): string | undefined {
-		return readPublicEnv("NEXT_PUBLIC_GA4_ID");
+		return clean(process.env.NEXT_PUBLIC_GA4_ID);
 	},
 	get posthogKey(): string | undefined {
-		return readPublicEnv("NEXT_PUBLIC_POSTHOG_KEY");
+		return clean(process.env.NEXT_PUBLIC_POSTHOG_KEY);
 	},
 	get posthogHost(): string {
-		return readPublicEnv("NEXT_PUBLIC_POSTHOG_HOST") ?? "https://eu.i.posthog.com";
+		return clean(process.env.NEXT_PUBLIC_POSTHOG_HOST) ?? "https://eu.i.posthog.com";
 	},
 	get metaPixelId(): string | undefined {
-		return readPublicEnv("NEXT_PUBLIC_META_PIXEL_ID");
+		return clean(process.env.NEXT_PUBLIC_META_PIXEL_ID);
 	},
 	get clarityId(): string | undefined {
-		return readPublicEnv("NEXT_PUBLIC_CLARITY_ID");
+		return clean(process.env.NEXT_PUBLIC_CLARITY_ID);
 	},
 	get locale(): string {
-		return readPublicEnv("NEXT_PUBLIC_SITE_LOCALE") ?? "pl-PL";
+		return clean(process.env.NEXT_PUBLIC_SITE_LOCALE) ?? "pl-PL";
 	},
 };
 

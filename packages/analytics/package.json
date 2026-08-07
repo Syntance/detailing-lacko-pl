@@ -13,7 +13,6 @@
   },
   "dependencies": {
     "@moduly/legal-consent": "workspace:*",
-    "@next/third-parties": "^16.2.4",
     "@syntance/analytics-events": "workspace:*",
     "@vercel/analytics": "^1.6.1",
     "@vercel/speed-insights": "^1.3.1",

@@ -11,3 +11,4 @@ export { captureFirstTouchUtm, withContext, type AnalyticsContext } from "./cont
 export { track, setTrackContext, applyConsentToDestinations, type EventKey, type EventPayloads } from "./track";
 export { useAnalytics } from "./hooks";
 export { AnalyticsProvider } from "./provider";
+export { TrafficTracker, type TrackedSection } from "./traffic";

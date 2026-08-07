@@ -43,7 +43,13 @@ certyfikat — status: `vercel domains inspect detailing-lacko.pl`.
 - [ ] Resend: dodaj `RESEND_API_KEY` (+ `CONTACT_INBOX_EMAIL`) w Vercel env,
       żeby formularz wysyłał maile. Bez tego zgłoszenia i tak trafiają do
       panelu (Formularze → Otrzymane).
-- [ ] Analityka: `NEXT_PUBLIC_GA4_ID`, `NEXT_PUBLIC_POSTHOG_KEY` w Vercel env.
+- [ ] Analityka storefrontu: `NEXT_PUBLIC_GA4_ID` + `NEXT_PUBLIC_POSTHOG_KEY`
+      w Vercel env (Production). Instrukcja skąd wziąć klucze:
+      `apps/strona/.env.example`. W GA4 wyłącz w Enhanced measurement
+      „historię przeglądarki" i „przewinięcia" (nasz kod wysyła je sam).
+- [ ] Panel Statystyki: `GA4_PROPERTY_ID`, `GA4_SERVICE_ACCOUNT_JSON`,
+      `POSTHOG_PERSONAL_API_KEY`, `POSTHOG_PROJECT_ID` w Vercel env —
+      bez nich `/magazyn/panel/statystyki` pokazuje „nie połączono".
 - [ ] Wizytówka Google: link strona ↔ wizytówka w obie strony (NAP identyczny).
 
 ## Operacje

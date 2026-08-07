@@ -27,7 +27,7 @@ export function track<K extends EventKey>(name: K, payload: EventPayloads[K]): v
 		currentPathname,
 		currentLocale,
 		payload as Record<string, unknown>,
-	) as EventPayloads[K] & Record<string, unknown>;
+	);
 
 	if (hasConsent("analytics")) {
 		if (enabled.ga4()) sendGa4Event(name, enriched);

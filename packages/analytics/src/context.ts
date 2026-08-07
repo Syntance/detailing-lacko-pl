@@ -1,3 +1,5 @@
+import { hasConsent } from "./consent";
+
 const UTM_STORAGE_KEY = "moduly.analytics.utm.v1";
 
 export type AnalyticsContext = {
@@ -14,6 +16,13 @@ type UtmParams = Pick<
 	AnalyticsContext,
 	"utm_source" | "utm_medium" | "utm_campaign" | "utm_content" | "utm_term"
 >;
+
+/**
+ * Art. 173 Pt: sessionStorage wolno tykać (zapis I odczyt) dopiero po zgodzie
+ * analitycznej. Przed zgodą UTM-y z URL-a żyją wyłącznie w pamięci modułu —
+ * withContext() dopisuje je do storage przy pierwszym evencie po zgodzie.
+ */
+let memoryUtm: UtmParams = {};
 
 function isBrowser(): boolean {
 	return typeof window !== "undefined";
@@ -54,6 +63,18 @@ function storeUtm(utm: UtmParams): void {
 	}
 }
 
+function rememberUtmFromUrl(): void {
+	const fromUrl = readUtmFromUrl();
+	if (Object.keys(fromUrl).length > 0) {
+		memoryUtm = { ...memoryUtm, ...fromUrl };
+	}
+}
+
+function persistMemoryUtm(): void {
+	if (Object.keys(memoryUtm).length === 0) return;
+	storeUtm({ ...loadStoredUtm(), ...memoryUtm });
+}
+
 function resolvePageType(pathname: string): AnalyticsContext["page_type"] {
 	if (pathname.includes("/magazyn/panel")) return "admin";
 	if (pathname.startsWith("/konto")) return "account";
@@ -68,9 +89,9 @@ function resolvePageType(pathname: string): AnalyticsContext["page_type"] {
 }
 
 export function captureFirstTouchUtm(): void {
-	const fromUrl = readUtmFromUrl();
-	if (Object.keys(fromUrl).length > 0) {
-		storeUtm(fromUrl);
+	rememberUtmFromUrl();
+	if (hasConsent("analytics")) {
+		persistMemoryUtm();
 	}
 }
 
@@ -79,10 +100,12 @@ export function withContext(
 	locale: string,
 	payload: Record<string, unknown>,
 ): Record<string, unknown> {
-	const utm = { ...loadStoredUtm(), ...readUtmFromUrl() };
-	if (Object.keys(readUtmFromUrl()).length > 0) {
-		storeUtm(readUtmFromUrl());
-	}
+	rememberUtmFromUrl();
+	const consented = hasConsent("analytics");
+	const utm = consented
+		? { ...loadStoredUtm(), ...memoryUtm }
+		: { ...memoryUtm };
+	if (consented) persistMemoryUtm();
 
 	return {
 		page_type: resolvePageType(pathname),

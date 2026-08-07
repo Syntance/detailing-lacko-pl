@@ -35,13 +35,14 @@ const SCRIPT_DEV = process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : "
 
 const CSP = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${SCRIPT_DEV} https://va.vercel-scripts.com https://eu-assets.i.posthog.com`,
+  `script-src 'self' 'unsafe-inline'${SCRIPT_DEV} https://va.vercel-scripts.com https://eu-assets.i.posthog.com https://www.googletagmanager.com`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
   // R2 S3 API — przeglądarka PUTuje duże zdjęcia presignem prosto na bucket
   // (omija limit body Vercel ~4,5 MB). Bez tego hosta CSP blokuje upload.
-  "connect-src 'self' https://08414a969e8107b01088ca1ced57dd94.r2.cloudflarestorage.com https://eu.i.posthog.com https://eu-assets.i.posthog.com https://vitals.vercel-insights.com https://va.vercel-scripts.com",
+  // GA4 wysyła beacon na region1.google-analytics.com — stąd wildcard.
+  "connect-src 'self' https://08414a969e8107b01088ca1ced57dd94.r2.cloudflarestorage.com https://eu.i.posthog.com https://eu-assets.i.posthog.com https://vitals.vercel-insights.com https://va.vercel-scripts.com https://www.googletagmanager.com https://*.google-analytics.com",
   "frame-ancestors 'none'",
   "base-uri 'none'",
   "object-src 'none'",

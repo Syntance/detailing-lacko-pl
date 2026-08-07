@@ -20,14 +20,20 @@ declare global {
 	}
 }
 
-function ensureDataLayer(): void {
+export function ensureDataLayer(): void {
 	if (typeof window === "undefined") return;
 	window.dataLayer = window.dataLayer ?? [];
-	window.gtag =
-		window.gtag ??
-		function gtag(...args: unknown[]) {
-			window.dataLayer?.push(args);
+	if (!window.gtag) {
+		// gtag.js rozpoznaje komendy WYŁĄCZNIE po obiekcie `arguments`
+		// ([object Arguments]) — push zwykłej tablicy (rest params) ląduje
+		// w gałęzi legacy i jest po cichu ignorowany, czyli GA4 nie dostaje
+		// ani configu, ani eventów. Stąd function + arguments, jak w
+		// kanonicznym snippecie Google.
+		window.gtag = function gtag() {
+			// eslint-disable-next-line prefer-rest-params
+			window.dataLayer?.push(arguments);
 		};
+	}
 }
 
 /** Consent Mode v2 — default denied przed pierwszą interakcją. */

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { TrafficTracker } from "@moduly/analytics";
 import { JsonLd } from "@/components/json-ld";
 import { Faq } from "@/components/sections/faq";
 import { Hero } from "@/components/sections/hero";
@@ -90,6 +91,19 @@ export default async function HomePage() {
       </main>
 
       <Stopka kontakt={kontakt} />
+      {/* Ruch wewnątrz one-page'a: które sekcje ludzie realnie oglądają i jak
+          głęboko scrollują — uzupełnia lejek booking_start → lead_submit. */}
+      <TrafficTracker
+        sections={[
+          { id: "hero", name: "Hero" },
+          { id: "cennik", name: "Usługi i cennik" },
+          { id: "efekty", name: "Efekty przed/po" },
+          { id: "jak", name: "Co wyjdzie, a co zostanie" },
+          { id: "rezerwacja", name: "Rezerwacja" },
+          { id: "faq", name: "FAQ" },
+          { id: "kontakt", name: "Kontakt" },
+        ]}
+      />
       <JsonLd
         kontakt={kontakt}
         cennik={cennik}

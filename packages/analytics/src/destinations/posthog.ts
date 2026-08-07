@@ -29,6 +29,11 @@ async function getPosthogClient(): Promise<PostHog | null> {
 			mask_all_text: true,
 			opt_out_capturing_by_default: true,
 			persistence: "localStorage+cookie",
+			// Strona nie ma logowania — nikt się nie „identyfikuje". Bez tego
+			// każdy anonim dostaje pełny profil osoby: drożej w rozliczeniu
+			// PostHoga i więcej danych osobowych niż potrzeba. Web Analytics
+			// liczy ruch tak samo, bo opiera się na $session_id.
+			person_profiles: "identified_only",
 		});
 
 		client = posthog;

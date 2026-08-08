@@ -1,3 +1,4 @@
+import type sharpType from "sharp";
 import { CMS_IMAGE_MAX_LONG_EDGE, CMS_IMAGE_WEBP_QUALITY } from "./cms-image-config";
 
 /**
@@ -12,7 +13,19 @@ import { CMS_IMAGE_MAX_LONG_EDGE, CMS_IMAGE_WEBP_QUALITY } from "./cms-image-con
  * ogranicza skutek awarii sharpa do samego uploadu obrazków.
  */
 export async function normalizeCmsImageToWebp(input: Buffer): Promise<Buffer> {
-	const { default: sharp } = await import("sharp");
+	let sharp: typeof sharpType;
+	try {
+		({ default: sharp } = await import("sharp"));
+	} catch {
+		// Natywne libvips nie ładuje się na tym runtime (typowo Vercel: `.so`
+		// nie trafia do bundla funkcji). Czytelny komunikat zamiast 500 —
+		// przeglądarka konwertuje sama wszystko poza HEIC/TIFF, więc realnie
+		// dotyczy to tylko tych dwóch formatów.
+		throw new Error(
+			"Ten format wymaga konwersji na serwerze, która jest niedostępna. Zapisz zdjęcie jako JPG, PNG lub WebP i wgraj ponownie.",
+		);
+	}
+
 	return sharp(input)
 		.rotate()
 		.resize(CMS_IMAGE_MAX_LONG_EDGE, CMS_IMAGE_MAX_LONG_EDGE, {
@@ -40,11 +53,24 @@ function isSvgFile(file: File): boolean {
 	return file.type === "image/svg+xml" || file.name.toLowerCase().endsWith(".svg");
 }
 
+function isWebpFile(file: File): boolean {
+	return (
+		file.type.toLowerCase() === "image/webp" ||
+		file.name.toLowerCase().endsWith(".webp")
+	);
+}
+
 /** Przygotowuje plik z panelu CMS do uploadu (zawsze WebP). */
 export async function prepareCmsUploadFile(file: File): Promise<File> {
 	if (isSvgFile(file)) {
 		throw new Error("SVG nie jest obsługiwany — użyj JPG, PNG lub WebP.");
 	}
+
+	// Przeglądarka konwertuje do WebP jeszcze przed wysyłką (patrz
+	// client/cms-image-upload.ts), więc typowy upload w ogóle nie budzi sharpa.
+	// Zostaje on wyłącznie dla formatów, których canvas nie dekoduje (HEIC poza
+	// Safari, TIFF).
+	if (isWebpFile(file)) return file;
 
 	const optimized = await normalizeCmsImageToWebp(Buffer.from(await file.arrayBuffer()));
 	return new File([new Uint8Array(optimized)], cmsUploadFileName(file.name), {

@@ -129,30 +129,39 @@ async function encodeUnderLimit(
 	return null;
 }
 
-/** PNG/JPG/AVIF → WebP w pełnej rozdzielczości. GIF/SVG/WebP bez zmian. */
+/**
+ * PNG/JPG/AVIF/HEIC → WebP w pełnej rozdzielczości. GIF/SVG/WebP bez zmian.
+ *
+ * Nigdy nie rzuca: gdy przeglądarka nie potrafi zdekodować formatu, oddaje
+ * oryginał i konwersję przejmuje serwer (sharp). Dlatego próbujemy też HEIC
+ * mimo `canCompressCmsImage` — Safari dekoduje go natywnie, więc zdjęcia
+ * prosto z iPhone'a konwertują się na miejscu; Chrome po prostu odpadnie
+ * do fallbacku zamiast z góry rezygnować.
+ */
 export async function convertCmsImageToWebp(file: File): Promise<File> {
 	const type = file.type.toLowerCase();
 	const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
 	if (SKIP_WEBP_CONVERSION.has(type) || ext === "webp" || ext === "gif" || ext === "svg") {
 		return file;
 	}
-	if (!canCompressCmsImage(file)) return file;
 
-	const raster = await loadRasterFromFile(file);
 	try {
-		const encoded = await encodeWebpAtDim(
-			raster.source,
-			raster.width,
-			raster.height,
-			Number.POSITIVE_INFINITY,
-			CMS_IMAGE_WEBP_QUALITY / 100,
-		);
-		if (!encoded) {
-			throw new Error("Nie udało się przekonwertować obrazu do WebP.");
+		const raster = await loadRasterFromFile(file);
+		try {
+			const encoded = await encodeWebpAtDim(
+				raster.source,
+				raster.width,
+				raster.height,
+				Number.POSITIVE_INFINITY,
+				CMS_IMAGE_WEBP_QUALITY / 100,
+			);
+			if (!encoded) return file;
+			return new File([encoded], webpFilename(file.name), { type: "image/webp" });
+		} finally {
+			raster.close?.();
 		}
-		return new File([encoded], webpFilename(file.name), { type: "image/webp" });
-	} finally {
-		raster.close?.();
+	} catch {
+		return file;
 	}
 }
 

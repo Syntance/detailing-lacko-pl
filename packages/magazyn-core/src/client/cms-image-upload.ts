@@ -11,6 +11,7 @@ import {
 import {
 	canCompressCmsImage,
 	compressCmsImageForUpload,
+	convertCmsImageToWebp,
 	prepareCmsImageForUpload,
 } from "../storage/compress-cms-image";
 import { inferCmsMimeType } from "../storage/cms-mime";
@@ -229,23 +230,36 @@ async function uploadViaApi(file: File): Promise<string> {
 	return url;
 }
 
-/** Upload obrazu CMS z przeglądarki — API route + presigned R2 (wzorzec lumine). */
+/**
+ * Upload obrazu CMS z przeglądarki — API route + presigned R2 (wzorzec lumine).
+ *
+ * Konwersja do WebP leci TU, przed wyborem ścieżki, z dwóch powodów:
+ *  1. Ścieżka presign (duże pliki) wysyła plik prosto do R2 z pominięciem
+ *     naszego serwera — wcześniej lądował tam nieskonwertowany oryginał, więc
+ *     „serwer konwertuje każdy plik do WebP" było prawdą tylko dla małych.
+ *  2. Zdejmuje sharpa ze ścieżki uploadu: serwer dostaje gotowy WebP i nie
+ *     musi ładować natywnego libvips, który na Vercelu nie trafia do bundla
+ *     funkcji (patrz normalize-cms-image.ts).
+ * Konwersja jest best-effort — czego przeglądarka nie zdekoduje, poleci
+ * oryginałem i spróbuje serwer.
+ */
 export async function uploadCmsImageFromBrowser(file: File): Promise<string> {
 	const isDev = process.env.NODE_ENV === "development";
-	const useDirectApi = isDev || file.size <= VERCEL_SAFE_UPLOAD_BYTES;
+	const prepared = await convertCmsImageToWebp(file);
+	const useDirectApi = isDev || prepared.size <= VERCEL_SAFE_UPLOAD_BYTES;
 
 	if (useDirectApi) {
 		try {
-			return await uploadViaApi(file);
+			return await uploadViaApi(prepared);
 		} catch (error) {
-			if (!isDev && file.size > VERCEL_SAFE_UPLOAD_BYTES) {
-				return uploadViaPresignedWithApiFallback(file);
+			if (!isDev && prepared.size > VERCEL_SAFE_UPLOAD_BYTES) {
+				return uploadViaPresignedWithApiFallback(prepared);
 			}
 			throw error;
 		}
 	}
 
-	return uploadViaPresignedWithApiFallback(file);
+	return uploadViaPresignedWithApiFallback(prepared);
 }
 
 export function formatCmsBrowserUploadError(error: unknown): string {

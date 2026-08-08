@@ -54,7 +54,9 @@ export function PanelNav({
     },
     {
       href: `${panel}/metamorfozy`,
-      label: "Metamorfozy",
+      // Etykieta „Efekty" — ścieżka i klucz danych zostają `metamorfozy`
+      // (blob w bazie + endpoint), zmiana nazwy dotyczy tylko warstwy UI.
+      label: "Efekty",
       icon: ArrowLeftRight,
       exact: false,
     },

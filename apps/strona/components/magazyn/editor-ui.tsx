@@ -1,7 +1,7 @@
 "use client";
 
-import type { PointerEvent, ReactNode } from "react";
-import { Button } from "@moduly/ui";
+import type { ComponentProps, PointerEvent, ReactNode } from "react";
+import { Button, cn } from "@moduly/ui";
 import {
   ArrowDown,
   ArrowUp,
@@ -24,7 +24,10 @@ export function Fieldset({
   children: ReactNode;
 }) {
   return (
-    <fieldset className="space-y-4 rounded-xl border border-border bg-card p-5">
+    // `min-w-0` gasi domyślne `min-inline-size: min-content` fieldsetu —
+    // bez tego karta nie zwęża się poniżej swojej treści i na telefonie
+    // wypycha stronę w poziomie.
+    <fieldset className="min-w-0 space-y-4 rounded-xl border border-border bg-card p-5">
       <legend className="flex w-full items-center justify-between gap-2 px-1 text-sm font-medium text-foreground">
         <span>{legend}</span>
         {actions}
@@ -49,6 +52,22 @@ export function Field({
       {children}
       {hint ? <span className="text-xs text-muted-foreground">{hint}</span> : null}
     </label>
+  );
+}
+
+/**
+ * Wieloliniowy odpowiednik `Input` (te same klasy) — do pól na 1–2 zdania,
+ * gdzie jednoliniowe pole ucina tekst i zmusza do przewijania w poziomie.
+ */
+export function TextArea({ className, ...props }: ComponentProps<"textarea">) {
+  return (
+    <textarea
+      className={cn(
+        "min-h-20 w-full min-w-0 resize-y rounded-lg border border-input bg-transparent px-3 py-2 text-sm leading-relaxed transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50",
+        className,
+      )}
+      {...props}
+    />
   );
 }
 

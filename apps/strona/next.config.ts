@@ -88,7 +88,16 @@ const nextConfig: NextConfig = {
   // @moduly/data-store czyta pliki .sql (readFileSync) przy imporcie —
   // muszą trafić do bundla funkcji serverless na Vercelu.
   outputFileTracingIncludes: {
-    "/**": ["../../packages/data-store/src/postgres/migrations/*.sql"],
+    "/**": [
+      "../../packages/data-store/src/postgres/migrations/*.sql",
+      // sharp wczytuje libvips przez dlopen, a nie require — Next nie widzi
+      // tego statycznie, więc `.so` nie trafiało do bundla funkcji i upload
+      // obrazków w panelu padał na „libvips-cpp.so: cannot open shared object
+      // file". Binarki są platformowe: pnpm instaluje na Vercelu wariant
+      // linux-x64, lokalnie win32 — glob obejmuje jedno i drugie.
+      "../../node_modules/.pnpm/@img+sharp-linux*/node_modules/@img/**",
+      "../../node_modules/.pnpm/@img+sharp-libvips-linux*/node_modules/@img/**",
+    ],
   },
   async headers() {
     return [{ source: "/(.*)", headers: [...SECURITY_HEADERS] }];

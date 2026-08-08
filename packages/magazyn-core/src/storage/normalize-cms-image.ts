@@ -1,8 +1,18 @@
-import sharp from "sharp";
 import { CMS_IMAGE_MAX_LONG_EDGE, CMS_IMAGE_WEBP_QUALITY } from "./cms-image-config";
 
-/** Konwersja CMS → WebP (EXIF rotate, max bok, q92). */
+/**
+ * Konwersja CMS → WebP (EXIF rotate, max bok, q92).
+ *
+ * sharp ładowany dynamicznie, NIE statycznym importem u góry pliku: ten moduł
+ * wisi w barrelu `@moduly/magazyn-core`, który ciągnie `initModuly()` z
+ * instrumentation hooka, czyli przy każdym starcie funkcji serwerowej. Statyczny
+ * import wciągał ~30 MB natywnej biblioteki na każdy cold start, a gdy jej
+ * binarka nie działała na runtime Vercela (ERR_DLOPEN_FAILED na libvips),
+ * wywracał render KAŻDEJ strony SSR — panel /magazyn oddawał 500. Leniwy import
+ * ogranicza skutek awarii sharpa do samego uploadu obrazków.
+ */
 export async function normalizeCmsImageToWebp(input: Buffer): Promise<Buffer> {
+	const { default: sharp } = await import("sharp");
 	return sharp(input)
 		.rotate()
 		.resize(CMS_IMAGE_MAX_LONG_EDGE, CMS_IMAGE_MAX_LONG_EDGE, {

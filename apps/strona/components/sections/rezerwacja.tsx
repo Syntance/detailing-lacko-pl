@@ -18,6 +18,7 @@ import {
   blockedItemIds,
   formatDuration,
   toggleServiceSelection,
+  wymien,
 } from "@/lib/cennik-selection";
 import type {
   DostepnoscData,
@@ -49,12 +50,6 @@ function formatDatePl(dateStr: string): string {
   } catch {
     return dateStr;
   }
-}
-
-/** Lista nazw po polsku: „A", „A i B", „A, B i C". */
-function wymien(nazwy: string[]): string {
-  if (nazwy.length <= 1) return nazwy[0] ?? "";
-  return `${nazwy.slice(0, -1).join(", ")} i ${nazwy[nazwy.length - 1]}`;
 }
 
 /** Nazwa z wariantem — „One step" samo w sobie nie mówi, za ile i jak długo. */

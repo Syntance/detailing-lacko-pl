@@ -200,6 +200,7 @@ export function variantDuration(
  */
 export {
   formatDuration,
+  wymien,
   itemIncludes,
   itemRequires,
   blockedItemIds,

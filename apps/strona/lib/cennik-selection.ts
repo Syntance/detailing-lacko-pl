@@ -59,6 +59,16 @@ export function parseVariantKey(key: string): {
   };
 }
 
+/**
+ * Lista nazw po polsku: „A", „A i B", „A, B i C". Współdzielona przez widget
+ * rezerwacji (komunikaty o zmianie wyboru) i publiczny cennik (lista
+ * wymaganych dodatków przy pozycji).
+ */
+export function wymien(nazwy: string[]): string {
+  if (nazwy.length <= 1) return nazwy[0] ?? "";
+  return `${nazwy.slice(0, -1).join(", ")} i ${nazwy[nazwy.length - 1]}`;
+}
+
 /** Format czasu realizacji: „30 min", „1,5 h", „4 h", „9,5 h". */
 export function formatDuration(minutes: number): string {
   if (minutes <= 0) return "";

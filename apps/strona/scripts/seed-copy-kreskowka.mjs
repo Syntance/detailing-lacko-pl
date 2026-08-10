@@ -52,8 +52,7 @@ const CENNIK_SETTINGS = {
   heading: "Zobacz, ile to kosztuje",
   subheading:
     "Czas realizacji otrzymasz po wybraniu usług, które Cię interesują",
-  noteText:
-    "100 zł taniej niż suma składowych · pakiet pod sprzedaż auta też 650 zł, ze zdjęciami do ogłoszenia",
+  noteText: "",
   // CTA czarnego pasa prowadzi do sekcji rezerwacji (#rezerwacja), nie do SMS-a.
   noteCtaLabel: "Zarezerwuj termin →",
 };

@@ -127,9 +127,7 @@ export const DEFAULT_CENNIK: CennikData = {
     subheading:
       "Czas realizacji otrzymasz po wybraniu usług, które Cię interesują",
     noteTitle: "Sprzedajesz auto?",
-    // Podpis w czarnym pasie pakietu (makieta „kreskówka").
-    noteText:
-      "100 zł taniej niż suma składowych · pakiet pod sprzedaż auta też 650 zł, ze zdjęciami do ogłoszenia",
+    noteText: "",
     noteCtaLabel: "Zarezerwuj termin →",
     expandLabel: "Rozwiń pełny cennik",
     collapseLabel: "Zwiń cennik",

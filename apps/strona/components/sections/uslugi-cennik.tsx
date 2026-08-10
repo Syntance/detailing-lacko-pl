@@ -2,7 +2,9 @@ import Image from "next/image";
 import {
   formatItemPrice,
   formatVariantPrice,
+  itemRequires,
   itemVariants,
+  wymien,
   type CennikData,
   type CennikItem,
 } from "@/lib/cennik";
@@ -134,7 +136,52 @@ function WariantyPozycji({ item }: { item: CennikItem }) {
   );
 }
 
-function PozycjaCennika({ item }: { item: CennikItem }) {
+/**
+ * Nazwy wymaganych dodatków tej pozycji — z pominięciem tych ukrytych na
+ * stronie (skoro nie da się ich zobaczyć w cenniku, wypisanie ich tu tylko by
+ * myliło) i bez prefiksu „• " składowych (jak `stripBullet` dla nazwy głównej).
+ */
+function wymaganeNazwy(item: CennikItem, allItems: CennikItem[]): string[] {
+  const byId = new Map(allItems.map((i) => [i.id, i]));
+  return itemRequires(item)
+    .map((id) => byId.get(id))
+    .filter((i): i is CennikItem => i != null && !i.disabled)
+    .map((i) => stripBullet(i.name));
+}
+
+/**
+ * „Wymaga: Dekontaminacja lakieru" — dodatki, które trzeba dobrać razem z tą
+ * pozycją (patrz `requiredItemIds` w panelu). Klient widzi to już w cenniku,
+ * zanim jeszcze dotrze do widgetu rezerwacji, gdzie wybór i tak dobierze je
+ * automatycznie — chodzi o to, żeby nie zaskoczyła go zmiana wyboru.
+ *
+ * Ten sam stopień/kolor co opis (13px, `text-tekst`) — to dalej informacja
+ * o zakresie usługi, nie osobna kategoria treści jak warianty (tam zmienia
+ * się cena, tu nie).
+ */
+function WymaganeDodatki({
+  item,
+  allItems,
+}: {
+  item: CennikItem;
+  allItems: CennikItem[];
+}) {
+  const nazwy = wymaganeNazwy(item, allItems);
+  if (!nazwy.length) return null;
+  return (
+    <span className="text-[13px] leading-[1.5] text-pretty text-tekst">
+      <span className="font-semibold">Wymaga:</span> {wymien(nazwy)}
+    </span>
+  );
+}
+
+function PozycjaCennika({
+  item,
+  allItems,
+}: {
+  item: CennikItem;
+  allItems: CennikItem[];
+}) {
   return (
     <li className="flex items-baseline justify-between gap-3 border-t-2 border-dashed border-kreska px-5 py-[13px] first:border-t-0">
       <span className="flex min-w-0 flex-1 flex-col gap-1">
@@ -151,6 +198,7 @@ function PozycjaCennika({ item }: { item: CennikItem }) {
             {item.description}
           </span>
         ) : null}
+        <WymaganeDodatki item={item} allItems={allItems} />
         <WariantyPozycji item={item} />
       </span>
       {/* `max-w-[145px]` + bez `whitespace-nowrap`: samo zdjęcie nowrap NIE
@@ -182,7 +230,14 @@ function PozycjaCennika({ item }: { item: CennikItem }) {
  * szersza od ekranu — a `position: fixed` podglądu Efektów dziedziczył tę
  * zawyżoną szerokość i ucinał zdjęcia.
  */
-function PakietPozycja({ item }: { item: CennikItem }) {
+function PakietPozycja({
+  item,
+  allItems,
+}: {
+  item: CennikItem;
+  allItems: CennikItem[];
+}) {
+  const wymagane = wymaganeNazwy(item, allItems);
   return (
     <li className="flex min-w-0 flex-col gap-1.5 border-t-2 border-dashed border-noc-szary/40 pt-3.5">
       <div className="flex min-w-0 items-baseline justify-between gap-3">
@@ -196,6 +251,11 @@ function PakietPozycja({ item }: { item: CennikItem }) {
       {item.description ? (
         <span className="text-[13px] leading-[1.5] text-pretty text-noc-szary">
           {item.description}
+        </span>
+      ) : null}
+      {wymagane.length ? (
+        <span className="text-[13px] leading-[1.5] text-pretty text-noc-szary">
+          <span className="font-semibold">Wymaga:</span> {wymien(wymagane)}
         </span>
       ) : null}
       {/* Warianty pakietu — te same pary etykieta↔cena co w kartach kategorii,
@@ -309,7 +369,11 @@ export function UslugiCennik({ cennik }: { cennik: CennikData }) {
                   </div>
                   <ul className="flex flex-col">
                     {rows.map((item) => (
-                      <PozycjaCennika key={item.id} item={item} />
+                      <PozycjaCennika
+                        key={item.id}
+                        item={item}
+                        allItems={items}
+                      />
                     ))}
                   </ul>
                 </article>
@@ -366,7 +430,7 @@ export function UslugiCennik({ cennik }: { cennik: CennikData }) {
               </div>
               <ul className="grid gap-x-8 gap-y-[18px] sm:grid-cols-2">
                 {pakiety.map((item) => (
-                  <PakietPozycja key={item.id} item={item} />
+                  <PakietPozycja key={item.id} item={item} allItems={items} />
                 ))}
               </ul>
             </div>

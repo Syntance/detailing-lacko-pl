@@ -21,6 +21,42 @@ export type PozycjaZeSkladowymi = {
   includedItemIds?: string[];
 };
 
+/**
+ * Separator w złożonym id wybranego wariantu („one-step::suv-van").
+ *
+ * Rezerwacja operuje na PŁASKIEJ liście id (`serviceIds`), a wariant zmienia
+ * cenę i czas pracy, więc sam id pozycji nie wystarcza — harmonogram musiałby
+ * zgadywać, czy to 6,5 h czy 8,5 h roboty. Zamiast dokładać drugie pole do
+ * protokołu (i migrować walidację, maile, panel), wariant jedzie w id: każdy
+ * wariant jest osobną pozycją wybieralną, więc blokady, konflikty i migawki
+ * usług liczą się DOKŁADNIE tak jak dotąd.
+ *
+ * Dwa dwukropki, nie jeden: id pozycji to slug z panelu (`[a-z0-9-]`), ale
+ * pojedynczy `:` bywa odruchowo wpisywany w nazwach, a `::` nie.
+ */
+export const VARIANT_SEP = "::";
+
+/** Id pozycji + id wariantu → jedno id wybieralnej pozycji rezerwacji. */
+export function variantKey(itemId: string, variantId: string): string {
+  return `${itemId}${VARIANT_SEP}${variantId}`;
+}
+
+/**
+ * Rozbiór złożonego id. `variantId` = null dla pozycji bez wariantów, więc
+ * stare rezerwacje i pozycje jednocenowe przechodzą tą samą ścieżką.
+ */
+export function parseVariantKey(key: string): {
+  itemId: string;
+  variantId: string | null;
+} {
+  const at = key.indexOf(VARIANT_SEP);
+  if (at === -1) return { itemId: key, variantId: null };
+  return {
+    itemId: key.slice(0, at),
+    variantId: key.slice(at + VARIANT_SEP.length),
+  };
+}
+
 /** Format czasu realizacji: „30 min", „1,5 h", „4 h", „9,5 h". */
 export function formatDuration(minutes: number): string {
   if (minutes <= 0) return "";

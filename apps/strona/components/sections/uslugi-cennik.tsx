@@ -1,6 +1,8 @@
 import Image from "next/image";
 import {
   formatItemPrice,
+  formatVariantPrice,
+  itemVariants,
   type CennikData,
   type CennikItem,
 } from "@/lib/cennik";
@@ -102,10 +104,40 @@ const NAKLEJKI: Record<
   },
 };
 
+/**
+ * Warianty pod opisem pozycji: etykieta ↔ cena, jedna linia na wariant.
+ *
+ * Wariant zastępuje trzy osobne pozycje z tym samym opisem (one step
+ * w trzech rozmiarach auta), więc opis pada RAZ, a klient i tak widzi cenę
+ * dla swojego auta bez wchodzenia w rezerwację.
+ *
+ * `<dl>`, nie `<ul>`: to pary etykieta–wartość, więc czytnik ekranu ogłasza
+ * „hatchback / małe: 600 zł" zamiast dwóch niepowiązanych tekstów.
+ */
+function WariantyPozycji({ item }: { item: CennikItem }) {
+  const variants = itemVariants(item);
+  if (!variants.length) return null;
+  return (
+    <dl className="mt-0.5 flex flex-col gap-1">
+      {variants.map((v) => (
+        <div
+          key={v.id}
+          className="flex items-baseline justify-between gap-3 border-t border-dashed border-kreska/70 pt-1"
+        >
+          <dt className="text-[13px] leading-[1.4] text-tekst">{v.label}</dt>
+          <dd className="text-[13px] font-bold whitespace-nowrap tabular-nums">
+            {formatVariantPrice(item, v)}
+          </dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
 function PozycjaCennika({ item }: { item: CennikItem }) {
   return (
     <li className="flex items-baseline justify-between gap-3 border-t-2 border-dashed border-kreska px-5 py-[13px] first:border-t-0">
-      <span className="flex flex-col gap-1">
+      <span className="flex min-w-0 flex-1 flex-col gap-1">
         <span className="text-[15px] font-semibold">
           {stripBullet(item.name)}
         </span>
@@ -119,6 +151,7 @@ function PozycjaCennika({ item }: { item: CennikItem }) {
             {item.description}
           </span>
         ) : null}
+        <WariantyPozycji item={item} />
       </span>
       <span className="text-lg font-bold whitespace-nowrap tabular-nums">
         {formatItemPrice(item)}
@@ -152,6 +185,25 @@ function PakietPozycja({ item }: { item: CennikItem }) {
         <span className="text-[13px] leading-[1.5] text-pretty text-noc-szary">
           {item.description}
         </span>
+      ) : null}
+      {/* Warianty pakietu — te same pary etykieta↔cena co w kartach kategorii,
+          przełożone na kontrast czarnego pasa (żółta kwota, szara etykieta). */}
+      {itemVariants(item).length ? (
+        <dl className="flex flex-col gap-1">
+          {itemVariants(item).map((v) => (
+            <div
+              key={v.id}
+              className="flex items-baseline justify-between gap-3 border-t border-dashed border-noc-szary/30 pt-1"
+            >
+              <dt className="text-[13px] leading-[1.4] text-noc-szary">
+                {v.label}
+              </dt>
+              <dd className="text-[13px] font-bold whitespace-nowrap text-zolty tabular-nums">
+                {formatVariantPrice(item, v)}
+              </dd>
+            </div>
+          ))}
+        </dl>
       ) : null}
       {item.timeLabel || item.popular ? (
         <span className="etykieta-sm flex flex-wrap items-center gap-2">

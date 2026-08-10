@@ -1,5 +1,13 @@
 import { z } from "zod";
-import { formatItemPrice, type CennikData } from "./cennik";
+import {
+  formatItemPrice,
+  formatVariantPrice,
+  itemVariants,
+  variantDuration,
+  variantKey,
+  type CennikData,
+  type CennikItem,
+} from "./cennik";
 
 /**
  * Rezerwacje online + konfiguracja dostępności.
@@ -109,8 +117,12 @@ export type Rezerwacja = {
 export const rezerwacjaInputSchema = z.object({
   date: z.string().regex(DATE),
   time: z.string().regex(TIME),
-  /** Id pozycji z cennika — serwer sam liczy czas i ceny (nigdy z klienta). */
-  serviceIds: z.array(z.string().min(1).max(80)).min(1).max(20),
+  /**
+   * Id pozycji z cennika — serwer sam liczy czas i ceny (nigdy z klienta).
+   * Pozycja z wariantami przychodzi jako „id-pozycji::id-wariantu", stąd limit
+   * długości z zapasem na oba slugi (obie części są edytowalne w panelu).
+   */
+  serviceIds: z.array(z.string().min(1).max(160)).min(1).max(20),
   name: z.string().trim().min(2).max(80),
   phone: z.string().trim().min(7).max(24),
   email: z.string().trim().email().or(z.literal("")),
@@ -199,6 +211,14 @@ export type RezerwacjaPozycja = {
    * zawartych w cenie. Same id, bez nazw: nazwy widget ma w swojej liście.
    */
   includedItemIds?: string[];
+  /**
+   * Id pozycji cennika, z której wariantu powstała ta opcja. Widget grupuje po
+   * tym polu, żeby trzy rozmiary auta były JEDNYM kafelkiem z wyborem rozmiaru.
+   * Puste dla pozycji bez wariantów.
+   */
+  grupaId?: string;
+  /** Etykieta wariantu w obrębie grupy, np. „SUV / van". */
+  wariantLabel?: string;
 };
 
 export type RezerwacjaKategoria = {
@@ -207,29 +227,104 @@ export type RezerwacjaKategoria = {
   pozycje: RezerwacjaPozycja[];
 };
 
+/**
+ * Id, pod którymi pozycja jest WYBIERALNA: bez wariantów to jedno id pozycji,
+ * z wariantami — po jednym złożonym id na wariant.
+ */
+function selectableIds(item: CennikItem): string[] {
+  const variants = itemVariants(item);
+  return variants.length
+    ? variants.map((v) => variantKey(item.id, v.id))
+    : [item.id];
+}
+
+/**
+ * Cennik → PŁASKA lista pozycji wybieralnych w rezerwacji; wariant to osobna
+ * pozycja ze wspólną `grupaId`, własną ceną i własnym czasem pracy.
+ *
+ * Jedno źródło prawdy dla widgetu, walidacji POST i harmonogramu — inaczej
+ * klient widziałby cenę jednego rozmiaru, a serwer policzyłby czas innego.
+ */
+export function rezerwacjaPozycje(
+  cennik: CennikData,
+): (RezerwacjaPozycja & { categoryId: string })[] {
+  const active = cennik.items.filter((i) => !i.disabled);
+  const byId = new Map(active.map((i) => [i.id, i]));
+
+  /**
+   * Składowa z wariantami blokuje się w KAŻDYM rozmiarze: pakiet zawiera pracę,
+   * nie konkretny wariant. Bez tego rozwinięcia „mycie" w pakiecie blokowałoby
+   * id bazowe, którego nikt nie może wybrać, a warianty zostałyby klikalne.
+   */
+  const expandIncluded = (ids: string[] | undefined): string[] | undefined => {
+    const expanded = (ids ?? []).flatMap((id) => {
+      const child = byId.get(id);
+      return child ? selectableIds(child) : [id];
+    });
+    return expanded.length ? expanded : undefined;
+  };
+
+  return active.flatMap((item) => {
+    const name = item.name.replace(/^•\s*/, "");
+    const includedItemIds = expandIncluded(item.includedItemIds);
+    const wspolne = {
+      name,
+      popular: item.popular,
+      includedItemIds,
+      categoryId: item.categoryId,
+    };
+    const variants = itemVariants(item);
+    if (!variants.length) {
+      return [
+        {
+          ...wspolne,
+          id: item.id,
+          priceLabel: formatItemPrice(item),
+          priceFrom: item.priceHidden ? 0 : item.priceFrom,
+          durationMinutes: item.durationMinutes,
+        },
+      ];
+    }
+    return variants.map((v) => ({
+      ...wspolne,
+      id: variantKey(item.id, v.id),
+      priceLabel: formatVariantPrice(item, v),
+      priceFrom: item.priceHidden ? 0 : v.priceFrom,
+      durationMinutes: variantDuration(item, v),
+      grupaId: item.id,
+      wariantLabel: v.label,
+    }));
+  });
+}
+
 /** Cennik → grupy do multi-selecta w widgecie (bez opisów — lżejszy payload). */
 export function buildRezerwacjaCennik(
   cennik: CennikData,
 ): RezerwacjaKategoria[] {
-  const categories = cennik.categories
+  // Ranking pozycji BAZOWEJ — warianty jednej pozycji muszą zostać obok siebie
+  // (widget skleja je w kafelek po `grupaId`), więc sortujemy po `order`
+  // pozycji, a nie po złożonym id wariantu.
+  const bazowe = new Map(
+    cennik.items.map((i, idx) => [i.id, { order: i.order, idx }]),
+  );
+  const rank = (p: RezerwacjaPozycja) =>
+    bazowe.get(p.grupaId ?? p.id) ?? { order: 0, idx: 0 };
+
+  const pozycje = rezerwacjaPozycje(cennik);
+  return cennik.categories
     .filter((c) => !c.disabled)
-    .sort((a, b) => a.order - b.order);
-  return categories
+    .sort((a, b) => a.order - b.order)
     .map((c) => ({
       id: c.id,
       name: c.name,
-      pozycje: cennik.items
-        .filter((i) => !i.disabled && i.categoryId === c.id)
-        .sort((a, b) => a.order - b.order)
-        .map((i) => ({
-          id: i.id,
-          name: i.name.replace(/^•\s*/, ""),
-          priceLabel: formatItemPrice(i),
-          priceFrom: i.priceHidden ? 0 : i.priceFrom,
-          durationMinutes: i.durationMinutes,
-          popular: i.popular,
-          includedItemIds: i.includedItemIds,
-        })),
+      pozycje: pozycje
+        .filter((p) => p.categoryId === c.id)
+        .sort((a, b) => {
+          const ra = rank(a);
+          const rb = rank(b);
+          return ra.order === rb.order ? ra.idx - rb.idx : ra.order - rb.order;
+        })
+        .map(({ categoryId: _categoryId, ...p }) => p),
     }))
     .filter((c) => c.pozycje.length > 0);
 }
@@ -243,15 +338,20 @@ export function resolveUslugi(
   serviceIds: string[],
 ): { services: RezerwacjaUsluga[]; durationMinutes: number } | null {
   const unique = [...new Set(serviceIds)];
+  const byId = new Map(rezerwacjaPozycje(cennik).map((p) => [p.id, p]));
   const services: RezerwacjaUsluga[] = [];
   for (const id of unique) {
-    const item = cennik.items.find((i) => i.id === id && !i.disabled);
-    if (!item) return null;
+    const pozycja = byId.get(id);
+    if (!pozycja) return null;
     services.push({
-      id: item.id,
-      name: item.name.replace(/^•\s*/, ""),
-      priceLabel: formatItemPrice(item),
-      durationMinutes: item.durationMinutes,
+      id: pozycja.id,
+      // Wariant w nazwie migawki — mail i panel muszą powiedzieć, KTÓRY rozmiar
+      // auta przyjęliśmy, inaczej „One step" nie mówi nic o cenie i czasie.
+      name: pozycja.wariantLabel
+        ? `${pozycja.name} — ${pozycja.wariantLabel}`
+        : pozycja.name,
+      priceLabel: pozycja.priceLabel,
+      durationMinutes: pozycja.durationMinutes,
     });
   }
   return {

@@ -3,6 +3,7 @@ import {
   computeSlots,
   resolveUslugi,
   rezerwacjaInputSchema,
+  rezerwacjaPozycje,
 } from "@/lib/rezerwacje";
 import { enforceRateLimit, requestIp } from "@/lib/rate-limit";
 import {
@@ -89,7 +90,13 @@ export async function POST(request: Request) {
   // Pakiet razem ze swoją składową = podwójna płatność za tę samą robotę
   // i podwójny czas w kalendarzu. Widget na to nie pozwala, ale payload
   // przychodzi od klienta, więc reguła musi obowiązywać też tutaj.
-  const conflict = findSelectionConflict(cennik.items, input.serviceIds);
+  // Na ROZWINIĘTYCH pozycjach (wariant = osobne id), bo `serviceIds` niosą id
+  // wariantów — `cennik.items` nie zna id „one-step::suv-van" i konflikt
+  // przeszedłby niezauważony.
+  const conflict = findSelectionConflict(
+    rezerwacjaPozycje(cennik),
+    input.serviceIds,
+  );
   if (conflict) {
     return NextResponse.json(
       {

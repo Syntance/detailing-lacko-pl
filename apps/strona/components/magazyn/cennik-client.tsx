@@ -6,7 +6,12 @@ import { Reorder, useDragControls } from "motion/react";
 import { Button, Input, PageHeader } from "@moduly/ui";
 import { ChevronUp, Pencil, Plus, Trash2 } from "lucide-react";
 import { formatDuration, formatItemPrice } from "@/lib/cennik";
-import type { CennikCategory, CennikData, CennikItem } from "@/lib/cennik";
+import type {
+  CennikCategory,
+  CennikData,
+  CennikItem,
+  CennikVariant,
+} from "@/lib/cennik";
 import { useMagazynHistory } from "@/hooks/use-magazyn-history";
 import {
   Checkbox,
@@ -608,6 +613,8 @@ function itemSummary(item: CennikItem): string {
   if (item.timeLabel) parts.push(item.timeLabel);
   if (item.durationMinutes > 0)
     parts.push(`rezerwacje: ${formatDuration(item.durationMinutes)}`);
+  const warianty = item.variants?.length ?? 0;
+  if (warianty > 0) parts.push(`warianty: ${warianty}`);
   const zawiera = item.includedItemIds?.length ?? 0;
   if (zawiera > 0) parts.push(`zawiera ${zawiera}`);
   if (item.popular) parts.push("najczęściej wybierane");
@@ -725,6 +732,155 @@ function SkladowePakietu({
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+/** Nowy wariant z id odpornym na dublowanie w tej samej milisekundzie. */
+function newVariant(existing: CennikVariant[]): CennikVariant {
+  const zajete = new Set(existing.map((v) => v.id));
+  let id = `wariant-${Date.now()}`;
+  for (let i = 2; zajete.has(id); i++) id = `wariant-${Date.now()}-${i}`;
+  return {
+    id,
+    label: "",
+    priceFrom: 0,
+    priceTo: 0,
+    durationMinutes: 0,
+    timeLabel: "",
+  };
+}
+
+/**
+ * Warianty pozycji — ten sam zakres pracy w kilku rozmiarach auta, gdzie różni
+ * się wyłącznie cena i czas (one step: hatchback / sedan / SUV).
+ *
+ * Zastępuje trzymanie każdego rozmiaru jako OSOBNEJ pozycji cennika: na stronie
+ * dawało to trzy wiersze z identycznym opisem, a w rezerwacji trzy kafelki,
+ * z których dwa zawsze były pomyłką.
+ *
+ * Id wariantu powstaje ze znacznika czasu i NIE zmienia się przy edycji
+ * etykiety — leci w rezerwacji jako „id-pozycji::id-wariantu", więc zmiana
+ * nazwy rozmiaru nie może unieważnić przyjętych już terminów.
+ */
+function WariantyPozycji({
+  item,
+  onChange,
+}: {
+  item: CennikItem;
+  onChange: (patch: Partial<CennikItem>) => void;
+}) {
+  const variants = item.variants ?? [];
+  // Pusta lista wraca do `undefined`, żeby blob nie puchł o `"variants": []`
+  // przy każdej pozycji bez wariantów.
+  const set = (next: CennikVariant[]) =>
+    onChange({ variants: next.length > 0 ? next : undefined });
+  const patch = (id: string, p: Partial<CennikVariant>) =>
+    set(variants.map((v) => (v.id === id ? { ...v, ...p } : v)));
+
+  return (
+    <div className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4">
+      <div className="flex flex-col gap-1">
+        <p className="text-sm font-medium text-foreground">
+          Warianty{variants.length > 0 ? ` (${variants.length})` : ""}
+        </p>
+        <p className="text-xs text-muted-foreground">
+          Dla usług, które różnią się tylko rozmiarem auta. Na stronie pozycja
+          zostaje JEDNA — ze wspólnym opisem i listą wariantów z cenami,
+          a w rezerwacji klient wybiera rozmiar jednym kliknięciem.
+        </p>
+      </div>
+
+      {variants.length > 0 ? (
+        <p className="rounded-md border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+          Przy wariantach cena i czas realizacji POZYCJI przestają się liczyć —
+          stronę i rezerwację napędzają wartości z wariantów. Pola wyżej zostaw
+          jako podgląd widełek.
+        </p>
+      ) : null}
+
+      <div className="flex flex-col gap-3">
+        {variants.map((v, i) => (
+          <div
+            key={v.id}
+            className="flex flex-col gap-3 rounded-lg border border-border bg-background/60 p-3"
+          >
+            <div className="flex items-center gap-2">
+              <span
+                aria-hidden
+                className="flex size-6 shrink-0 items-center justify-center rounded-md bg-muted text-xs font-medium tabular-nums text-muted-foreground"
+              >
+                {i + 1}
+              </span>
+              <p className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">
+                {v.label || "(wariant bez etykiety)"}
+              </p>
+              <RowControls
+                onRemove={() => set(variants.filter((x) => x.id !== v.id))}
+                removeLabel={`Usuń wariant ${v.label || i + 1}`}
+              />
+            </div>
+
+            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+              <Field label="Etykieta" hint="np. SUV / van">
+                <Input
+                  value={v.label}
+                  onChange={(e) => patch(v.id, { label: e.target.value })}
+                />
+              </Field>
+              <Field label="Cena od (zł)">
+                <Input
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  value={v.priceFrom}
+                  onChange={(e) =>
+                    patch(v.id, { priceFrom: Number(e.target.value) || 0 })
+                  }
+                />
+              </Field>
+              <Field label="Cena do (zł)" hint="0 = cena stała">
+                <Input
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  value={v.priceTo}
+                  onChange={(e) =>
+                    patch(v.id, { priceTo: Number(e.target.value) || 0 })
+                  }
+                />
+              </Field>
+              <Field
+                label="Czas realizacji (min)"
+                hint="0 = bierze czas pozycji"
+              >
+                <Input
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  step={15}
+                  value={v.durationMinutes}
+                  onChange={(e) =>
+                    patch(v.id, {
+                      durationMinutes: Math.max(0, Number(e.target.value) || 0),
+                    })
+                  }
+                />
+              </Field>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        className="w-max gap-1.5"
+        onClick={() => set([...variants, newVariant(variants)])}
+      >
+        <Plus className="size-4" aria-hidden /> Dodaj wariant
+      </Button>
     </div>
   );
 }
@@ -936,6 +1092,8 @@ function ItemRow({
               Ukryj cenę
             </label>
           </div>
+
+          <WariantyPozycji item={item} onChange={onChange} />
 
           <SkladowePakietu
             item={item}

@@ -57,6 +57,41 @@ function wymien(nazwy: string[]): string {
   return `${nazwy.slice(0, -1).join(", ")} i ${nazwy[nazwy.length - 1]}`;
 }
 
+/** Nazwa z wariantem — „One step" samo w sobie nie mówi, za ile i jak długo. */
+function pelnaNazwa(p: RezerwacjaPozycja): string {
+  return p.wariantLabel ? `${p.name} — ${p.wariantLabel}` : p.name;
+}
+
+/**
+ * Pozycja cennika w widgecie: pojedyncza usługa albo kilka wariantów jednej
+ * usługi (rozmiary auta), które trafiają do WSPÓLNEGO kafelka.
+ */
+type Grupa = { key: string; name: string; pozycje: RezerwacjaPozycja[] };
+
+/**
+ * Warianty tej samej pozycji sklejone w jedną grupę. Serwer wysyła je jako
+ * osobne pozycje ze wspólną `grupaId` (każdy wariant ma własną cenę i czas,
+ * więc musi być osobno wybieralny), ale klientowi pokazujemy jedną usługę
+ * z wyborem rozmiaru — trzy kafelki, z których dwa zawsze są pomyłką, tylko
+ * wydłużały listę.
+ */
+function grupujWarianty(pozycje: RezerwacjaPozycja[]): Grupa[] {
+  const grupy: Grupa[] = [];
+  const wgKlucza = new Map<string, Grupa>();
+  for (const p of pozycje) {
+    const key = p.grupaId ?? p.id;
+    const istniejaca = wgKlucza.get(key);
+    if (istniejaca) {
+      istniejaca.pozycje.push(p);
+      continue;
+    }
+    const grupa: Grupa = { key, name: p.name, pozycje: [p] };
+    wgKlucza.set(key, grupa);
+    grupy.push(grupa);
+  }
+  return grupy;
+}
+
 /**
  * Co widget ma powiedzieć o skutku ostatniego kliknięcia.
  *
@@ -109,18 +144,24 @@ function WyborCallout({
         <p className="text-[14px] leading-[1.5] text-pretty">
           {zablokowane ? (
             <>
-              <strong className="font-bold">{callout.pozycja.name}</strong> jest
-              już w cenie pakietu{" "}
-              <strong className="font-bold">{callout.pakiet.name}</strong> — nie
-              trzeba dobierać osobno.
+              <strong className="font-bold">
+                {pelnaNazwa(callout.pozycja)}
+              </strong>{" "}
+              jest już w cenie pakietu{" "}
+              <strong className="font-bold">
+                {pelnaNazwa(callout.pakiet)}
+              </strong>{" "}
+              — nie trzeba dobierać osobno.
             </>
           ) : (
             <>
               Pakiet{" "}
-              <strong className="font-bold">{callout.pakiet.name}</strong>{" "}
+              <strong className="font-bold">
+                {pelnaNazwa(callout.pakiet)}
+              </strong>{" "}
               zawiera już{" "}
               <strong className="font-bold">
-                {wymien(callout.usuniete.map((u) => u.name))}
+                {wymien(callout.usuniete.map(pelnaNazwa))}
               </strong>
               , więc{" "}
               {callout.usuniete.length > 1 ? "zdjęliśmy je" : "zdjęliśmy ją"} z
@@ -145,9 +186,99 @@ function WyborCallout({
       >
         <Undo2 className="size-3.5" aria-hidden />
         {zablokowane
-          ? `Wolę osobno — usuń ${callout.pakiet.name}`
+          ? `Wolę osobno — usuń ${pelnaNazwa(callout.pakiet)}`
           : "Cofnij tę zmianę"}
       </button>
+    </div>
+  );
+}
+
+/**
+ * Kafelek usługi z wariantami: nazwa raz, pod nią pigułki rozmiarów z cenami.
+ *
+ * Wybór rozmiaru jest wyborem CAŁEJ usługi (nie ma stanu „zaznaczona, ale bez
+ * rozmiaru"), więc kafelek nie ma osobnego checkboxa — zaznaczona pigułka jest
+ * jednocześnie zaznaczeniem usługi. Dzięki temu nie da się wysłać rezerwacji
+ * bez rozmiaru, a więc bez znanej ceny i czasu pracy.
+ */
+function KafelekWariantow({
+  grupa,
+  selected,
+  wPakiecie,
+  onWybierz,
+}: {
+  grupa: Grupa;
+  selected: string[];
+  /** Pakiet, który zawiera tę usługę w cenie (wtedy wariantów nie wybieramy). */
+  wPakiecie: RezerwacjaPozycja | undefined;
+  onWybierz: (id: string, rodzenstwo: string[]) => void;
+}) {
+  const wybrany = grupa.pozycje.find((p) => selected.includes(p.id));
+  const opisId = `warianty-${grupa.key}`;
+  return (
+    <div
+      className={`flex flex-col gap-2.5 rounded-xl border-2 px-3.5 py-3 ${
+        wybrany
+          ? "cien-3 border-ink bg-zolty"
+          : wPakiecie
+            ? "border-dashed border-kreska bg-piasek"
+            : "border-ink bg-background"
+      }`}
+    >
+      <span
+        className={`text-[14px] leading-snug font-semibold ${
+          wPakiecie ? "text-muted-foreground" : ""
+        }`}
+      >
+        {grupa.name}
+      </span>
+
+      {wPakiecie ? (
+        <span className="etykieta-sm text-muted-foreground">
+          w cenie: {wPakiecie.name}
+        </span>
+      ) : (
+        <>
+          <span id={opisId} className="etykieta-sm text-muted-foreground">
+            wybierz rozmiar auta
+          </span>
+          <div
+            role="group"
+            aria-labelledby={opisId}
+            className="flex flex-wrap gap-2"
+          >
+            {grupa.pozycje.map((p) => {
+              const active = selected.includes(p.id);
+              const rodzenstwo = grupa.pozycje
+                .filter((x) => x.id !== p.id)
+                .map((x) => x.id);
+              return (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => onWybierz(p.id, rodzenstwo)}
+                  aria-pressed={active}
+                  // `py-2.5` daje ~42 px wysokości — wybór rozmiaru to cel
+                  // dotykowy na telefonie i nie może być drobniejszy od
+                  // pigułek z godzinami obok.
+                  className={`flex items-baseline gap-2 rounded-lg border-2 border-ink px-3 py-2.5 text-left transition-transform focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none motion-reduce:transition-none ${
+                    active
+                      ? "bg-ink text-zolty"
+                      : "bg-background hover:-translate-y-0.5"
+                  }`}
+                >
+                  <span className="text-[13px] font-semibold">
+                    {p.wariantLabel}
+                  </span>
+                  <span className="text-[13px] font-bold tabular-nums">
+                    {p.priceLabel}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -384,12 +515,19 @@ export function Rezerwacja({ config, kategorie }: Props) {
   /**
    * Cała reguła siedzi w `toggleServiceSelection` (wspólnej z panelem i API) —
    * tutaj zostaje wyłącznie zamiana wyniku na komunikat dla klienta.
+   *
+   * `rodzenstwo` to pozostałe warianty tej samej pozycji: wykluczają się, bo
+   * jedno auto ma jeden rozmiar. Klik w inny rozmiar ma go PODMIENIĆ, a nie
+   * dołożyć drugiego one stepa do rachunku i harmonogramu.
    */
-  const toggle = (id: string) => {
+  const toggle = (id: string, rodzenstwo: string[] = []) => {
     const pozycja = pozycje.find((p) => p.id === id);
     if (!pozycja) return;
 
-    const zmiana = toggleServiceSelection(pozycje, selected, id);
+    const bezRodzenstwa = rodzenstwo.length
+      ? selected.filter((x) => !rodzenstwo.includes(x))
+      : selected;
+    const zmiana = toggleServiceSelection(pozycje, bezRodzenstwa, id);
 
     if (zmiana.blockedBy) {
       setCallout({
@@ -537,7 +675,7 @@ export function Rezerwacja({ config, kategorie }: Props) {
             <strong className="font-bold">{formatDatePl(date)}</strong> na{" "}
             <strong className="font-bold">{done.time}</strong>
             {wybrane.length ? (
-              <> — {wybrane.map((p) => p.name).join(", ")}</>
+              <> — {wybrane.map(pelnaNazwa).join(", ")}</>
             ) : null}
             . Potwierdzę telefonicznie — do usłyszenia!
           </p>
@@ -579,7 +717,30 @@ export function Rezerwacja({ config, kategorie }: Props) {
                   {kategoria.name}
                 </legend>
                 <div className="grid gap-2.5 sm:grid-cols-2">
-                  {kategoria.pozycje.map((p) => {
+                  {grupujWarianty(kategoria.pozycje).map((grupa) => {
+                    // Usługa z wariantami ma własny kafelek z wyborem rozmiaru.
+                    if (grupa.pozycje.length > 1) {
+                      const wybrany = grupa.pozycje.find((x) =>
+                        selected.includes(x.id),
+                      );
+                      return (
+                        <KafelekWariantow
+                          key={grupa.key}
+                          grupa={grupa}
+                          selected={selected}
+                          wPakiecie={
+                            wybrany
+                              ? undefined
+                              : grupa.pozycje
+                                  .map((x) => zablokowane.get(x.id))
+                                  .find(Boolean)
+                          }
+                          onWybierz={toggle}
+                        />
+                      );
+                    }
+                    const p = grupa.pozycje[0];
+                    if (!p) return null;
                     const active = selected.includes(p.id);
                     // Pozycja w cenie wybranego pakietu: zostaje klikalna,
                     // żeby dało się dopytać „dlaczego nie mogę?" — martwy,

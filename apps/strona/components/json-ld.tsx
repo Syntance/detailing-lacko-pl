@@ -1,5 +1,5 @@
 import type { FaqItem } from "@moduly/types";
-import type { CennikData } from "@/lib/cennik";
+import { itemPriceRange, type CennikData } from "@/lib/cennik";
 import type { DostepnoscData } from "@/lib/rezerwacje";
 import type { KontaktData } from "@/lib/site";
 
@@ -49,14 +49,14 @@ export function JsonLd({
   dostepnosc: DostepnoscData;
   siteUrl: string;
 }) {
-  const prices = cennik.items
+  // Widełki przez `itemPriceRange`, bo pozycja z wariantami ma własne
+  // `priceFrom`/`priceTo` tylko poglądowo — realne kwoty siedzą w wariantach.
+  const zakresy = cennik.items
     .filter((i) => !i.disabled)
-    .map((i) => i.priceFrom)
-    .filter((p) => p > 0);
+    .map((i) => itemPriceRange(i));
+  const prices = zakresy.map((z) => z.from).filter((p) => p > 0);
   const minPrice = prices.length ? Math.min(...prices) : 100;
-  const maxPrice = cennik.items
-    .filter((i) => !i.disabled)
-    .reduce((max, i) => Math.max(max, i.priceTo, i.priceFrom), 0);
+  const maxPrice = zakresy.reduce((max, z) => Math.max(max, z.to, z.from), 0);
 
   const localBusiness = {
     "@context": "https://schema.org",

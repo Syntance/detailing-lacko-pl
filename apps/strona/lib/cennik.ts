@@ -22,6 +22,28 @@ export const cennikCategorySchema = z.object({
   disabled: z.boolean(),
 });
 
+/**
+ * Wariant pozycji — ten sam zakres pracy w kilku rozmiarach/odmianach, gdzie
+ * różni się wyłącznie cena i czas (one step: hatchback / sedan / SUV).
+ *
+ * Bez wariantów każdy rozmiar był OSOBNĄ pozycją cennika: trzy wiersze z tym
+ * samym opisem zajmowały pół kolumny, a w rezerwacji trzy kafelki, z których
+ * dwa zawsze były pomyłką. Wariant zwija to do jednej opcji ze wspólnym
+ * opisem, a cena i czas idą z wybranego wariantu.
+ */
+export const cennikVariantSchema = z.object({
+  id: z.string().min(1),
+  /** Etykieta wariantu, np. „hatchback / małe". */
+  label: z.string().min(1),
+  priceFrom: z.number().int().min(0),
+  /** 0 = cena stała (bez widełek) — jak w pozycji. */
+  priceTo: z.number().int().min(0),
+  /** Czas realizacji wariantu w minutach — źródło prawdy dla harmonogramu. */
+  durationMinutes: z.number().int().min(0).max(10_080).default(0),
+  /** Opisowy czas wariantu, np. „6–7 h (1 dzień)". Puste = bierzemy z pozycji. */
+  timeLabel: z.string().default(""),
+});
+
 export const cennikItemSchema = z.object({
   id: z.string().min(1),
   categoryId: z.string().min(1),
@@ -63,6 +85,15 @@ export const cennikItemSchema = z.object({
    * pozycji w DEFAULT_CENNIK. Czytamy przez `?? []`.
    */
   includedItemIds: z.array(z.string()).optional(),
+  /**
+   * Warianty rozmiarowe/cenowe. Gdy lista jest NIEPUSTA, cena i czas pozycji
+   * (`priceFrom`/`priceTo`/`durationMinutes`) przestają się liczyć — wygrywają
+   * wartości wariantu, a strona pokazuje widełki od najtańszego do najdroższego.
+   *
+   * `.optional()` jak `includedItemIds`: stare blob-y w bazie nie mają tego
+   * pola i muszą się dalej parsować. Czytamy przez `itemVariants()`.
+   */
+  variants: z.array(cennikVariantSchema).optional(),
   popular: z.boolean(),
   order: z.number().int(),
   disabled: z.boolean(),
@@ -87,22 +118,67 @@ export const cennikDataSchema = z.object({
 
 export type CennikCategory = z.infer<typeof cennikCategorySchema>;
 export type CennikItem = z.infer<typeof cennikItemSchema>;
+export type CennikVariant = z.infer<typeof cennikVariantSchema>;
 export type CennikSettings = z.infer<typeof cennikSettingsSchema>;
 export type CennikData = z.infer<typeof cennikDataSchema>;
 
 /** Etykieta pozycji z ukrytą kwotą. */
 export const HIDDEN_PRICE_LABEL = "Zapytaj o cenę";
 
-/** Format ceny pozycji: „250–350 zł", „600 zł", „80 zł za parę", „od 1200 zł", „+150 zł". */
-export function formatItemPrice(item: CennikItem): string {
+/** Warianty pozycji, odporne na brak pola w starych blob-ach z bazy. */
+export function itemVariants(item: CennikItem): CennikVariant[] {
+  return item.variants ?? [];
+}
+
+/** Czy pozycja jest wybierana przez wariant (a nie jedną ceną). */
+export function hasVariants(item: CennikItem): boolean {
+  return itemVariants(item).length > 0;
+}
+
+/**
+ * Widełki pozycji: własne kwoty, a przy wariantach — od najtańszego do
+ * najdroższego. `to === from` znaczy „cena stała" (bez widełek).
+ */
+export function itemPriceRange(item: CennikItem): { from: number; to: number } {
+  const variants = itemVariants(item);
+  if (!variants.length) {
+    return { from: item.priceFrom, to: item.priceTo || item.priceFrom };
+  }
+  return {
+    from: Math.min(...variants.map((v) => v.priceFrom)),
+    to: Math.max(...variants.map((v) => v.priceTo || v.priceFrom)),
+  };
+}
+
+/** Kwota + prefiks + dopisek wg reguł pozycji — wspólne dla pozycji i wariantu. */
+function priceLabel(item: CennikItem, from: number, to: number): string {
   // Ukryta cena: własny dopisek ma pierwszeństwo nad domyślną etykietą.
   if (item.priceHidden) return item.unit.trim() || HIDDEN_PRICE_LABEL;
-  const range =
-    item.priceTo > item.priceFrom
-      ? `${item.priceFrom}–${item.priceTo} zł`
-      : `${item.priceFrom} zł`;
+  const range = to > from ? `${from}–${to} zł` : `${from} zł`;
   const withPrefix = item.pricePrefix ? `${item.pricePrefix}${range}` : range;
   return item.unit ? `${withPrefix} ${item.unit}` : withPrefix;
+}
+
+/** Format ceny pozycji: „250–350 zł", „600 zł", „80 zł za parę", „od 1200 zł", „+150 zł". */
+export function formatItemPrice(item: CennikItem): string {
+  const { from, to } = itemPriceRange(item);
+  return priceLabel(item, from, to);
+}
+
+/** Cena jednego wariantu — prefiks i dopisek dziedziczy po pozycji. */
+export function formatVariantPrice(
+  item: CennikItem,
+  variant: CennikVariant,
+): string {
+  return priceLabel(item, variant.priceFrom, variant.priceTo || variant.priceFrom);
+}
+
+/** Czas realizacji wariantu w minutach (0 = nie wlicza się do rezerwacji). */
+export function variantDuration(
+  item: CennikItem,
+  variant: CennikVariant,
+): number {
+  return variant.durationMinutes || item.durationMinutes;
 }
 
 /**
@@ -116,6 +192,9 @@ export {
   blockedItemIds,
   toggleServiceSelection,
   findSelectionConflict,
+  variantKey,
+  parseVariantKey,
+  VARIANT_SEP,
   type PozycjaZeSkladowymi,
   type SelectionChange,
 } from "./cennik-selection";
@@ -453,51 +532,48 @@ export const DEFAULT_CENNIK: CennikData = {
       disabled: false,
     },
     {
-      id: "one-step-hatchback",
+      // Jedna pozycja zamiast trzech („one-step-hatchback/-sedan-kombi/-suv-van"):
+      // zakres pracy i opis są identyczne, różni się wyłącznie rozmiar auta,
+      // więc rozmiar jest wariantem, nie osobną usługą.
+      id: "one-step",
       categoryId: "polerowanie-korekta",
-      name: "One step — hatchback / małe",
+      name: "One step",
       description:
         "Mycie z dekontaminacją + glinkowanie + polerka jednoetapowa (usuwa 50–70% rys) + panel wipe + wosk SSW.",
-      timeLabel: "6–7 h (1 dzień)",
+      timeLabel: "6–9 h (1 dzień)",
       durationMinutes: 390,
       priceFrom: 600,
-      priceTo: 0,
+      priceTo: 900,
       pricePrefix: "",
       unit: "",
+      variants: [
+        {
+          id: "hatchback",
+          label: "hatchback / małe",
+          priceFrom: 600,
+          priceTo: 0,
+          durationMinutes: 390,
+          timeLabel: "6–7 h (1 dzień)",
+        },
+        {
+          id: "sedan-kombi",
+          label: "sedan / kombi",
+          priceFrom: 750,
+          priceTo: 0,
+          durationMinutes: 450,
+          timeLabel: "7–8 h (1 dzień)",
+        },
+        {
+          id: "suv-van",
+          label: "SUV / van",
+          priceFrom: 900,
+          priceTo: 0,
+          durationMinutes: 510,
+          timeLabel: "8–9 h (1 dzień)",
+        },
+      ],
       popular: false,
       order: 1,
-      disabled: false,
-    },
-    {
-      id: "one-step-sedan-kombi",
-      categoryId: "polerowanie-korekta",
-      name: "One step — sedan / kombi",
-      description:
-        "Mycie z dekontaminacją + glinkowanie + polerka jednoetapowa (usuwa 50–70% rys) + panel wipe + wosk SSW.",
-      timeLabel: "7–8 h (1 dzień)",
-      durationMinutes: 450,
-      priceFrom: 750,
-      priceTo: 0,
-      pricePrefix: "",
-      unit: "",
-      popular: false,
-      order: 2,
-      disabled: false,
-    },
-    {
-      id: "one-step-suv-van",
-      categoryId: "polerowanie-korekta",
-      name: "One step — SUV / van",
-      description:
-        "Mycie z dekontaminacją + glinkowanie + polerka jednoetapowa (usuwa 50–70% rys) + panel wipe + wosk SSW.",
-      timeLabel: "8–9 h (1 dzień)",
-      durationMinutes: 510,
-      priceFrom: 900,
-      priceTo: 0,
-      pricePrefix: "",
-      unit: "",
-      popular: false,
-      order: 3,
       disabled: false,
     },
     {
@@ -513,7 +589,7 @@ export const DEFAULT_CENNIK: CennikData = {
       pricePrefix: "+",
       unit: "",
       popular: false,
-      order: 4,
+      order: 2,
       disabled: false,
     },
     {
@@ -529,7 +605,7 @@ export const DEFAULT_CENNIK: CennikData = {
       pricePrefix: "od ",
       unit: "",
       popular: false,
-      order: 5,
+      order: 3,
       disabled: true,
     },
 

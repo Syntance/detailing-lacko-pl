@@ -86,6 +86,18 @@ export const cennikItemSchema = z.object({
    */
   includedItemIds: z.array(z.string()).optional(),
   /**
+   * Id pozycji, które trzeba doselekcjonować RAZEM z tą (np. wosk wymaga
+   * dekontaminacji). W rezerwacji zaznaczenie tej pozycji automatycznie
+   * dokłada brakujące wymagane dodatki i pokazuje o tym komunikat — inaczej
+   * niż `includedItemIds`, dodatek NIE jest darmowy, liczy się osobno w cenie
+   * i czasie.
+   *
+   * Przechodnie jak `includedItemIds` (patrz `resolveRequiredAdditions`).
+   * `.optional()` z tego samego powodu co `includedItemIds` — stare blob-y
+   * w bazie nie mają tego pola. Czytamy przez `itemRequires()`.
+   */
+  requiredItemIds: z.array(z.string()).optional(),
+  /**
    * Warianty rozmiarowe/cenowe. Gdy lista jest NIEPUSTA, cena i czas pozycji
    * (`priceFrom`/`priceTo`/`durationMinutes`) przestają się liczyć — wygrywają
    * wartości wariantu, a strona pokazuje widełki od najtańszego do najdroższego.
@@ -189,7 +201,9 @@ export function variantDuration(
 export {
   formatDuration,
   itemIncludes,
+  itemRequires,
   blockedItemIds,
+  resolveRequiredAdditions,
   toggleServiceSelection,
   findSelectionConflict,
   variantKey,

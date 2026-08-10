@@ -14,6 +14,7 @@ import {
   Field,
   Fieldset,
   RowControls,
+  TextArea,
   UndoRedoToolbar,
   putEditorData,
 } from "./editor-ui";
@@ -825,7 +826,7 @@ function ItemRow({
               />
             </Field>
             <Field label="Opis">
-              <Input
+              <TextArea
                 value={item.description}
                 onChange={(e) => onChange({ description: e.target.value })}
               />

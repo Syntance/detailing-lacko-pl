@@ -246,6 +246,7 @@ export function CookieConsent() {
                         potrzebujesz.{" "}
                         <Link
                           href={config.privacyPolicyHref}
+                          prefetch={false}
                           className="font-semibold text-ink underline decoration-zolty decoration-[3px] underline-offset-2 hover:decoration-ink focus-visible:ring-3 focus-visible:ring-ink/40 focus-visible:outline-none"
                         >
                           Polityka prywatności

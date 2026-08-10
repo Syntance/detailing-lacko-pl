@@ -3,14 +3,15 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { X } from "lucide-react";
+// Funkcje z `metamorfozy-view`, nie z `metamorfozy` — ten drugi buduje schematy
+// zod przy imporcie, więc cały zod wjeżdżałby do bundla strony głównej.
 import {
   paraZdjecia,
   plakietkaZdjecia,
   podgladMaxSzerokosc,
   siatkaKolumny,
-  type MetamorfozyData,
-  type MetamorfozyPara,
-} from "@/lib/metamorfozy";
+} from "@/lib/metamorfozy-view";
+import type { MetamorfozyData, MetamorfozyPara } from "@/lib/metamorfozy";
 import { Reveal, RevealItem, RevealStagger } from "@/components/motion/reveal";
 
 /**

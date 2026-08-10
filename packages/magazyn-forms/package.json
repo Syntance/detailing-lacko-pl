@@ -5,6 +5,7 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
+    "./configure": "./src/configure.ts",
     "./validation": "./src/lib/validation/contact.ts",
     "./contact-form": "./src/components/contact-form.tsx"
   },

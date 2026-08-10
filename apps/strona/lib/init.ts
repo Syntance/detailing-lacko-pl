@@ -1,9 +1,19 @@
 import "server-only";
 
-import { configureMagazynAnalytics } from "@moduly/magazyn-analytics";
-import { configureMagazynSettings } from "@moduly/magazyn-settings";
-import { configureMagazynModules } from "@moduly/magazyn-core";
-import { configureMagazynForms } from "@moduly/magazyn-forms";
+/**
+ * Importy z podścieżek `/configure`, NIE z barreli pakietów. `initModuly()`
+ * woła root layout, więc jego graf modułów jest grafem każdej strony —
+ * a barrel `@moduly/magazyn-*` re-eksportuje też panele („use client"),
+ * np. AnalyticsPanel z recharts. Next dokłada wtedy chunk tych paneli do
+ * KAŻDEJ strony: strona główna ciągnęła 478 KB (124 KB br) samego recharts,
+ * którego nigdy nie renderuje. Podścieżka `/configure` to czysty moduł
+ * serwerowy z singletonem konfiguracji — ten sam plik, który barrel by
+ * zaimportował, więc panel dostaje tę samą instancję.
+ */
+import { configureMagazynAnalytics } from "@moduly/magazyn-analytics/configure";
+import { configureMagazynSettings } from "@moduly/magazyn-settings/configure";
+import { configureMagazynModules } from "@moduly/magazyn-core/config";
+import { configureMagazynForms } from "@moduly/magazyn-forms/configure";
 import { setDataStore } from "@moduly/data-store";
 import { modulyConfig } from "../moduly.config";
 import { createPostgresStore } from "./db";

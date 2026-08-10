@@ -15,12 +15,18 @@ export function Kontakt({ kontakt }: { kontakt: KontaktData }) {
       className="scroll-mt-24 border-t-[3px] border-ink bg-noc text-background"
     >
       <div className="mx-auto flex max-w-[1140px] flex-col items-center gap-[30px] px-5 pt-16 pb-14 text-center md:px-6 md:pt-[72px] md:pb-14">
-        {/* SVG marki przez <img> — optymalizator Next nie przetwarza SVG. */}
+        {/* SVG marki przez <img> — optymalizator Next nie przetwarza SVG.
+            `loading="lazy"` nie jest kosmetyką: React 19 sam wystawia
+            <link rel=preload as=image> dla każdego niezleniwionego <img>
+            w SSR, więc ten znak (29 KB br) startował z priorytetem head
+            i zabierał pasmo zdjęciu hero — a leży na samym dole strony. */}
         <img
           src="/brand/lw-mono-czern.svg"
           alt=""
           width={1888}
           height={659}
+          loading="lazy"
+          decoding="async"
           className="block w-[190px]"
         />
 

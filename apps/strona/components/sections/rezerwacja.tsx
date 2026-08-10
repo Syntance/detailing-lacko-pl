@@ -12,11 +12,13 @@ import {
   Undo2,
   X,
 } from "lucide-react";
+// Z `cennik-selection`, nie z `cennik` — ten drugi buduje schematy zod przy
+// imporcie, więc cały zod (~61 KB) wjeżdżałby do bundla strony głównej.
 import {
   blockedItemIds,
   formatDuration,
   toggleServiceSelection,
-} from "@/lib/cennik";
+} from "@/lib/cennik-selection";
 import type {
   DostepnoscData,
   RezerwacjaKategoria,
@@ -829,6 +831,7 @@ export function Rezerwacja({ config, kategorie }: Props) {
                 Szczegóły:{" "}
                 <Link
                   href="/polityka-prywatnosci"
+                  prefetch={false}
                   className="font-semibold text-ink underline underline-offset-2"
                 >
                   polityka prywatności

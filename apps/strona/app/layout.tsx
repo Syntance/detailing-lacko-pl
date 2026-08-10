@@ -14,12 +14,25 @@ const spaceGrotesk = Space_Grotesk({
   display: "swap",
 });
 
-/** IBM Plex Mono — etykiety, badge'y i podpisy (uppercase, szeroki tracking). */
+/**
+ * IBM Plex Mono — etykiety, badge'y i podpisy (uppercase, szeroki tracking).
+ *
+ * Tylko waga 500: `etykieta` i `etykieta-sm` (globals.css) to jedyne miejsca,
+ * które sięgają po `--font-mono`, i obie ustawiają `font-weight: 500`. Waga
+ * 400 ciągnęła dwa dodatkowe pliki woff2 (latin + latin-ext), których żaden
+ * glif nie używał.
+ *
+ * `preload: false`, bo next/font preloaduje z <head> wszystkie subsety każdego
+ * kroju — razem ~80 KB przed zdjęciem hero, czyli przed LCP. Mono obsługuje
+ * wyłącznie drobne etykiety, więc może dojechać z drugą turą; `display: swap`
+ * plus metryki zastępcze z next/font trzymają CLS na zeru.
+ */
 const ibmPlexMono = IBM_Plex_Mono({
   subsets: ["latin", "latin-ext"],
-  weight: ["400", "500"],
+  weight: ["500"],
   variable: "--font-ibm-plex-mono",
   display: "swap",
+  preload: false,
 });
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://detailing-lacko.pl";

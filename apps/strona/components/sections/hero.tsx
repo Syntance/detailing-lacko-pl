@@ -1,3 +1,4 @@
+import ReactDOM from "react-dom";
 import Image, { getImageProps } from "next/image";
 import type { HeroImages } from "@/lib/cms-content";
 import type { KontaktData } from "@/lib/site";
@@ -14,12 +15,34 @@ import { BookingLink, PhoneLink } from "./phone-link";
  * karta ze zdjęciem. Zdjęcie w karcie pochodzi z panelu (Magazyn → Treść).
  */
 
+/** Podział art direction — dopełniające się warunki, bez luki i zakładki. */
+const MOBILE_MEDIA = "(max-width: 1023.5px)";
+const DESKTOP_MEDIA = "not all and (max-width: 1023.5px)";
+
+/**
+ * `<link rel=preload>` wypisany jako JSX ląduje tam, gdzie stoi w drzewie —
+ * czyli w <body>, tuż nad samym <img>, więc nic nie przyspiesza. ReactDOM
+ * .preload() wynosi go do <head>, przed cały markup strony.
+ */
+function preloadHero(
+  props: { srcSet?: string; sizes?: string; src?: string },
+  media?: string,
+): void {
+  if (!props.srcSet || !props.src) return;
+  ReactDOM.preload(props.src, {
+    as: "image",
+    imageSrcSet: props.srcSet,
+    imageSizes: props.sizes,
+    fetchPriority: "high",
+    ...(media ? { media } : {}),
+  });
+}
+
 /**
  * Zdjęcie hero z art direction: telefon dostaje kadr mobilny, desktop
  * desktopowy — przez <picture> + media query, więc przeglądarka pobiera
- * TYLKO jeden plik. Brak `priority` celowo: <link rel=preload> nie umie media
- * query i preloadowałby oba pliki; eager+fetchpriority na <img> w initial HTML
- * daje LCP bez podwójnego pobierania.
+ * TYLKO jeden plik. Brak `priority`: `next/image` wystawiłby preload bez
+ * media query i ściągnął oba kadry. Preload robimy więc sami, niżej.
  */
 function HeroPicture({
   images,
@@ -40,11 +63,27 @@ function HeroPicture({
   const desktop = getImageProps({ ...common, src: images.desktop });
   const { srcSet: desktopSrcSet, ...imgProps } = desktop.props;
 
+  // Preload LCP-a. Bez niego przeglądarka odkrywa <img> dopiero przy parsowaniu
+  // <body> — a w <head> stoi nad nim komplet preloadowanych fontów, stąd ~410 ms
+  // „opóźnienia ładowania zasobu" w PSI. <link rel=preload> UMIE media query
+  // (wbrew temu, co zakładał poprzedni komentarz w tym pliku), więc telefon
+  // pobiera wyłącznie kadr mobilny, a desktop desktopowy — dokładnie jak
+  // <source> niżej. Gdy panel nie wgrał osobnego kadru pod telefon, oba warianty
+  // to ten sam plik: wtedy jeden preload bez media query (React i tak scaliłby
+  // dwa linki o tym samym imageSrcSet, gubiąc przy tym warunek).
+  preloadHero(desktop.props, images.hasMobile ? DESKTOP_MEDIA : undefined);
+  if (images.hasMobile) preloadHero(mobile.props, MOBILE_MEDIA);
+
   return (
     <picture>
+      {/* `sizes` MUSI stać przy <source>: gdy warunek media pasuje, przeglądarka
+          czyta sizes z <source>, a nie z <img>. Bez niego przyjmowała domyślne
+          100vw i na telefonie brała kadr 750 px zamiast 640 px — a od czasu
+          preloadu (który liczy sizes poprawnie) pobierała OBA. */}
       <source
-        media="(max-width: 1023.5px)"
+        media={MOBILE_MEDIA}
         srcSet={mobile.props.srcSet ?? mobile.props.src}
+        sizes={mobile.props.sizes}
       />
       <img
         {...imgProps}

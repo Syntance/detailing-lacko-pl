@@ -44,14 +44,20 @@ export function Stopka({ kontakt }: { kontakt: KontaktData }) {
           </div>
 
           <nav aria-label="Stopka" className="flex flex-col gap-2 text-sm">
+            {/* prefetch={false}: linki prawne w stopce Next prefetchował z
+                automatu — pięć zapytań RSC (~22 KB) o strony, na które prawie
+                nikt nie wchodzi, w trakcie ładowania strony głównej. Prefetch
+                po najechaniu kursorem zostaje. */}
             <Link
               href="/polityka-prywatnosci"
+              prefetch={false}
               className="text-noc-szary hover:text-background"
             >
               Polityka prywatności
             </Link>
             <Link
               href="/deklaracja-dostepnosci"
+              prefetch={false}
               className="text-noc-szary hover:text-background"
             >
               Deklaracja dostępności

@@ -95,14 +95,18 @@ function grupujWarianty(pozycje: RezerwacjaPozycja[]): Grupa[] {
 /**
  * Co widget ma powiedzieć o skutku ostatniego kliknięcia.
  *
- * `usuniete` — wybrany pakiet zdjął z wyboru usługi, które zawiera w cenie.
+ * `zmiana` — kliknięta pozycja przy okazji zdjęła z wyboru usługi, które
+ * zawiera w cenie (`usuniete`), i/albo dołożyła wymagane dodatki (`dodane`).
+ * Jedno kliknięcie może zrobić oba naraz (pakiet z wymaganym dodatkiem),
+ * stąd dwie osobne listy zamiast jednego pola.
  * `zablokowane` — klient kliknął usługę, którą już obejmuje wybrany pakiet.
  */
 type Callout =
   | {
-      rodzaj: "usuniete";
-      pakiet: RezerwacjaPozycja;
+      rodzaj: "zmiana";
+      zrodlo: RezerwacjaPozycja;
       usuniete: RezerwacjaPozycja[];
+      dodane: RezerwacjaPozycja[];
       /** Wybór sprzed kliknięcia — do „Cofnij". */
       poprzedni: string[];
     }
@@ -141,9 +145,9 @@ function WyborCallout({
     >
       <div className="flex items-start gap-2.5">
         <PackageCheck className="mt-0.5 size-[18px] shrink-0" aria-hidden />
-        <p className="text-[14px] leading-[1.5] text-pretty">
+        <div className="flex flex-col gap-1 text-[14px] leading-[1.5] text-pretty">
           {zablokowane ? (
-            <>
+            <p>
               <strong className="font-bold">
                 {pelnaNazwa(callout.pozycja)}
               </strong>{" "}
@@ -152,23 +156,40 @@ function WyborCallout({
                 {pelnaNazwa(callout.pakiet)}
               </strong>{" "}
               — nie trzeba dobierać osobno.
-            </>
+            </p>
           ) : (
             <>
-              Pakiet{" "}
-              <strong className="font-bold">
-                {pelnaNazwa(callout.pakiet)}
-              </strong>{" "}
-              zawiera już{" "}
-              <strong className="font-bold">
-                {wymien(callout.usuniete.map(pelnaNazwa))}
-              </strong>
-              , więc{" "}
-              {callout.usuniete.length > 1 ? "zdjęliśmy je" : "zdjęliśmy ją"} z
-              wyboru. Nie płacisz dwa razy za to samo.
+              {callout.usuniete.length > 0 ? (
+                <p>
+                  <strong className="font-bold">
+                    {pelnaNazwa(callout.zrodlo)}
+                  </strong>{" "}
+                  zawiera już{" "}
+                  <strong className="font-bold">
+                    {wymien(callout.usuniete.map(pelnaNazwa))}
+                  </strong>
+                  , więc{" "}
+                  {callout.usuniete.length > 1 ? "zdjęliśmy je" : "zdjęliśmy ją"}{" "}
+                  z wyboru. Nie płacisz dwa razy za to samo.
+                </p>
+              ) : null}
+              {callout.dodane.length > 0 ? (
+                <p>
+                  <strong className="font-bold">
+                    {pelnaNazwa(callout.zrodlo)}
+                  </strong>{" "}
+                  wymaga też{" "}
+                  <strong className="font-bold">
+                    {wymien(callout.dodane.map(pelnaNazwa))}
+                  </strong>
+                  , więc{" "}
+                  {callout.dodane.length > 1 ? "dodaliśmy je" : "dodaliśmy ją"}{" "}
+                  do wyboru.
+                </p>
+              ) : null}
             </>
           )}
-        </p>
+        </div>
         <button
           type="button"
           onClick={onZamknij}
@@ -541,11 +562,12 @@ export function Rezerwacja({ config, kategorie }: Props) {
     const poprzedni = selected;
     setSelected(zmiana.selected);
     setCallout(
-      zmiana.removed.length > 0
+      zmiana.removed.length > 0 || zmiana.added.length > 0
         ? {
-            rodzaj: "usuniete",
-            pakiet: pozycja,
+            rodzaj: "zmiana",
+            zrodlo: pozycja,
             usuniete: zmiana.removed,
+            dodane: zmiana.added,
             poprzedni,
           }
         : null,
@@ -818,7 +840,7 @@ export function Rezerwacja({ config, kategorie }: Props) {
                 key={
                   widocznyCallout.rodzaj === "zablokowane"
                     ? `blok-${widocznyCallout.pozycja.id}`
-                    : `usun-${widocznyCallout.pakiet.id}`
+                    : `zmiana-${widocznyCallout.zrodlo.id}`
                 }
                 data-state={calloutState}
                 className="presence presence-z-gory"
@@ -826,7 +848,7 @@ export function Rezerwacja({ config, kategorie }: Props) {
                 <WyborCallout
                   callout={widocznyCallout}
                   onCofnij={() => {
-                    if (widocznyCallout.rodzaj === "usuniete")
+                    if (widocznyCallout.rodzaj === "zmiana")
                       setSelected(widocznyCallout.poprzedni);
                     setCallout(null);
                   }}

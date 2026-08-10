@@ -212,6 +212,12 @@ export type RezerwacjaPozycja = {
    */
   includedItemIds?: string[];
   /**
+   * Wymagane dodatki — widget je automatycznie doselekcjonowuje i pokazuje
+   * o tym komunikat. Inaczej niż `includedItemIds`: dodatek NIE jest darmowy,
+   * liczy się osobno w cenie i czasie (patrz `resolveRequiredAdditions`).
+   */
+  requiredItemIds?: string[];
+  /**
    * Id pozycji cennika, z której wariantu powstała ta opcja. Widget grupuje po
    * tym polu, żeby trzy rozmiary auta były JEDNYM kafelkiem z wyborem rozmiaru.
    * Puste dla pozycji bez wariantów.
@@ -271,6 +277,12 @@ export function rezerwacjaPozycje(
       name,
       popular: item.popular,
       includedItemIds,
+      // BEZ rozwijania przez warianty (inaczej niż `includedItemIds`): panel
+      // nie pozwala wskazać pozycji z wariantami jako wymaganej, bo nie da
+      // się zgadnąć KTÓRY rozmiar doselekcjonować. Surowe id, którego nie da
+      // się rozpoznać na tej płaskiej liście, `resolveRequiredAdditions`
+      // bezpiecznie pomija.
+      requiredItemIds: item.requiredItemIds,
       categoryId: item.categoryId,
     };
     const variants = itemVariants(item);

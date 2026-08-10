@@ -19,6 +19,8 @@ export type PozycjaZeSkladowymi = {
   id: string;
   name: string;
   includedItemIds?: string[];
+  /** Pozycje, które trzeba doselekcjonować razem z tą — patrz `itemRequires`. */
+  requiredItemIds?: string[];
 };
 
 /**
@@ -71,6 +73,11 @@ export function itemIncludes(item: PozycjaZeSkladowymi): string[] {
   return item.includedItemIds ?? [];
 }
 
+/** Wymagane dodatki pozycji, odporne na brak pola w starych blob-ach z bazy. */
+export function itemRequires(item: PozycjaZeSkladowymi): string[] {
+  return item.requiredItemIds ?? [];
+}
+
 /**
  * Mapa: id zablokowanej pozycji → pozycja, która ją zawiera. Pozycja jest
  * zablokowana, gdy któraś z WYBRANYCH już ją obejmuje w cenie.
@@ -104,11 +111,52 @@ export function blockedItemIds<T extends PozycjaZeSkladowymi>(
   return blocked;
 }
 
+/**
+ * Wymagane dodatki, których brakuje w wyborze po zaznaczeniu `id` — przechodnio
+ * (wymagany dodatek może sam czegoś wymagać) i z pominięciem tego, co i tak
+ * jest już zaznaczone albo zablokowane (bo już jest w cenie wybranego pakietu
+ * — nie da się tego zaznaczyć osobno, więc nie ma czego doselekcjonowywać).
+ *
+ * `seen` (jak w `blockedItemIds`) chroni przed nieskończoną rekurencją przy
+ * pętli A wymaga B, B wymaga A — panel na to pozwala skonfigurować.
+ */
+export function resolveRequiredAdditions<T extends PozycjaZeSkladowymi>(
+  items: T[],
+  /** Wybór PO dodaniu `id` (i po zdjęciu jego składowych). */
+  selectedAfter: string[],
+  id: string,
+): T[] {
+  const byId = new Map(items.map((i) => [i.id, i]));
+  const blocked = blockedItemIds(items, selectedAfter);
+  const already = new Set(selectedAfter);
+  const additions: T[] = [];
+  const seen = new Set<string>([id]);
+
+  const walk = (current: T) => {
+    for (const reqId of itemRequires(current)) {
+      if (seen.has(reqId)) continue;
+      seen.add(reqId);
+      if (already.has(reqId) || blocked.has(reqId)) continue;
+      const req = byId.get(reqId);
+      if (!req) continue;
+      additions.push(req);
+      already.add(reqId);
+      walk(req);
+    }
+  };
+
+  const start = byId.get(id);
+  if (start) walk(start);
+  return additions;
+}
+
 /** Skutek kliknięcia w pozycję: nowy wybór + co z niego wypadło i dlaczego. */
 export type SelectionChange<T> = {
   selected: string[];
   /** Zdjęte z wyboru, bo świeżo wybrana pozycja już je zawiera. */
   removed: T[];
+  /** Doselekcjonowane, bo świeżo wybrana pozycja tego wymaga. */
+  added: T[];
   /** Ustawione, gdy kliknięto pozycję zawartą w już wybranym pakiecie. */
   blockedBy: T | null;
 };
@@ -117,9 +165,12 @@ export type SelectionChange<T> = {
  * Jedyne miejsce, które zmienia wybór usług w rezerwacji — dzięki temu panel,
  * widget i walidacja serwera liczą to samo.
  *
- * Odznaczenie zawsze przechodzi. Zaznaczenie pozycji zawartej w wybranym
- * pakiecie NIE przechodzi (zwracamy `blockedBy`, wybór bez zmian). Zaznaczenie
- * pakietu przechodzi i zdejmuje jego składowe.
+ * Odznaczenie zawsze przechodzi (bez kasowania tego, co przy okazji zostało
+ * doselekcjonowane jako wymagane — to osobna, samodzielna pozycja od tej
+ * chwili). Zaznaczenie pozycji zawartej w wybranym pakiecie NIE przechodzi
+ * (zwracamy `blockedBy`, wybór bez zmian). Zaznaczenie pakietu przechodzi
+ * i zdejmuje jego składowe, a zaznaczenie pozycji z wymaganiami dokłada
+ * brakujące wymagane dodatki.
  */
 export function toggleServiceSelection<T extends PozycjaZeSkladowymi>(
   items: T[],
@@ -132,12 +183,14 @@ export function toggleServiceSelection<T extends PozycjaZeSkladowymi>(
     return {
       selected: selectedIds.filter((x) => x !== id),
       removed: [],
+      added: [],
       blockedBy: null,
     };
   }
 
   const blockedBy = blockedItemIds(items, selectedIds).get(id) ?? null;
-  if (blockedBy) return { selected: selectedIds, removed: [], blockedBy };
+  if (blockedBy)
+    return { selected: selectedIds, removed: [], added: [], blockedBy };
 
   const zawarte = blockedItemIds(items, [id]);
   const removed = selectedIds
@@ -145,9 +198,13 @@ export function toggleServiceSelection<T extends PozycjaZeSkladowymi>(
     .map((x) => byId.get(x))
     .filter((x): x is T => Boolean(x));
 
+  const poOdjeciu = [...selectedIds.filter((x) => !zawarte.has(x)), id];
+  const added = resolveRequiredAdditions(items, poOdjeciu, id);
+
   return {
-    selected: [...selectedIds.filter((x) => !zawarte.has(x)), id],
+    selected: [...poOdjeciu, ...added.map((a) => a.id)],
     removed,
+    added,
     blockedBy: null,
   };
 }

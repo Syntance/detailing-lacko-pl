@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Reorder, useDragControls } from "motion/react";
 import { Button, Input, PageHeader } from "@moduly/ui";
 import { ChevronUp, Pencil, Plus, Trash2 } from "lucide-react";
-import { formatDuration, formatItemPrice } from "@/lib/cennik";
+import { formatDuration, formatItemPrice, hasVariants } from "@/lib/cennik";
 import type {
   CennikCategory,
   CennikData,
@@ -617,65 +617,99 @@ function itemSummary(item: CennikItem): string {
   if (warianty > 0) parts.push(`warianty: ${warianty}`);
   const zawiera = item.includedItemIds?.length ?? 0;
   if (zawiera > 0) parts.push(`zawiera ${zawiera}`);
+  const wymaga = item.requiredItemIds?.length ?? 0;
+  if (wymaga > 0) parts.push(`wymaga ${wymaga}`);
   if (item.popular) parts.push("najczęściej wybierane");
   if (item.disabled) parts.push("ukryta na stronie");
   return parts.join(" · ");
 }
 
 /**
- * Czy od tej pozycji da się wrócić do niej samej po łańcuchu składowych.
- * Panel pozwala zaznaczyć cokolwiek, więc A→B→A jest do zrobienia jednym
- * kliknięciem; wyliczanie blokad jest na to odporne (ma strażnika cykli), ale
- * dla właściciela to konfiguracja bez sensu i lepiej ją pokazać.
+ * Czy od tej pozycji da się wrócić do niej samej po łańcuchu `pole` (składowe
+ * albo wymagania — wywołujący decyduje, którym polem chodzimy). Panel
+ * pozwala zaznaczyć cokolwiek, więc A→B→A jest do zrobienia jednym
+ * kliknięciem; wyliczanie w rezerwacji jest na to odporne (ma strażnika
+ * cykli), ale dla właściciela to konfiguracja bez sensu i lepiej ją pokazać.
  */
-function maPetle(item: CennikItem, allItems: CennikItem[]): boolean {
+function maPetle(
+  item: CennikItem,
+  allItems: CennikItem[],
+  pole: (i: CennikItem) => string[],
+): boolean {
   const byId = new Map(allItems.map((i) => [i.id, i]));
   const seen = new Set<string>();
-  const stack = [...(item.includedItemIds ?? [])];
+  const stack = [...pole(item)];
   while (stack.length > 0) {
     const id = stack.pop() as string;
     if (id === item.id) return true;
     if (seen.has(id)) continue;
     seen.add(id);
     const next = byId.get(id);
-    if (next) stack.push(...(next.includedItemIds ?? []));
+    if (next) stack.push(...pole(next));
   }
   return false;
 }
 
 /**
- * „Ta pozycja zawiera w cenie…" — składowe pakietu. Przy rezerwacji wybór tej
- * pozycji zdejmie i zablokuje zaznaczone tu usługi, żeby klient nie płacił
- * dwa razy za tę samą robotę ani nie blokował podwójnego czasu w kalendarzu.
+ * Wybór powiązanych pozycji, checkboxami grupowanymi po kategorii — wspólna
+ * dla dwóch relacji z bardzo różną semantyką dla klienta, ale identycznym
+ * kształtem edycji (zbiór id na tej samej pozycji, blokujący wybór siebie
+ * samej, z ryzykiem pętli): „Zawiera w cenie" (`includedItemIds` — składowa
+ * jest darmowa i zablokowana do osobnego wyboru) i „Wymaga" (`requiredItemIds`
+ * — dodatek NIE jest darmowy, tylko doselekcjonowany automatycznie).
  *
- * Grupowane po kategoriach, bo płaska lista kilkudziesięciu checkboxów jest
- * nie do przejrzenia.
+ * `pole` wybiera, KTÓRE z tych dwóch pól czytamy/zapisujemy — ta sama funkcja
+ * służy też do chodzenia po łańcuchu przy wykrywaniu pętli, więc obie relacje
+ * (`item`, jak i każdy inny element `allItems` po drodze) czytane są spójnie.
+ *
+ * `pomin`: pozycje z wariantami nie mogą być CELEM wymagania — auto-dodanie
+ * nie umie zgadnąć rozmiaru auta. Dla „Zawiera w cenie" to nieistotne
+ * (rezerwacja i tak blokuje wszystkie warianty składowej), więc filtr jest
+ * opcjonalny i włącza go tylko wywołanie dla „Wymaga".
  */
-function SkladowePakietu({
+function PowiazanePozycje({
   item,
   allItems,
   categories,
-  onChange,
+  pole,
+  onZmien,
+  tytul,
+  opis,
+  aria,
+  petlaOpis,
+  pomin,
 }: {
   item: CennikItem;
   allItems: CennikItem[];
   categories: CennikCategory[];
-  onChange: (patch: Partial<CennikItem>) => void;
+  pole: (i: CennikItem) => string[];
+  onZmien: (next: string[]) => void;
+  tytul: string;
+  opis: string;
+  /** `(nazwaTej, nazwaPowiazanej) => aria-label checkboxa`. */
+  aria: (nazwaTej: string, nazwaPowiazanej: string) => string;
+  petlaOpis: string;
+  pomin?: (candidate: CennikItem) => boolean;
 }) {
-  const wybrane = item.includedItemIds ?? [];
+  const wartosc = pole(item);
 
   const toggle = (id: string) =>
-    onChange({
-      includedItemIds: wybrane.includes(id)
-        ? wybrane.filter((x) => x !== id)
-        : [...wybrane, id],
-    });
+    onZmien(
+      wartosc.includes(id)
+        ? wartosc.filter((x) => x !== id)
+        : [...wartosc, id],
+    );
 
   const grupy = categories
     .map((c) => ({
       kategoria: c,
       pozycje: allItems
-        .filter((i) => i.categoryId === c.id && i.id !== item.id)
+        .filter(
+          (i) =>
+            i.categoryId === c.id &&
+            i.id !== item.id &&
+            !(pomin?.(i) ?? false),
+        )
         .sort((a, b) => a.order - b.order),
     }))
     .filter((g) => g.pozycje.length > 0);
@@ -684,23 +718,18 @@ function SkladowePakietu({
     <div className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4">
       <div className="flex flex-col gap-1">
         <p className="text-sm font-medium text-foreground">
-          Zawiera w cenie{wybrane.length > 0 ? ` (${wybrane.length})` : ""}
+          {tytul}
+          {wartosc.length > 0 ? ` (${wartosc.length})` : ""}
         </p>
-        <p className="text-xs text-muted-foreground">
-          Zaznacz usługi, które ta pozycja już obejmuje. W rezerwacji klient nie
-          dobierze ich osobno — zobaczy komunikat, że są w cenie, a jeśli miał
-          je zaznaczone, zostaną zdjęte z wyboru.
-        </p>
+        <p className="text-xs text-muted-foreground">{opis}</p>
       </div>
 
-      {maPetle(item, allItems) ? (
+      {maPetle(item, allItems, pole) ? (
         <p
           role="alert"
           className="rounded-md border border-destructive px-3 py-2 text-xs text-destructive"
         >
-          Pętla: po łańcuchu składowych ta pozycja wraca do samej siebie.
-          Rozepnij jedną ze stron — inaczej te pozycje będą blokować się
-          nawzajem i klient nie wybierze żadnej.
+          {petlaOpis}
         </p>
       ) : null}
 
@@ -717,11 +746,12 @@ function SkladowePakietu({
                   className="flex items-start gap-2 text-sm text-foreground"
                 >
                   <Checkbox
-                    checked={wybrane.includes(p.id)}
+                    checked={wartosc.includes(p.id)}
                     onCheckedChange={() => toggle(p.id)}
-                    ariaLabel={`${item.name || "Ta pozycja"} zawiera ${
-                      p.name || "pozycję bez nazwy"
-                    }`}
+                    ariaLabel={aria(
+                      item.name || "Ta pozycja",
+                      p.name || "pozycję bez nazwy",
+                    )}
                   />
                   <span className="leading-snug">
                     {p.name || "(bez nazwy)"}
@@ -1095,11 +1125,29 @@ function ItemRow({
 
           <WariantyPozycji item={item} onChange={onChange} />
 
-          <SkladowePakietu
+          <PowiazanePozycje
             item={item}
             allItems={allItems}
             categories={categories}
-            onChange={onChange}
+            pole={(i) => i.includedItemIds ?? []}
+            onZmien={(next) => onChange({ includedItemIds: next })}
+            tytul="Zawiera w cenie"
+            opis="Zaznacz usługi, które ta pozycja już obejmuje. W rezerwacji klient nie dobierze ich osobno — zobaczy komunikat, że są w cenie, a jeśli miał je zaznaczone, zostaną zdjęte z wyboru."
+            aria={(ta, powiazana) => `${ta} zawiera ${powiazana}`}
+            petlaOpis="Pętla: po łańcuchu składowych ta pozycja wraca do samej siebie. Rozepnij jedną ze stron — inaczej te pozycje będą blokować się nawzajem i klient nie wybierze żadnej."
+          />
+
+          <PowiazanePozycje
+            item={item}
+            allItems={allItems}
+            categories={categories}
+            pole={(i) => i.requiredItemIds ?? []}
+            onZmien={(next) => onChange({ requiredItemIds: next })}
+            tytul="Wymaga"
+            opis="Zaznacz pozycje, które trzeba dobrać razem z tą (np. wosk wymaga dekontaminacji). W rezerwacji klient dostanie o tym komunikat, a brakujący dodatek zaznaczymy automatycznie — liczy się osobno w cenie i czasie, to nie jest darmowy składnik."
+            aria={(ta, powiazana) => `${ta} wymaga ${powiazana}`}
+            petlaOpis="Pętla: po łańcuchu wymagań ta pozycja wraca do samej siebie. Rozepnij jedną ze stron — inaczej te pozycje będą się nawzajem domagać zaznaczenia."
+            pomin={(candidate) => hasVariants(candidate)}
           />
         </div>
       </div>

@@ -153,7 +153,19 @@ function PozycjaCennika({ item }: { item: CennikItem }) {
         ) : null}
         <WariantyPozycji item={item} />
       </span>
-      <span className="text-lg font-bold whitespace-nowrap tabular-nums">
+      {/* `max-w-[145px]` + bez `whitespace-nowrap`: samo zdjęcie nowrap NIE
+          wystarczyło — w tym wierszu (`justify-between`, cena bez
+          `flex-grow`) flex nigdy nie wchodzi w tryb kurczenia, dopóki wiersz
+          się mieści, więc cena i tak renderowała się w naturalnej,
+          jednoliniowej szerokości, a CAŁY nadmiar szedł do kolumny z opisem
+          (`flex-grow` tam jest ustawiony) — dokładnie odwrotnie, niż trzeba.
+          Realne pomiary (Space Grotesk 18px bold): najdłuższa zwykła cena
+          w tym komponencie to „80 zł za parę" = 112px, domyślne
+          „Zapytaj o cenę" = 129px, custom tekst przy ukrytej cenie
+          (np. „Wycena indywidualna") = 191px. 145px zostawia zapas nad
+          zwykłymi cenami, a dłuższy tekst zmusza do zawinięcia — `text-balance`
+          wtedy dzieli go na równe linie zamiast jednego wiersza + ogona. */}
+      <span className="max-w-[145px] text-right text-lg font-bold text-balance tabular-nums">
         {formatItemPrice(item)}
       </span>
     </li>

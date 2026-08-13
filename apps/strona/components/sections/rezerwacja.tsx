@@ -28,7 +28,16 @@ import type {
 } from "@/lib/rezerwacje";
 import { trackReservationSubmit } from "@/lib/track";
 
-type Props = { config: DostepnoscData; kategorie: RezerwacjaKategoria[] };
+type Props = {
+  config: DostepnoscData;
+  kategorie: RezerwacjaKategoria[];
+  /**
+   * Dopisek o podatku spod kwot w cenniku (panel → Cennik → Ustawienia sekcji).
+   * Suma leci z tych samych pozycji, więc musi mówić o cenie to samo, co
+   * cennik — łącznie z tym, że właściciel może go w panelu wyczyścić.
+   */
+  dopisekPodatek: string;
+};
 
 function pad(n: number): string {
   return String(n).padStart(2, "0");
@@ -489,7 +498,7 @@ const EXIT_MS = 200;
  * Wygląd w języku makiety „kreskówka": biała karta z kreską 3px, żółty
  * nagłówek, usługi/dni/godziny jako pigułki z twardym cieniem po wybraniu.
  */
-export function Rezerwacja({ config, kategorie }: Props) {
+export function Rezerwacja({ config, kategorie, dopisekPodatek }: Props) {
   const [selected, setSelected] = useState<string[]>([]);
   const [callout, setCallout] = useState<Callout | null>(null);
   const [date, setDate] = useState("");
@@ -857,10 +866,8 @@ export function Rezerwacja({ config, kategorie }: Props) {
               <p className="flex flex-wrap items-baseline gap-x-3 gap-y-1 rounded-xl border-2 border-dashed border-kreska px-4 py-3">
                 <span className="etykieta-sm text-muted-foreground">razem</span>
                 <span className="text-[15px] font-bold">
-                  {/* „z VAT" jak przy każdej kwocie w cenniku — suma leci
-                      z tych samych pozycji, więc musi mówić o cenie to samo,
-                      co cennik. */}
-                  od {razemCena} zł z VAT
+                  od {razemCena} zł
+                  {dopisekPodatek ? ` ${dopisekPodatek}` : ""}
                   {razemMinuty > 0
                     ? ` · ok. ${formatDuration(razemMinuty)} pracy`
                     : ""}

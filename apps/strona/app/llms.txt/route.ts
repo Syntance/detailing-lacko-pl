@@ -14,6 +14,15 @@ export async function GET(): Promise<Response> {
     .map((c) => `- ${c.name}: od ${c.priceFrom} zł (${c.timeLabel}). ${c.description}`)
     .join("\n");
 
+  // Informacja o podatku prosto z panelu (Cennik → Ustawienia sekcji), żeby
+  // silniki AI cytowały to samo, co widzi człowiek w cenniku. W panelu tekst
+  // jest pisany pod plakietkę („ceny zawierają VAT"), więc tutaj dostaje
+  // wielką literę i kropkę — w pliku tekstowym stoi jako osobne zdanie.
+  const vatNote = cennik.settings.vatNote.trim();
+  const oPodatku = vatNote
+    ? `${vatNote.charAt(0).toUpperCase()}${vatNote.slice(1)}${/[.!?]$/.test(vatNote) ? "" : "."}\n`
+    : "";
+
   const body = `# Detailing Łącko
 
 > Detailing samochodowy w Łącku (powiat nowosądecki, małopolskie): pranie
@@ -21,8 +30,7 @@ export async function GET(): Promise<Response> {
 > polerowanie lakieru one step. Usługa stacjonarna${kontakt.freeTravelKm > 0 ? ` — dojazd gratis do ${kontakt.freeTravelKm} km` : ""}.
 
 ## Usługi i ceny
-Wszystkie ceny zawierają VAT.
-${uslugi}
+${oPodatku}${uslugi}
 
 ## Obszar działania
 ${kontakt.serviceAreas.join(", ")}.

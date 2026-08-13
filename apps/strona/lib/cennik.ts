@@ -120,6 +120,24 @@ export const cennikSettingsSchema = z.object({
   noteCtaLabel: z.string(),
   expandLabel: z.string(),
   collapseLabel: z.string(),
+  /**
+   * Plakietka o podatku obok badge'a sekcji („ceny zawierają VAT"). Puste =
+   * brak plakietki.
+   *
+   * `.default()` (nie zwykły `z.string()`) — blob-y zapisane przed dodaniem
+   * tych pól nie mają ich w bazie, a bez domyślki CAŁY cennik nie przeszedłby
+   * walidacji i strona zjechałaby na `DEFAULT_CENNIK`, gubiąc wszystko, co
+   * właściciel wyklikał w panelu (`readBlob` loguje błąd i zwraca fallback).
+   * Domyślki są równe temu, co było wcześniej zapisane na sztywno w kodzie,
+   * więc stare blob-y wyglądają dokładnie tak jak przed zmianą.
+   */
+  vatNote: z.string().default("ceny zawierają VAT"),
+  /**
+   * Dopisek pod każdą kwotą w cenniku („z VAT", „netto", „brutto"). Puste =
+   * same kwoty, bez dopisków. Idzie też do sumy w widgecie rezerwacji, bo ta
+   * liczy się z tych samych pozycji.
+   */
+  vatSuffix: z.string().default("z VAT"),
 });
 
 export const cennikDataSchema = z.object({
@@ -225,6 +243,8 @@ export const DEFAULT_CENNIK: CennikData = {
     noteCtaLabel: "Zarezerwuj termin →",
     expandLabel: "Rozwiń pełny cennik",
     collapseLabel: "Zwiń cennik",
+    vatNote: "ceny zawierają VAT",
+    vatSuffix: "z VAT",
   },
   categories: [
     {

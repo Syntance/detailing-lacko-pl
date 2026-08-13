@@ -357,6 +357,43 @@ export function CennikClient({ initial }: { initial: CennikData }) {
                   }
                 />
               </Field>
+              {/* Podatek: plakietka pada raz na całą sekcję, dopisek stoi pod
+                  każdą kwotą (także w wariantach i pakietach) i trafia do sumy
+                  w rezerwacji. Oba pola można wyczyścić — wtedy po prostu
+                  znikają ze strony. */}
+              <div className="grid gap-4 md:grid-cols-2">
+                <Field
+                  label="Plakietka o podatku (nad kartami)"
+                  hint={`np. „ceny zawierają VAT”, „ceny netto”; puste = bez plakietki`}
+                >
+                  <Input
+                    value={settings.vatNote}
+                    onChange={(e) =>
+                      history.setState((draft) => ({
+                        ...draft,
+                        settings: { ...draft.settings, vatNote: e.target.value },
+                      }))
+                    }
+                  />
+                </Field>
+                <Field
+                  label="Dopisek przy każdej cenie"
+                  hint={`np. „z VAT”, „netto”, „brutto” — 2–3 słowa, bo stoi pod kwotą; puste = bez dopisku`}
+                >
+                  <Input
+                    value={settings.vatSuffix}
+                    onChange={(e) =>
+                      history.setState((draft) => ({
+                        ...draft,
+                        settings: {
+                          ...draft.settings,
+                          vatSuffix: e.target.value,
+                        },
+                      }))
+                    }
+                  />
+                </Field>
+              </div>
               <div className="grid gap-4 md:grid-cols-3">
                 <Field label="CTA bloku">
                   <Input

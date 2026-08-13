@@ -37,6 +37,46 @@ function stripBullet(name: string): string {
 }
 
 /**
+ * Czy przy pozycji stoi realna KWOTA — pozycje z `priceHidden` pokazują tekst
+ * („Zapytaj o cenę", „Wycena indywidualna"), a wtedy dopisek o VAT nie ma do
+ * czego się odnieść.
+ */
+function maKwote(item: CennikItem): boolean {
+  return !item.priceHidden;
+}
+
+/**
+ * Dopisek „z VAT" przy kwocie. Każda cena w cenniku jest ceną końcową — to,
+ * co klient płaci — więc informacja stoi przy KAŻDEJ kwocie, nie tylko
+ * w plakietce nad kartami: w sekcję wchodzi się też z linku „#cennik"
+ * i z wyszukiwarki, czyli czytanie zaczyna się od środka, a wtedy jedna
+ * plakietka na górze zostaje poza kadrem.
+ *
+ * POD kwotą (`block`), nie obok niej: wiersz cennika to `justify-between`, więc
+ * każdy piksel kolumny z ceną schodzi z kolumny z nazwą i opisem. Wersja
+ * inline („150 zł Z VAT") zabierała jej ~45 px — mono 11px z trackingiem
+ * 0,16em ma prawie tyle co sama kwota — i cała trójka kart rosła o ~9%
+ * wysokości, bo nazwy pozycji zaczęły się łamać na dwie linie. W bloku
+ * dopisek (~40 px) mieści się pod kwotą (55 px dla „150 zł") i kolumna
+ * z ceną nie rośnie ani o piksel.
+ *
+ * `etykieta-sm` (mono 11px, weight 500) sam zdejmuje odziedziczone `text-lg`
+ * i `font-bold` kwoty, więc dopisek nie konkuruje z liczbą — tak jak reszta
+ * meta w kartach (czas realizacji, plakietki).
+ */
+function ZVat({ ciemne = false }: { ciemne?: boolean }) {
+  return (
+    <span
+      className={`etykieta-sm block leading-none ${
+        ciemne ? "text-noc-szary" : "text-tekst"
+      }`}
+    >
+      z VAT
+    </span>
+  );
+}
+
+/**
  * Naklejki narzędzi wychodzące poza prawy górny róg karty — jedna na
  * kategorię, w języku hero (grafika z wypaloną białą obwódką + czarna kreska
  * marki dookoła, obie w pliku PNG, zero filtrów CSS).
@@ -127,8 +167,9 @@ function WariantyPozycji({ item }: { item: CennikItem }) {
           className="flex items-baseline justify-between gap-3 border-t border-dashed border-kreska/70 pt-1"
         >
           <dt className="text-[13px] leading-[1.4] text-tekst">{v.label}</dt>
-          <dd className="text-[13px] font-bold whitespace-nowrap tabular-nums">
+          <dd className="text-right text-[13px] font-bold whitespace-nowrap tabular-nums">
             {formatVariantPrice(item, v)}
+            {maKwote(item) ? <ZVat /> : null}
           </dd>
         </div>
       ))}
@@ -212,9 +253,12 @@ function PozycjaCennika({
           „Zapytaj o cenę" = 129px, custom tekst przy ukrytej cenie
           (np. „Wycena indywidualna") = 191px. 145px zostawia zapas nad
           zwykłymi cenami, a dłuższy tekst zmusza do zawinięcia — `text-balance`
-          wtedy dzieli go na równe linie zamiast jednego wiersza + ogona. */}
+          wtedy dzieli go na równe linie zamiast jednego wiersza + ogona.
+          Dopisek „z VAT" idzie POD kwotą (patrz `ZVat`), więc nie wchodzi
+          w te szerokości — mierzone są dalej samą kwotą. */}
       <span className="max-w-[145px] text-right text-lg font-bold text-balance tabular-nums">
         {formatItemPrice(item)}
+        {maKwote(item) ? <ZVat /> : null}
       </span>
     </li>
   );
@@ -244,8 +288,9 @@ function PakietPozycja({
         <span className="min-w-0 text-[15px] font-semibold">
           {stripBullet(item.name)}
         </span>
-        <span className="text-lg font-bold text-balance text-zolty tabular-nums">
+        <span className="text-right text-lg font-bold text-balance text-zolty tabular-nums">
           {formatItemPrice(item)}
+          {maKwote(item) ? <ZVat ciemne /> : null}
         </span>
       </div>
       {item.description ? (
@@ -270,8 +315,9 @@ function PakietPozycja({
               <dt className="text-[13px] leading-[1.4] text-noc-szary">
                 {v.label}
               </dt>
-              <dd className="text-[13px] font-bold whitespace-nowrap text-zolty tabular-nums">
+              <dd className="text-right text-[13px] font-bold whitespace-nowrap text-zolty tabular-nums">
                 {formatVariantPrice(item, v)}
+                {maKwote(item) ? <ZVat ciemne /> : null}
               </dd>
             </div>
           ))}
@@ -322,9 +368,20 @@ export function UslugiCennik({ cennik }: { cennik: CennikData }) {
       <div className="mx-auto flex max-w-[1140px] flex-col gap-[34px] px-5 py-16 md:px-6 md:py-[68px]">
         <Reveal className="flex flex-wrap items-end justify-between gap-6">
           <div className="flex flex-col gap-2.5">
-            <p className="etykieta w-max -rotate-[1.5deg] rounded-full border-2 border-ink bg-zolty px-3.5 py-1.5">
-              01 · cennik
-            </p>
+            {/* Druga plakietka obok „01 · cennik": informacja o VAT musi paść
+                RAZ, pełnym zdaniem, na poziomie całej sekcji (dopiski przy
+                kwotach mówią „z VAT", ale nie „wszystkie ceny"). Ten sam język
+                co badge sekcji — pigułka z twardą kreską i lekkim obrotem
+                w drugą stronę — tylko biała i o stopień mniejsza, żeby nie
+                zabierała numeracji sekcji pierwszeństwa. */}
+            <div className="flex flex-wrap items-center gap-2.5">
+              <p className="etykieta w-max -rotate-[1.5deg] rounded-full border-2 border-ink bg-zolty px-3.5 py-1.5">
+                01 · cennik
+              </p>
+              <p className="etykieta-sm w-max rotate-[1.5deg] rounded-full border-2 border-ink bg-background px-3 py-1.5">
+                ceny zawierają VAT
+              </p>
+            </div>
             <h2
               id="cennik-heading"
               className="text-3xl leading-[1.05] font-bold tracking-[-0.02em] md:text-[40px]"

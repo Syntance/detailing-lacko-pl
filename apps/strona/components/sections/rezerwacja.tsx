@@ -857,7 +857,10 @@ export function Rezerwacja({ config, kategorie }: Props) {
               <p className="flex flex-wrap items-baseline gap-x-3 gap-y-1 rounded-xl border-2 border-dashed border-kreska px-4 py-3">
                 <span className="etykieta-sm text-muted-foreground">razem</span>
                 <span className="text-[15px] font-bold">
-                  od {razemCena} zł
+                  {/* „z VAT" jak przy każdej kwocie w cenniku — suma leci
+                      z tych samych pozycji, więc musi mówić o cenie to samo,
+                      co cennik. */}
+                  od {razemCena} zł z VAT
                   {razemMinuty > 0
                     ? ` · ok. ${formatDuration(razemMinuty)} pracy`
                     : ""}

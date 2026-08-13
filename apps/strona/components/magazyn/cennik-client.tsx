@@ -841,6 +841,7 @@ function newVariant(existing: CennikVariant[]): CennikVariant {
     label: "",
     priceFrom: 0,
     priceTo: 0,
+    compareAtPrice: 0,
     durationMinutes: 0,
     timeLabel: "",
   };
@@ -942,6 +943,17 @@ function WariantyPozycji({
                   value={v.priceTo}
                   onChange={(e) =>
                     patch(v.id, { priceTo: Number(e.target.value) || 0 })
+                  }
+                />
+              </Field>
+              <Field label="Cena osobno (zł)" hint="0 = bez przekreślenia">
+                <Input
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  value={v.compareAtPrice}
+                  onChange={(e) =>
+                    patch(v.id, { compareAtPrice: Number(e.target.value) || 0 })
                   }
                 />
               </Field>

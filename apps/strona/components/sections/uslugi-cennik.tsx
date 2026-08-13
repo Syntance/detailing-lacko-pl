@@ -98,6 +98,37 @@ function DopisekPodatek({
 }
 
 /**
+ * Przekreślona cena „gdyby osobno", tuż przed właściwą kwotą (`compareAtPrice`
+ * w panelu). Stopień niższy od ceny i czerwień, żeby czytało się jako „było →
+ * jest", a nie jako druga, równorzędna kwota.
+ *
+ * `<s>`, nie sam `line-through`: to semantyczne „już nieaktualne", więc czytnik
+ * ekranu ma szansę to zapowiedzieć. Do tego `sr-only` „zamiast", bo samo
+ * przekreślenie w mowie nie istnieje — bez tego padłyby dwie kwoty pod rząd.
+ *
+ * Przy ukrytej kwocie („Zapytaj o cenę") nie ma czego przekreślać.
+ */
+function CenaOsobno({
+  item,
+  ciemne = false,
+}: {
+  item: CennikItem;
+  ciemne?: boolean;
+}) {
+  if (item.priceHidden || !item.compareAtPrice) return null;
+  return (
+    <s
+      className={`mr-2 text-[15px] font-bold ${
+        ciemne ? "text-czerwony-jasny" : "text-destructive"
+      }`}
+    >
+      <span className="sr-only">zamiast </span>
+      {item.compareAtPrice} zł
+    </s>
+  );
+}
+
+/**
  * Naklejki narzędzi wychodzące poza prawy górny róg karty — jedna na
  * kategorię, w języku hero (grafika z wypaloną białą obwódką + czarna kreska
  * marki dookoła, obie w pliku PNG, zero filtrów CSS).
@@ -298,6 +329,7 @@ function PozycjaCennika({
             Dopisek o podatku idzie POD kwotą (patrz `DopisekPodatek`), więc
             nie wchodzi w te szerokości — mierzone są dalej samą kwotą. */}
         <span className="max-w-[145px] text-right text-lg font-bold text-balance tabular-nums">
+          <CenaOsobno item={item} />
           {formatItemPrice(item)}
           {maKwote(item) ? <DopisekPodatek podatek={podatek} /> : null}
         </span>
@@ -341,6 +373,7 @@ function PakietPozycja({
           {stripBullet(item.name)}
         </span>
         <span className="text-right text-lg font-bold text-balance text-zolty tabular-nums">
+          <CenaOsobno item={item} ciemne />
           {formatItemPrice(item)}
           {maKwote(item) ? <DopisekPodatek podatek={podatek} ciemne /> : null}
         </span>

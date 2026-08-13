@@ -73,6 +73,7 @@ function newItem(categoryId: string, order: number): CennikItem {
     priceTo: 0,
     pricePrefix: "",
     unit: "",
+    compareAtPrice: 0,
     popular: false,
     order,
     disabled: false,
@@ -1141,6 +1142,20 @@ function ItemRow({
                 value={item.priceTo}
                 onChange={(e) =>
                   onChange({ priceTo: Number(e.target.value) || 0 })
+                }
+              />
+            </Field>
+            <Field
+              label="Cena osobno (zł)"
+              hint="przekreślona na czerwono przed ceną; 0 = bez przekreślenia"
+            >
+              <Input
+                type="number"
+                inputMode="numeric"
+                min={0}
+                value={item.compareAtPrice}
+                onChange={(e) =>
+                  onChange({ compareAtPrice: Number(e.target.value) || 0 })
                 }
               />
             </Field>

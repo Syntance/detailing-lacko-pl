@@ -138,6 +138,15 @@ export const cennikSettingsSchema = z.object({
    * liczy się z tych samych pozycji.
    */
   vatSuffix: z.string().default("z VAT"),
+  /**
+   * Stopień pisma dopisku w px. Domyślne 11 = `etykieta-sm`, czyli to samo, co
+   * reszta meta w kartach (czas realizacji, plakietki). Zakres 8–20 pilnuje
+   * dwóch rzeczy: poniżej 8 px dopisek jest nieczytelny, a powyżej 20 px
+   * przestaje być dopiskiem i zaczyna konkurować z samą kwotą (18 px bold) —
+   * przy okazji szeroki napis rozpycha kolumnę z ceną i zabiera szerokość
+   * kolumnie z nazwą i opisem.
+   */
+  vatSuffixSize: z.number().int().min(8).max(20).default(11),
 });
 
 export const cennikDataSchema = z.object({
@@ -245,6 +254,7 @@ export const DEFAULT_CENNIK: CennikData = {
     collapseLabel: "Zwiń cennik",
     vatNote: "ceny zawierają VAT",
     vatSuffix: "z VAT",
+    vatSuffixSize: 11,
   },
   categories: [
     {

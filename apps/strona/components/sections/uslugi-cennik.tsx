@@ -67,21 +67,32 @@ function maKwote(item: CennikItem): boolean {
  * i `font-bold` kwoty, więc dopisek nie konkuruje z liczbą — tak jak reszta
  * meta w kartach (czas realizacji, plakietki).
  */
+type UstawieniaDopisku = {
+  tekst: string;
+  /** Stopień pisma w px — z panelu, patrz `vatSuffixSize`. */
+  rozmiar: number;
+};
+
 function DopisekPodatek({
-  tekst,
+  podatek,
   ciemne = false,
 }: {
-  tekst: string;
+  podatek: UstawieniaDopisku;
   ciemne?: boolean;
 }) {
-  if (!tekst) return null;
+  if (!podatek.tekst) return null;
   return (
     <span
+      // `fontSize` inline, bo wartość jest z panelu — klasa Tailwinda musiałaby
+      // istnieć w kodzie dla każdego dopuszczalnego stopnia (JIT skanuje
+      // źródła, nie runtime), a `etykieta-sm` i tak zostaje: niesie krój mono,
+      // grubość, tracking i wersaliki, a nadpisujemy z niej tylko rozmiar.
+      style={{ fontSize: `${podatek.rozmiar}px` }}
       className={`etykieta-sm block leading-none ${
         ciemne ? "text-noc-szary" : "text-tekst"
       }`}
     >
-      {tekst}
+      {podatek.tekst}
     </span>
   );
 }
@@ -175,10 +186,10 @@ const NAKLEJKI: Record<
  */
 function WariantyPozycji({
   item,
-  dopisek,
+  podatek,
 }: {
   item: CennikItem;
-  dopisek: string;
+  podatek: UstawieniaDopisku;
 }) {
   const variants = itemVariants(item);
   if (!variants.length) return null;
@@ -192,7 +203,7 @@ function WariantyPozycji({
           <dt className="text-[13px] leading-[1.4] text-tekst">{v.label}</dt>
           <dd className="text-right text-[13px] font-bold whitespace-nowrap tabular-nums">
             {formatVariantPrice(item, v)}
-            {maKwote(item) ? <DopisekPodatek tekst={dopisek} /> : null}
+            {maKwote(item) ? <DopisekPodatek podatek={podatek} /> : null}
           </dd>
         </div>
       ))}
@@ -242,11 +253,11 @@ function WymaganeDodatki({
 function PozycjaCennika({
   item,
   allItems,
-  dopisek,
+  podatek,
 }: {
   item: CennikItem;
   allItems: CennikItem[];
-  dopisek: string;
+  podatek: UstawieniaDopisku;
 }) {
   return (
     // Kolumna, nie jeden wiersz: warianty muszą wyjść POZA parę
@@ -288,10 +299,10 @@ function PozycjaCennika({
             nie wchodzi w te szerokości — mierzone są dalej samą kwotą. */}
         <span className="max-w-[145px] text-right text-lg font-bold text-balance tabular-nums">
           {formatItemPrice(item)}
-          {maKwote(item) ? <DopisekPodatek tekst={dopisek} /> : null}
+          {maKwote(item) ? <DopisekPodatek podatek={podatek} /> : null}
         </span>
       </div>
-      <WariantyPozycji item={item} dopisek={dopisek} />
+      <WariantyPozycji item={item} podatek={podatek} />
     </li>
   );
 }
@@ -316,11 +327,11 @@ function PozycjaCennika({
 function PakietPozycja({
   item,
   allItems,
-  dopisek,
+  podatek,
 }: {
   item: CennikItem;
   allItems: CennikItem[];
-  dopisek: string;
+  podatek: UstawieniaDopisku;
 }) {
   const wymagane = wymaganeNazwy(item, allItems);
   return (
@@ -331,7 +342,7 @@ function PakietPozycja({
         </span>
         <span className="text-right text-lg font-bold text-balance text-zolty tabular-nums">
           {formatItemPrice(item)}
-          {maKwote(item) ? <DopisekPodatek tekst={dopisek} ciemne /> : null}
+          {maKwote(item) ? <DopisekPodatek podatek={podatek} ciemne /> : null}
         </span>
       </div>
       {item.description ? (
@@ -358,7 +369,7 @@ function PakietPozycja({
               </dt>
               <dd className="text-right text-[13px] font-bold whitespace-nowrap text-zolty tabular-nums">
                 {formatVariantPrice(item, v)}
-                {maKwote(item) ? <DopisekPodatek tekst={dopisek} ciemne /> : null}
+                {maKwote(item) ? <DopisekPodatek podatek={podatek} ciemne /> : null}
               </dd>
             </div>
           ))}
@@ -405,7 +416,10 @@ export function UslugiCennik({ cennik }: { cennik: CennikData }) {
   // „nie pokazuj", więc właściciel może wyłączyć plakietkę, dopiski albo obie
   // rzeczy naraz, bez ruszania kodu. `trim()`, bo samo wyczyszczenie pola
   // w przeglądarce zostawia czasem spację, a ta wyrenderowałaby pustą pigułkę.
-  const dopisekPodatek = cennik.settings.vatSuffix.trim();
+  const podatek: UstawieniaDopisku = {
+    tekst: cennik.settings.vatSuffix.trim(),
+    rozmiar: cennik.settings.vatSuffixSize,
+  };
   const plakietkaPodatek = cennik.settings.vatNote.trim();
 
   // Kolumny: najpierw kategorie z makiety w jej kolejności, potem ewentualne
@@ -502,7 +516,7 @@ export function UslugiCennik({ cennik }: { cennik: CennikData }) {
                         key={item.id}
                         item={item}
                         allItems={items}
-                        dopisek={dopisekPodatek}
+                        podatek={podatek}
                       />
                     ))}
                   </ul>
@@ -575,7 +589,7 @@ export function UslugiCennik({ cennik }: { cennik: CennikData }) {
                     key={item.id}
                     item={item}
                     allItems={items}
-                    dopisek={dopisekPodatek}
+                    podatek={podatek}
                   />
                 ))}
               </ul>

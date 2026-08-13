@@ -393,6 +393,33 @@ export function CennikClient({ initial }: { initial: CennikData }) {
                     }
                   />
                 </Field>
+                <Field
+                  label="Wielkość dopisku (px)"
+                  hint="8–20; domyślnie 11, czyli tyle co czas realizacji i plakietki w kartach"
+                >
+                  <Input
+                    type="number"
+                    inputMode="numeric"
+                    min={8}
+                    max={20}
+                    value={settings.vatSuffixSize}
+                    onChange={(e) =>
+                      history.setState((draft) => ({
+                        ...draft,
+                        settings: {
+                          ...draft.settings,
+                          // Zacisk na 8–20 jak w schemacie: bez niego puste pole
+                          // albo wklejone „999" leciało do zapisu i cały cennik
+                          // wywalał się na walidacji dopiero w API.
+                          vatSuffixSize: Math.min(
+                            20,
+                            Math.max(8, Number(e.target.value) || 11),
+                          ),
+                        },
+                      }))
+                    }
+                  />
+                </Field>
               </div>
               <div className="grid gap-4 md:grid-cols-3">
                 <Field label="CTA bloku">

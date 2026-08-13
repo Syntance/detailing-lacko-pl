@@ -46,11 +46,13 @@ function maKwote(item: CennikItem): boolean {
 }
 
 /**
- * Dopisek „z VAT" przy kwocie. Każda cena w cenniku jest ceną końcową — to,
- * co klient płaci — więc informacja stoi przy KAŻDEJ kwocie, nie tylko
- * w plakietce nad kartami: w sekcję wchodzi się też z linku „#cennik"
- * i z wyszukiwarki, czyli czytanie zaczyna się od środka, a wtedy jedna
- * plakietka na górze zostaje poza kadrem.
+ * Dopisek o podatku przy kwocie — treść z panelu (Magazyn → Cennik →
+ * Ustawienia sekcji, pole „Dopisek przy każdej cenie"): „z VAT", „netto",
+ * „brutto", co właściciel wpisze. Puste pole = same kwoty, bez dopisków.
+ *
+ * Stoi przy KAŻDEJ kwocie, nie tylko w plakietce nad kartami: w sekcję wchodzi
+ * się też z linku „#cennik" i z wyszukiwarki, czyli czytanie zaczyna się od
+ * środka, a wtedy jedna plakietka na górze zostaje poza kadrem.
  *
  * POD kwotą (`block`), nie obok niej: wiersz cennika to `justify-between`, więc
  * każdy piksel kolumny z ceną schodzi z kolumny z nazwą i opisem. Wersja
@@ -58,20 +60,28 @@ function maKwote(item: CennikItem): boolean {
  * 0,16em ma prawie tyle co sama kwota — i cała trójka kart rosła o ~9%
  * wysokości, bo nazwy pozycji zaczęły się łamać na dwie linie. W bloku
  * dopisek (~40 px) mieści się pod kwotą (55 px dla „150 zł") i kolumna
- * z ceną nie rośnie ani o piksel.
+ * z ceną nie rośnie ani o piksel. To dlatego pole w panelu ma być KRÓTKIE
+ * (2–3 słowa) — dłuższy tekst zawinie się pod kwotą na kilka linii.
  *
  * `etykieta-sm` (mono 11px, weight 500) sam zdejmuje odziedziczone `text-lg`
  * i `font-bold` kwoty, więc dopisek nie konkuruje z liczbą — tak jak reszta
  * meta w kartach (czas realizacji, plakietki).
  */
-function ZVat({ ciemne = false }: { ciemne?: boolean }) {
+function DopisekPodatek({
+  tekst,
+  ciemne = false,
+}: {
+  tekst: string;
+  ciemne?: boolean;
+}) {
+  if (!tekst) return null;
   return (
     <span
       className={`etykieta-sm block leading-none ${
         ciemne ? "text-noc-szary" : "text-tekst"
       }`}
     >
-      z VAT
+      {tekst}
     </span>
   );
 }
@@ -163,7 +173,13 @@ const NAKLEJKI: Record<
  * plus odstęp za wcześnie: trzy kwoty pod ceną nadrzędną wisiały w powietrzu
  * zamiast tworzyć z nią jedną kolumnę liczb.
  */
-function WariantyPozycji({ item }: { item: CennikItem }) {
+function WariantyPozycji({
+  item,
+  dopisek,
+}: {
+  item: CennikItem;
+  dopisek: string;
+}) {
   const variants = itemVariants(item);
   if (!variants.length) return null;
   return (
@@ -176,7 +192,7 @@ function WariantyPozycji({ item }: { item: CennikItem }) {
           <dt className="text-[13px] leading-[1.4] text-tekst">{v.label}</dt>
           <dd className="text-right text-[13px] font-bold whitespace-nowrap tabular-nums">
             {formatVariantPrice(item, v)}
-            {maKwote(item) ? <ZVat /> : null}
+            {maKwote(item) ? <DopisekPodatek tekst={dopisek} /> : null}
           </dd>
         </div>
       ))}
@@ -226,9 +242,11 @@ function WymaganeDodatki({
 function PozycjaCennika({
   item,
   allItems,
+  dopisek,
 }: {
   item: CennikItem;
   allItems: CennikItem[];
+  dopisek: string;
 }) {
   return (
     // Kolumna, nie jeden wiersz: warianty muszą wyjść POZA parę
@@ -266,14 +284,14 @@ function PozycjaCennika({
             (np. „Wycena indywidualna") = 191px. 145px zostawia zapas nad
             zwykłymi cenami, a dłuższy tekst zmusza do zawinięcia — `text-balance`
             wtedy dzieli go na równe linie zamiast jednego wiersza + ogona.
-            Dopisek „z VAT" idzie POD kwotą (patrz `ZVat`), więc nie wchodzi
-            w te szerokości — mierzone są dalej samą kwotą. */}
+            Dopisek o podatku idzie POD kwotą (patrz `DopisekPodatek`), więc
+            nie wchodzi w te szerokości — mierzone są dalej samą kwotą. */}
         <span className="max-w-[145px] text-right text-lg font-bold text-balance tabular-nums">
           {formatItemPrice(item)}
-          {maKwote(item) ? <ZVat /> : null}
+          {maKwote(item) ? <DopisekPodatek tekst={dopisek} /> : null}
         </span>
       </div>
-      <WariantyPozycji item={item} />
+      <WariantyPozycji item={item} dopisek={dopisek} />
     </li>
   );
 }
@@ -298,9 +316,11 @@ function PozycjaCennika({
 function PakietPozycja({
   item,
   allItems,
+  dopisek,
 }: {
   item: CennikItem;
   allItems: CennikItem[];
+  dopisek: string;
 }) {
   const wymagane = wymaganeNazwy(item, allItems);
   return (
@@ -311,7 +331,7 @@ function PakietPozycja({
         </span>
         <span className="text-right text-lg font-bold text-balance text-zolty tabular-nums">
           {formatItemPrice(item)}
-          {maKwote(item) ? <ZVat ciemne /> : null}
+          {maKwote(item) ? <DopisekPodatek tekst={dopisek} ciemne /> : null}
         </span>
       </div>
       {item.description ? (
@@ -338,7 +358,7 @@ function PakietPozycja({
               </dt>
               <dd className="text-right text-[13px] font-bold whitespace-nowrap text-zolty tabular-nums">
                 {formatVariantPrice(item, v)}
-                {maKwote(item) ? <ZVat ciemne /> : null}
+                {maKwote(item) ? <DopisekPodatek tekst={dopisek} ciemne /> : null}
               </dd>
             </div>
           ))}
@@ -381,6 +401,13 @@ export function UslugiCennik({ cennik }: { cennik: CennikData }) {
     (i) => !i.disabled && widoczneKategorie.has(i.categoryId),
   );
 
+  // Oba teksty o podatku są z panelu (Ustawienia sekcji) — puste pole znaczy
+  // „nie pokazuj", więc właściciel może wyłączyć plakietkę, dopiski albo obie
+  // rzeczy naraz, bez ruszania kodu. `trim()`, bo samo wyczyszczenie pola
+  // w przeglądarce zostawia czasem spację, a ta wyrenderowałaby pustą pigułkę.
+  const dopisekPodatek = cennik.settings.vatSuffix.trim();
+  const plakietkaPodatek = cennik.settings.vatNote.trim();
+
   // Kolumny: najpierw kategorie z makiety w jej kolejności, potem ewentualne
   // dodane w panelu — żadna nie znika ze strony po edycji.
   const cardCategories = [
@@ -410,19 +437,22 @@ export function UslugiCennik({ cennik }: { cennik: CennikData }) {
       <div className="mx-auto flex max-w-[1140px] flex-col gap-[34px] px-5 py-16 md:px-6 md:py-[68px]">
         <Reveal className="flex flex-wrap items-end justify-between gap-6">
           <div className="flex flex-col gap-2.5">
-            {/* Druga plakietka obok „01 · cennik": informacja o VAT musi paść
-                RAZ, pełnym zdaniem, na poziomie całej sekcji (dopiski przy
+            {/* Druga plakietka obok „01 · cennik": informacja o podatku musi
+                paść RAZ, pełnym zdaniem, na poziomie całej sekcji (dopiski przy
                 kwotach mówią „z VAT", ale nie „wszystkie ceny"). Ten sam język
                 co badge sekcji — pigułka z twardą kreską i lekkim obrotem
                 w drugą stronę — tylko biała i o stopień mniejsza, żeby nie
-                zabierała numeracji sekcji pierwszeństwa. */}
+                zabierała numeracji sekcji pierwszeństwa. Treść z panelu;
+                puste pole = zostaje sam badge sekcji. */}
             <div className="flex flex-wrap items-center gap-2.5">
               <p className="etykieta w-max -rotate-[1.5deg] rounded-full border-2 border-ink bg-zolty px-3.5 py-1.5">
                 01 · cennik
               </p>
-              <p className="etykieta-sm w-max rotate-[1.5deg] rounded-full border-2 border-ink bg-background px-3 py-1.5">
-                ceny zawierają VAT
-              </p>
+              {plakietkaPodatek ? (
+                <p className="etykieta-sm w-max rotate-[1.5deg] rounded-full border-2 border-ink bg-background px-3 py-1.5">
+                  {plakietkaPodatek}
+                </p>
+              ) : null}
             </div>
             <h2
               id="cennik-heading"
@@ -472,6 +502,7 @@ export function UslugiCennik({ cennik }: { cennik: CennikData }) {
                         key={item.id}
                         item={item}
                         allItems={items}
+                        dopisek={dopisekPodatek}
                       />
                     ))}
                   </ul>
@@ -540,7 +571,12 @@ export function UslugiCennik({ cennik }: { cennik: CennikData }) {
                   w kolumnie, żeby czarny pas kończył się na swoim `py-6`. */}
               <ul className="-mb-[18px] gap-x-8 sm:columns-2">
                 {pakiety.map((item) => (
-                  <PakietPozycja key={item.id} item={item} allItems={items} />
+                  <PakietPozycja
+                    key={item.id}
+                    item={item}
+                    allItems={items}
+                    dopisek={dopisekPodatek}
+                  />
                 ))}
               </ul>
             </div>

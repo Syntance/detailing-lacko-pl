@@ -50,7 +50,11 @@ export function RezerwacjaSekcja({
 
         <Reveal>
           {dostepnosc.enabled ? (
-            <Rezerwacja config={dostepnosc} kategorie={kategorie} />
+            <Rezerwacja
+              config={dostepnosc}
+              kategorie={kategorie}
+              dopisekPodatek={cennik.settings.vatSuffix.trim()}
+            />
           ) : (
             <div className="cien-6 flex flex-col items-start gap-4 rounded-2xl border-[3px] border-ink bg-background p-6 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-[15px] font-medium text-pretty">

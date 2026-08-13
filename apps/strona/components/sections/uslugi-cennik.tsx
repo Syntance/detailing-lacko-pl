@@ -155,6 +155,13 @@ const NAKLEJKI: Record<
  *
  * `<dl>`, nie `<ul>`: to pary etykieta–wartość, więc czytnik ekranu ogłasza
  * „hatchback / małe: 600 zł" zamiast dwóch niepowiązanych tekstów.
+ *
+ * Renderuje się na PEŁNEJ szerokości wiersza (patrz `PozycjaCennika`), nie
+ * w kolumnie z nazwą i opisem — dzięki temu kwoty wariantów kończą się na tej
+ * samej pionowej linii co cena główna nad nimi. Wewnątrz lewej kolumny
+ * wyrównywały się do jej prawej krawędzi, czyli o szerokość kolumny z ceną
+ * plus odstęp za wcześnie: trzy kwoty pod ceną nadrzędną wisiały w powietrzu
+ * zamiast tworzyć z nią jedną kolumnę liczb.
  */
 function WariantyPozycji({ item }: { item: CennikItem }) {
   const variants = itemVariants(item);
@@ -224,42 +231,49 @@ function PozycjaCennika({
   allItems: CennikItem[];
 }) {
   return (
-    <li className="flex items-baseline justify-between gap-3 border-t-2 border-dashed border-kreska px-5 py-[13px] first:border-t-0">
-      <span className="flex min-w-0 flex-1 flex-col gap-1">
-        <span className="text-[15px] font-semibold">
-          {stripBullet(item.name)}
-        </span>
-        {item.description ? (
-          // 13px/1,5 w `text-tekst`, nie 12px w `text-muted-foreground`: opisy
-          // mają po 3–4 linie w wąskiej kolumnie, a #6B7075 daje na bieli 5:1 —
-          // ledwie ponad progiem AA. Hierarchię wobec nazwy trzyma stopień
-          // i grubość (15px semibold vs 13px regular), nie wyblakły kolor.
-          // Ten sam stopień co opisy pakietów w czarnym pasie nad kartami.
-          <span className="text-[13px] leading-[1.5] text-pretty text-tekst">
-            {item.description}
+    // Kolumna, nie jeden wiersz: warianty muszą wyjść POZA parę
+    // „opis ↔ cena", żeby rozciągnąć się na całą szerokość wiersza i wyrównać
+    // kwoty do tej samej pionowej linii co cena główna. `gap-1` odtwarza
+    // odstęp, który warianty miały wcześniej jako ostatnie dziecko lewej
+    // kolumny — pozycja bez wariantów wygląda dokładnie tak jak przedtem.
+    <li className="flex flex-col gap-1 border-t-2 border-dashed border-kreska px-5 py-[13px] first:border-t-0">
+      <div className="flex items-baseline justify-between gap-3">
+        <span className="flex min-w-0 flex-1 flex-col gap-1">
+          <span className="text-[15px] font-semibold">
+            {stripBullet(item.name)}
           </span>
-        ) : null}
-        <WymaganeDodatki item={item} allItems={allItems} />
-        <WariantyPozycji item={item} />
-      </span>
-      {/* `max-w-[145px]` + bez `whitespace-nowrap`: samo zdjęcie nowrap NIE
-          wystarczyło — w tym wierszu (`justify-between`, cena bez
-          `flex-grow`) flex nigdy nie wchodzi w tryb kurczenia, dopóki wiersz
-          się mieści, więc cena i tak renderowała się w naturalnej,
-          jednoliniowej szerokości, a CAŁY nadmiar szedł do kolumny z opisem
-          (`flex-grow` tam jest ustawiony) — dokładnie odwrotnie, niż trzeba.
-          Realne pomiary (Space Grotesk 18px bold): najdłuższa zwykła cena
-          w tym komponencie to „80 zł za parę" = 112px, domyślne
-          „Zapytaj o cenę" = 129px, custom tekst przy ukrytej cenie
-          (np. „Wycena indywidualna") = 191px. 145px zostawia zapas nad
-          zwykłymi cenami, a dłuższy tekst zmusza do zawinięcia — `text-balance`
-          wtedy dzieli go na równe linie zamiast jednego wiersza + ogona.
-          Dopisek „z VAT" idzie POD kwotą (patrz `ZVat`), więc nie wchodzi
-          w te szerokości — mierzone są dalej samą kwotą. */}
-      <span className="max-w-[145px] text-right text-lg font-bold text-balance tabular-nums">
-        {formatItemPrice(item)}
-        {maKwote(item) ? <ZVat /> : null}
-      </span>
+          {item.description ? (
+            // 13px/1,5 w `text-tekst`, nie 12px w `text-muted-foreground`: opisy
+            // mają po 3–4 linie w wąskiej kolumnie, a #6B7075 daje na bieli 5:1 —
+            // ledwie ponad progiem AA. Hierarchię wobec nazwy trzyma stopień
+            // i grubość (15px semibold vs 13px regular), nie wyblakły kolor.
+            // Ten sam stopień co opisy pakietów w czarnym pasie nad kartami.
+            <span className="text-[13px] leading-[1.5] text-pretty text-tekst">
+              {item.description}
+            </span>
+          ) : null}
+          <WymaganeDodatki item={item} allItems={allItems} />
+        </span>
+        {/* `max-w-[145px]` + bez `whitespace-nowrap`: samo zdjęcie nowrap NIE
+            wystarczyło — w tym wierszu (`justify-between`, cena bez
+            `flex-grow`) flex nigdy nie wchodzi w tryb kurczenia, dopóki wiersz
+            się mieści, więc cena i tak renderowała się w naturalnej,
+            jednoliniowej szerokości, a CAŁY nadmiar szedł do kolumny z opisem
+            (`flex-grow` tam jest ustawiony) — dokładnie odwrotnie, niż trzeba.
+            Realne pomiary (Space Grotesk 18px bold): najdłuższa zwykła cena
+            w tym komponencie to „80 zł za parę" = 112px, domyślne
+            „Zapytaj o cenę" = 129px, custom tekst przy ukrytej cenie
+            (np. „Wycena indywidualna") = 191px. 145px zostawia zapas nad
+            zwykłymi cenami, a dłuższy tekst zmusza do zawinięcia — `text-balance`
+            wtedy dzieli go na równe linie zamiast jednego wiersza + ogona.
+            Dopisek „z VAT" idzie POD kwotą (patrz `ZVat`), więc nie wchodzi
+            w te szerokości — mierzone są dalej samą kwotą. */}
+        <span className="max-w-[145px] text-right text-lg font-bold text-balance tabular-nums">
+          {formatItemPrice(item)}
+          {maKwote(item) ? <ZVat /> : null}
+        </span>
+      </div>
+      <WariantyPozycji item={item} />
     </li>
   );
 }
@@ -272,7 +286,14 @@ function PozycjaCennika({
  * Nierozrywalny ciąg tej długości rozpychał kolumnę gridu (grid-item ma
  * domyślnie `min-width: auto`), przez co na telefonie CAŁA strona robiła się
  * szersza od ekranu — a `position: fixed` podglądu Efektów dziedziczył tę
- * zawyżoną szerokość i ucinał zdjęcia.
+ * zawyżoną szerokość i ucinał zdjęcia. Lista jest dziś multicol, nie gridem,
+ * ale `min-w-0` zostaje: wewnętrzny wiersz nazwa↔cena to dalej flex, więc bez
+ * niego kwota nadal wypychałaby nazwę poza kolumnę.
+ *
+ * `break-inside-avoid` + `mb-[18px]`: w kolumnach CSS pozycja mogłaby się
+ * przełamać w połowie na granicy kolumn (nazwa u dołu lewej, warianty
+ * u góry prawej), a odstęp pionowy między pozycjami nie leci już z `row-gap`
+ * listy — multicol go nie zna.
  */
 function PakietPozycja({
   item,
@@ -283,7 +304,7 @@ function PakietPozycja({
 }) {
   const wymagane = wymaganeNazwy(item, allItems);
   return (
-    <li className="flex min-w-0 flex-col gap-1.5 border-t-2 border-dashed border-noc-szary/40 pt-3.5">
+    <li className="mb-[18px] flex min-w-0 break-inside-avoid flex-col gap-1.5 border-t-2 border-dashed border-noc-szary/40 pt-3.5">
       <div className="flex min-w-0 items-baseline justify-between gap-3">
         <span className="min-w-0 text-[15px] font-semibold">
           {stripBullet(item.name)}
@@ -506,7 +527,18 @@ export function UslugiCennik({ cennik }: { cennik: CennikData }) {
                   {cennik.settings.noteCtaLabel}
                 </BookingLink>
               </div>
-              <ul className="grid gap-x-8 gap-y-[18px] sm:grid-cols-2">
+              {/* Kolumny CSS, nie grid: w gridzie oba pola jednego wiersza
+                  mają wspólną wysokość, więc pakiet z trzema wariantami
+                  („Przygotowanie do sprzedaży PRO") podnosił sąsiada obok —
+                  pod krótkim pakietem zostawała pusta dziura, a następny
+                  wchodził dopiero pod najwyższym. W multicol każda pozycja
+                  kończy się tam, gdzie kończy się jej treść, a przeglądarka
+                  sama rozkłada je tak, żeby obie kolumny miały zbliżoną
+                  wysokość — bez dziur i bez rozdzielania listy w JSX (jeden
+                  `<ul>`, kolejność DOM = kolejność z panelu).
+                  `-mb-[18px]` zdejmuje margines spod ostatniej pozycji
+                  w kolumnie, żeby czarny pas kończył się na swoim `py-6`. */}
+              <ul className="-mb-[18px] gap-x-8 sm:columns-2">
                 {pakiety.map((item) => (
                   <PakietPozycja key={item.id} item={item} allItems={items} />
                 ))}

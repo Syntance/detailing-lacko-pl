@@ -109,21 +109,24 @@ function DopisekPodatek({
  * Przy ukrytej kwocie („Zapytaj o cenę") nie ma czego przekreślać.
  */
 function CenaOsobno({
-  item,
+  kwota,
   ciemne = false,
+  maly = false,
 }: {
-  item: CennikItem;
+  kwota: number;
   ciemne?: boolean;
+  /** Wiersz wariantu — kwota ma 13px, więc przekreślenie schodzi do 12px. */
+  maly?: boolean;
 }) {
-  if (item.priceHidden || !item.compareAtPrice) return null;
+  if (!kwota) return null;
   return (
     <s
-      className={`mr-2 text-[15px] font-bold ${
+      className={`mr-2 font-bold ${maly ? "text-[12px]" : "text-[15px]"} ${
         ciemne ? "text-czerwony-jasny" : "text-destructive"
       }`}
     >
       <span className="sr-only">zamiast </span>
-      {item.compareAtPrice} zł
+      {kwota} zł
     </s>
   );
 }
@@ -233,6 +236,7 @@ function WariantyPozycji({
         >
           <dt className="text-[13px] leading-[1.4] text-tekst">{v.label}</dt>
           <dd className="text-right text-[13px] font-bold whitespace-nowrap tabular-nums">
+            <CenaOsobno kwota={maKwote(item) ? v.compareAtPrice : 0} maly />
             {formatVariantPrice(item, v)}
             {maKwote(item) ? <DopisekPodatek podatek={podatek} /> : null}
           </dd>
@@ -329,7 +333,7 @@ function PozycjaCennika({
             Dopisek o podatku idzie POD kwotą (patrz `DopisekPodatek`), więc
             nie wchodzi w te szerokości — mierzone są dalej samą kwotą. */}
         <span className="max-w-[145px] text-right text-lg font-bold text-balance tabular-nums">
-          <CenaOsobno item={item} />
+          <CenaOsobno kwota={maKwote(item) ? item.compareAtPrice : 0} />
           {formatItemPrice(item)}
           {maKwote(item) ? <DopisekPodatek podatek={podatek} /> : null}
         </span>
@@ -373,7 +377,7 @@ function PakietPozycja({
           {stripBullet(item.name)}
         </span>
         <span className="text-right text-lg font-bold text-balance text-zolty tabular-nums">
-          <CenaOsobno item={item} ciemne />
+          <CenaOsobno kwota={maKwote(item) ? item.compareAtPrice : 0} ciemne />
           {formatItemPrice(item)}
           {maKwote(item) ? <DopisekPodatek podatek={podatek} ciemne /> : null}
         </span>
@@ -401,6 +405,11 @@ function PakietPozycja({
                 {v.label}
               </dt>
               <dd className="text-right text-[13px] font-bold whitespace-nowrap text-zolty tabular-nums">
+                <CenaOsobno
+                  kwota={maKwote(item) ? v.compareAtPrice : 0}
+                  ciemne
+                  maly
+                />
                 {formatVariantPrice(item, v)}
                 {maKwote(item) ? <DopisekPodatek podatek={podatek} ciemne /> : null}
               </dd>

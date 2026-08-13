@@ -38,6 +38,13 @@ export const cennikVariantSchema = z.object({
   priceFrom: z.number().int().min(0),
   /** 0 = cena stała (bez widełek) — jak w pozycji. */
   priceTo: z.number().int().min(0),
+  /**
+   * Cena „gdyby osobno" tego wariantu — przekreślona przed jego kwotą, na tej
+   * samej zasadzie co `compareAtPrice` pozycji. Osobne pole, bo pakiet
+   * w trzech rozmiarach auta ma trzy różne ceny „przed" i jedna liczba na
+   * pozycji byłaby prawdziwa najwyżej dla jednego z nich. 0 = brak.
+   */
+  compareAtPrice: z.number().int().min(0).default(0),
   /** Czas realizacji wariantu w minutach — źródło prawdy dla harmonogramu. */
   durationMinutes: z.number().int().min(0).max(10_080).default(0),
   /** Opisowy czas wariantu, np. „6–7 h (1 dzień)". Puste = bierzemy z pozycji. */
@@ -625,6 +632,7 @@ export const DEFAULT_CENNIK: CennikData = {
           label: "hatchback / małe",
           priceFrom: 600,
           priceTo: 0,
+          compareAtPrice: 0,
           durationMinutes: 390,
           timeLabel: "6–7 h (1 dzień)",
         },
@@ -633,6 +641,7 @@ export const DEFAULT_CENNIK: CennikData = {
           label: "sedan / kombi",
           priceFrom: 750,
           priceTo: 0,
+          compareAtPrice: 0,
           durationMinutes: 450,
           timeLabel: "7–8 h (1 dzień)",
         },
@@ -641,6 +650,7 @@ export const DEFAULT_CENNIK: CennikData = {
           label: "SUV / van",
           priceFrom: 900,
           priceTo: 0,
+          compareAtPrice: 0,
           durationMinutes: 510,
           timeLabel: "8–9 h (1 dzień)",
         },

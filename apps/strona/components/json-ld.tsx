@@ -51,8 +51,16 @@ export function JsonLd({
 }) {
   // Widełki przez `itemPriceRange`, bo pozycja z wariantami ma własne
   // `priceFrom`/`priceTo` tylko poglądowo — realne kwoty siedzą w wariantach.
+  //
+  // Liczone z tego, co realnie widać w cenniku: ukryta kategoria zabiera ze
+  // strony wszystkie swoje pozycje (patrz `UslugiCennik`), więc jej kwoty nie
+  // mogą wyznaczać `priceRange` — inaczej Google dostaje widełki do 1300 zł,
+  // których na stronie nie ma ani jednej.
+  const widoczneKategorie = new Set(
+    cennik.categories.filter((c) => !c.disabled).map((c) => c.id),
+  );
   const zakresy = cennik.items
-    .filter((i) => !i.disabled)
+    .filter((i) => !i.disabled && widoczneKategorie.has(i.categoryId))
     .map((i) => itemPriceRange(i));
   const prices = zakresy.map((z) => z.from).filter((p) => p > 0);
   const minPrice = prices.length ? Math.min(...prices) : 100;

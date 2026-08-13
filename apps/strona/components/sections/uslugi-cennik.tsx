@@ -340,8 +340,25 @@ function PakietPozycja({
 }
 
 export function UslugiCennik({ cennik }: { cennik: CennikData }) {
-  const items = cennik.items.filter((i) => !i.disabled);
   const categories = cennik.categories.filter((c) => !c.disabled);
+  /**
+   * Ukrycie KATEGORII w panelu („Widoczna na stronie") ukrywa też wszystkie jej
+   * pozycje — pozycja bez swojej karty nie ma na stronie miejsca, w którym
+   * mogłaby stanąć. Filtr musi być tutaj, na wspólnej liście, bo z `items`
+   * korzystają trzy rzeczy naraz: kolumny kategorii, czarny pas z pakietami
+   * i nazwy w „Wymaga: …". Kolumny sprawdzały widoczność same (renderują tylko
+   * kategorie z `categories`), ale pozostałe dwie brały pozycje wprost — więc
+   * wyłączenie kategorii „Pakiety" nie ruszało czarnego pasa, a dodatek
+   * z wyłączonej kategorii dalej dawało się wyczytać z „Wymaga: …".
+   *
+   * To samo, co robi widget rezerwacji (`grupyRezerwacji`): grupy leci z
+   * kategorii przefiltrowanych po `disabled`, więc pozycja z ukrytej kategorii
+   * nie ma jak się tam pokazać.
+   */
+  const widoczneKategorie = new Set(categories.map((c) => c.id));
+  const items = cennik.items.filter(
+    (i) => !i.disabled && widoczneKategorie.has(i.categoryId),
+  );
 
   // Kolumny: najpierw kategorie z makiety w jej kolejności, potem ewentualne
   // dodane w panelu — żadna nie znika ze strony po edycji.
@@ -354,6 +371,10 @@ export function UslugiCennik({ cennik }: { cennik: CennikData }) {
     ),
   ];
 
+  // `pakietyKategoria` bierze się z listy PO odsianiu ukrytych, więc jego brak
+  // znaczy „kategoria wyłączona w panelu" — i wtedy czarny pas w ogóle nie
+  // wchodzi do drzewa (warunek przy renderze), zamiast lecieć na fallbackowym
+  // tytule „Pakiety" nad pozycjami, których nie powinno tam być.
   const pakietyKategoria = categories.find((c) => c.id === PAKIETY_CATEGORY_ID);
   const pakiety = items
     .filter((item) => item.categoryId === PAKIETY_CATEGORY_ID)
@@ -463,14 +484,14 @@ export function UslugiCennik({ cennik }: { cennik: CennikData }) {
           })}
         </RevealStagger>
 
-        {pakiety.length ? (
+        {pakietyKategoria && pakiety.length ? (
           <Reveal>
             <div className="cien-zolty-6 flex flex-col gap-[22px] rounded-2xl border-[3px] border-ink bg-ink px-[26px] py-6 text-background">
               <div className="flex flex-wrap items-end justify-between gap-5">
                 <div className="flex flex-col gap-1.5">
                   <p className="etykieta-sm text-zolty">pakiety</p>
                   <h3 className="text-[22px] leading-[1.1] font-bold">
-                    {pakietyKategoria?.name ?? "Pakiety"}
+                    {pakietyKategoria.name}
                   </h3>
                   {cennik.settings.noteText ? (
                     <p className="max-w-[62ch] text-[13.5px] text-pretty text-noc-szary">

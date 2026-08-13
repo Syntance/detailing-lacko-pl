@@ -21,6 +21,7 @@ export async function GET(): Promise<Response> {
 > polerowanie lakieru one step. Usługa stacjonarna${kontakt.freeTravelKm > 0 ? ` — dojazd gratis do ${kontakt.freeTravelKm} km` : ""}.
 
 ## Usługi i ceny
+Wszystkie ceny zawierają VAT.
 ${uslugi}
 
 ## Obszar działania

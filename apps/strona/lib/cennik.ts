@@ -69,6 +69,17 @@ export const cennikItemSchema = z.object({
   pricePrefix: z.string(),
   /** Dopisek za ceną, np. „za parę". */
   unit: z.string(),
+  /**
+   * Cena „gdyby osobno" — kwota przekreślona na czerwono PRZED właściwą ceną
+   * („~~800 zł~~ 650 zł"). Pakiet jest tańszy od sumy składowych, ale klient
+   * musiałby to sam policzyć z trzech pozycji z innej kolumny; przekreślenie
+   * pokazuje oszczędność w miejscu, w którym zapada decyzja.
+   *
+   * 0 = brak przekreślenia (domyślnie). `.default(0)` jak przy
+   * `durationMinutes` — blob-y zapisane wcześniej nie mają tego pola i muszą
+   * się dalej parsować.
+   */
+  compareAtPrice: z.number().int().min(0).default(0),
   /** Ukrycie kwoty — zamiast ceny pokazujemy „Zapytaj o cenę". */
   priceHidden: z.boolean().optional(),
   /**
@@ -319,6 +330,7 @@ export const DEFAULT_CENNIK: CennikData = {
       priceTo: 0,
       pricePrefix: "",
       unit: "",
+      compareAtPrice: 0,
       popular: false,
       order: 0,
       disabled: false,
@@ -335,6 +347,7 @@ export const DEFAULT_CENNIK: CennikData = {
       priceTo: 0,
       pricePrefix: "",
       unit: "",
+      compareAtPrice: 0,
       // Wprost z opisu pakietu. Mycie/dekontaminacja/wosk lecą przez zestaw
       // „Mycie + dekontaminacja + wosk", który sam je zawiera — blokady liczą
       // się przechodnio, więc nie trzeba ich tu powtarzać.
@@ -360,6 +373,7 @@ export const DEFAULT_CENNIK: CennikData = {
       priceTo: 0,
       pricePrefix: "",
       unit: "",
+      compareAtPrice: 0,
       popular: false,
       order: 0,
       disabled: false,
@@ -376,6 +390,7 @@ export const DEFAULT_CENNIK: CennikData = {
       priceTo: 0,
       pricePrefix: "",
       unit: "",
+      compareAtPrice: 0,
       popular: false,
       order: 1,
       disabled: false,
@@ -391,6 +406,7 @@ export const DEFAULT_CENNIK: CennikData = {
       priceTo: 0,
       pricePrefix: "",
       unit: "",
+      compareAtPrice: 0,
       popular: false,
       order: 2,
       disabled: false,
@@ -407,6 +423,7 @@ export const DEFAULT_CENNIK: CennikData = {
       priceTo: 0,
       pricePrefix: "",
       unit: "",
+      compareAtPrice: 0,
       popular: false,
       order: 3,
       disabled: false,
@@ -423,6 +440,7 @@ export const DEFAULT_CENNIK: CennikData = {
       priceTo: 0,
       pricePrefix: "",
       unit: "",
+      compareAtPrice: 0,
       popular: false,
       order: 4,
       disabled: false,
@@ -439,6 +457,7 @@ export const DEFAULT_CENNIK: CennikData = {
       priceTo: 0,
       pricePrefix: "",
       unit: "",
+      compareAtPrice: 0,
       popular: false,
       order: 5,
       disabled: false,
@@ -455,6 +474,7 @@ export const DEFAULT_CENNIK: CennikData = {
       priceTo: 0,
       pricePrefix: "",
       unit: "",
+      compareAtPrice: 0,
       // Zestaw = suma trzech pozycji z tej samej kategorii, wprost z nazwy.
       includedItemIds: [
         "mycie-detailingowe-baza",
@@ -478,6 +498,7 @@ export const DEFAULT_CENNIK: CennikData = {
       priceTo: 0,
       pricePrefix: "",
       unit: "",
+      compareAtPrice: 0,
       popular: false,
       order: 0,
       disabled: false,
@@ -493,6 +514,7 @@ export const DEFAULT_CENNIK: CennikData = {
       priceTo: 0,
       pricePrefix: "",
       unit: "",
+      compareAtPrice: 0,
       popular: false,
       order: 1,
       disabled: false,
@@ -509,6 +531,7 @@ export const DEFAULT_CENNIK: CennikData = {
       priceTo: 0,
       pricePrefix: "",
       unit: "",
+      compareAtPrice: 0,
       popular: true,
       order: 2,
       disabled: false,
@@ -524,6 +547,7 @@ export const DEFAULT_CENNIK: CennikData = {
       priceTo: 0,
       pricePrefix: "",
       unit: "",
+      compareAtPrice: 0,
       popular: false,
       order: 3,
       disabled: false,
@@ -540,6 +564,7 @@ export const DEFAULT_CENNIK: CennikData = {
       priceTo: 0,
       pricePrefix: "",
       unit: "",
+      compareAtPrice: 0,
       popular: false,
       order: 4,
       disabled: false,
@@ -555,6 +580,7 @@ export const DEFAULT_CENNIK: CennikData = {
       priceTo: 0,
       pricePrefix: "+",
       unit: "",
+      compareAtPrice: 0,
       popular: false,
       order: 5,
       disabled: false,
@@ -572,6 +598,7 @@ export const DEFAULT_CENNIK: CennikData = {
       priceTo: 0,
       pricePrefix: "",
       unit: "",
+      compareAtPrice: 0,
       popular: false,
       order: 0,
       disabled: false,
@@ -591,6 +618,7 @@ export const DEFAULT_CENNIK: CennikData = {
       priceTo: 900,
       pricePrefix: "",
       unit: "",
+      compareAtPrice: 0,
       variants: [
         {
           id: "hatchback",
@@ -633,6 +661,7 @@ export const DEFAULT_CENNIK: CennikData = {
       priceTo: 0,
       pricePrefix: "+",
       unit: "",
+      compareAtPrice: 0,
       popular: false,
       order: 2,
       disabled: false,
@@ -649,6 +678,7 @@ export const DEFAULT_CENNIK: CennikData = {
       priceTo: 0,
       pricePrefix: "od ",
       unit: "",
+      compareAtPrice: 0,
       popular: false,
       order: 3,
       disabled: true,
@@ -665,6 +695,7 @@ export const DEFAULT_CENNIK: CennikData = {
       priceTo: 0,
       pricePrefix: "",
       unit: "",
+      compareAtPrice: 0,
       // Zawiera cały pakiet IN+OUT, a przez niego — przechodnio — wszystkie
       // jego składowe. Wystarczy jedno id.
       includedItemIds: ["detailing-kompletny-in-out"],
@@ -684,6 +715,7 @@ export const DEFAULT_CENNIK: CennikData = {
       priceTo: 1300,
       pricePrefix: "",
       unit: "wg rozmiaru auta",
+      compareAtPrice: 0,
       popular: false,
       order: 3,
       disabled: false,

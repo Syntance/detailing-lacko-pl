@@ -60,6 +60,10 @@
   --noc: #000000;
   --noc-jasny: #e4e6e8;
   --noc-szary: #a9acaf;
+  /* Przekreślona cena „gdyby osobno" na czarnym pasie pakietów. Jaśniejsza od
+     `--destructive` (0.58), bo tamta na czerni daje ~4:1 — poniżej progu AA
+     dla tego stopnia pisma. */
+  --czerwony-jasny: oklch(0.72 0.19 27);
 }
 
 @theme inline {
@@ -78,6 +82,7 @@
   --color-noc: var(--noc);
   --color-noc-jasny: var(--noc-jasny);
   --color-noc-szary: var(--noc-szary);
+  --color-czerwony-jasny: var(--czerwony-jasny);
 }
 
 /* Kropkowana siatka pod hero i FAQ — 1:1 z makietą. */

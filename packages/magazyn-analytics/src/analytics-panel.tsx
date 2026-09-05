@@ -12,9 +12,9 @@ import {
 	XAxis,
 	YAxis,
 } from "recharts";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, CircleOff } from "lucide-react";
 import { Badge, Card, Section, StatTile, formatKwota } from "@moduly/ui";
-import type { AnalyticsDashboardData, AnalyticsKpi } from "./types";
+import type { AnalyticsDashboardData, AnalyticsKpi, AnalyticsSourceState } from "./types";
 
 const CHART_STROKE = "#AF7C61";
 
@@ -27,6 +27,33 @@ const chartTooltipStyle = {
 } as const;
 
 type SourceTab = "combined" | "ga4" | "posthog";
+
+/**
+ * Wcześniej ten badge był zawsze zielony z haczykiem, niezależnie od statusu —
+ * niewinne, dopóki dane były zawsze demo (zawsze "connected"). Teraz panel
+ * dostaje prawdziwy status z fetchAnalyticsDashboard(), więc kolor musi
+ * odzwierciedlać rzeczywistość: rozłączone/błąd źle wygląda jako "połączono".
+ */
+function SourceStatusBadge({ source, label }: { source: AnalyticsSourceState; label: string }) {
+	if (source.status === "connected") {
+		return (
+			<span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+				<CheckCircle2 className="size-3.5" aria-hidden />
+				{source.label}
+			</span>
+		);
+	}
+	const tone =
+		source.status === "error"
+			? "bg-destructive/10 text-destructive"
+			: "bg-muted text-muted-foreground";
+	return (
+		<span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${tone}`}>
+			<CircleOff className="size-3.5" aria-hidden />
+			{label}
+		</span>
+	);
+}
 
 function pickKpi(data: AnalyticsDashboardData, tab: SourceTab): AnalyticsKpi | null {
 	if (tab === "ga4") return data.ga4.kpi ?? null;
@@ -130,18 +157,17 @@ export function AnalyticsPanel({ data, demo = false }: AnalyticsPanelProps) {
 		return data.ga4.traffic ?? data.posthog.traffic ?? [];
 	}, [tab, data.ga4.traffic, data.posthog.traffic]);
 
+	const disconnectedReasons = [data.ga4, data.posthog]
+		.filter((source) => source.status !== "connected")
+		.map((source) => source.reason)
+		.filter((reason): reason is string => Boolean(reason));
+
 	return (
 		<div className="flex flex-col gap-6">
 			<div className="flex flex-wrap items-center justify-between gap-3">
 				<div className="flex flex-wrap gap-2">
-					<span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-400">
-						<CheckCircle2 className="size-3.5" aria-hidden />
-						{data.ga4.status === "connected" ? data.ga4.label : "GA4"}
-					</span>
-					<span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-400">
-						<CheckCircle2 className="size-3.5" aria-hidden />
-						{data.posthog.status === "connected" ? data.posthog.label : "PostHog"}
-					</span>
+					<SourceStatusBadge source={data.ga4} label="GA4" />
+					<SourceStatusBadge source={data.posthog} label="PostHog" />
 					{demo ? <Badge tone="brand">Podgląd demo</Badge> : null}
 				</div>
 				{demo ? (
@@ -182,7 +208,15 @@ export function AnalyticsPanel({ data, demo = false }: AnalyticsPanelProps) {
 				))}
 			</div>
 
-			{kpi ? <KpiGrid kpi={kpi} periodLabel={periodLabel} /> : null}
+			{kpi ? (
+				<KpiGrid kpi={kpi} periodLabel={periodLabel} />
+			) : disconnectedReasons.length > 0 ? (
+				<Card>
+					<p className="text-sm text-muted-foreground">
+						Brak danych: {disconnectedReasons.join(" ")}
+					</p>
+				</Card>
+			) : null}
 
 			<TrafficChart
 				title={tab === "posthog" ? "Odsłony (PostHog $pageview)" : "Sesje / ruch"}

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Badge, StatisticsView } from "@moduly/ui";
 import { AnalyticsPanel } from "./analytics-panel";
-import { demoAnalyticsDashboard } from "./demo-analytics-data";
+import type { AnalyticsDashboardData } from "./types";
 
 type StatisticsTab = "sales" | "analytics";
 
@@ -20,7 +20,7 @@ const TABS: Array<{ id: StatisticsTab; label: string; description: string }> = [
 	},
 ];
 
-export function StatisticsTabs() {
+export function StatisticsTabs({ analytics }: { analytics: AnalyticsDashboardData }) {
 	const [tab, setTab] = useState<StatisticsTab>("sales");
 	const activeMeta = TABS.find((item) => item.id === tab) ?? TABS[0]!;
 
@@ -52,14 +52,17 @@ export function StatisticsTabs() {
 			<p className="text-sm text-muted-foreground">{activeMeta.description}</p>
 
 			{tab === "sales" ? (
-				<StatisticsView />
+				<>
+					<StatisticsView />
+					{/* Sklep na Medusie nie jest podpięty w tym projekcie (usługa, nie
+					    e-commerce) — ten widok zawsze pokazuje przykładowe dane. */}
+					<Badge tone="neutral" className="self-start">
+						Dane przykładowe · czerwiec 2026
+					</Badge>
+				</>
 			) : (
-				<AnalyticsPanel data={demoAnalyticsDashboard} demo />
+				<AnalyticsPanel data={analytics} />
 			)}
-
-			<Badge tone="neutral" className="self-start">
-				Dane przykładowe · czerwiec 2026
-			</Badge>
 		</div>
 	);
 }

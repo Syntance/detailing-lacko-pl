@@ -37,7 +37,7 @@ export function RezerwacjaSekcja({
     >
       <div className="mx-auto flex max-w-[900px] flex-col gap-[30px] px-5 py-16 md:px-6 md:py-[68px]">
         <Reveal className="flex flex-col gap-2.5">
-          <p className="etykieta w-max rotate-[1.2deg] rounded-full border-2 border-ink bg-zolty px-3.5 py-1.5">
+          <p className="etykieta w-max rotate-[1.2deg] rounded-full border-2 border-ink bg-akcent px-3.5 py-1.5">
             04 · rezerwacja
           </p>
           <h2
@@ -64,7 +64,7 @@ export function RezerwacjaSekcja({
               <PhoneLink
                 phoneE164={kontakt.phoneE164}
                 section="rezerwacja"
-                className="cien-zolty-3 inline-flex min-h-12 shrink-0 items-center rounded-full border-2 border-ink bg-ink px-5 py-3 text-[15px] font-bold whitespace-nowrap text-background focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+                className="cien-akcent-3 inline-flex min-h-12 shrink-0 items-center rounded-full border-2 border-ink bg-ink px-5 py-3 text-[15px] font-bold whitespace-nowrap text-background focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
                 ariaLabel={`Zadzwoń: ${kontakt.phoneDisplay}`}
               >
                 Zadzwoń: {kontakt.phoneDisplay}

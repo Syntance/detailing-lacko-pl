@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button, Input, PageHeader } from "@moduly/ui";
 import { Plus } from "lucide-react";
 import type { FaqData, FaqItemInput } from "@/lib/faq";
+import { LINIA_INFO, type Linia } from "@/lib/linie";
 import { useMagazynHistory } from "@/hooks/use-magazyn-history";
 import {
   Field,
@@ -17,11 +18,23 @@ import {
 const textareaClass =
   "w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none";
 
+/** Endpoint zapisu per linia — osobne bloby, ten sam edytor. */
+const ENDPOINT: Record<Linia, string> = {
+  detailing: "/api/magazyn/faq",
+  wulkanizacja: "/api/magazyn/faq-wulkanizacja",
+};
+
 function reorder(list: FaqItemInput[]): FaqItemInput[] {
   return list.map((entry, index) => ({ ...entry, order: index }));
 }
 
-export function FaqClient({ initial }: { initial: FaqData }) {
+export function FaqClient({
+  initial,
+  linia = "detailing",
+}: {
+  initial: FaqData;
+  linia?: Linia;
+}) {
   const router = useRouter();
   const history = useMagazynHistory<FaqData>(initial);
   const { items } = history.state;
@@ -38,7 +51,7 @@ export function FaqClient({ initial }: { initial: FaqData }) {
     setPending(true);
     setStatus(null);
     setError(false);
-    const result = await putEditorData("/api/magazyn/faq", history.state);
+    const result = await putEditorData(ENDPOINT[linia], history.state);
     if (result.ok) {
       setStatus("Zapisano FAQ.");
       history.commitSaved();
@@ -53,8 +66,8 @@ export function FaqClient({ initial }: { initial: FaqData }) {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="FAQ"
-        description={`${items.length} pytań — sekcja „Częste pytania" na stronie głównej`}
+        title={`FAQ — ${LINIA_INFO[linia].etykieta}`}
+        description={`${items.length} pytań — sekcja „Częste pytania" na stronie ${LINIA_INFO[linia].path}`}
       />
       <UndoRedoToolbar
         canUndo={history.canUndo}

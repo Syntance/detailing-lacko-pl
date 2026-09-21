@@ -15,6 +15,7 @@ import {
   Building2,
   CalendarClock,
   CircleDollarSign,
+  Disc3,
   HelpCircle,
   Images,
   Search,
@@ -92,6 +93,37 @@ export function PanelNav({
   const insertAt = statsCount === -1 ? 1 : statsCount + 1;
   const items = [...base.slice(0, insertAt), ...custom, ...base.slice(insertAt)];
 
+  // Druga linia usług — osobna zakładka pod kreską, bo wszystko powyżej
+  // (Cennik, CMS, FAQ, SEO…) dotyczy detailingu. W środku te same edytory
+  // podpięte pod dane wulkanizacji (app/magazyn/panel/wulkanizacja).
+  const drugaLinia: NavItem[] = [
+    {
+      href: `${panel}/wulkanizacja`,
+      label: "Wulkanizacja",
+      icon: Disc3,
+      exact: false,
+    },
+  ];
+
+  const renderLink = ({ href, label, icon: Icon, exact }: NavItem) => {
+    const active = exact ? pathname === href : pathname.startsWith(href);
+    return (
+      <Link
+        key={href}
+        href={href}
+        aria-current={active ? "page" : undefined}
+        className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none ${
+          active
+            ? "bg-primary text-primary-foreground"
+            : "text-muted-foreground hover:bg-muted hover:text-foreground"
+        }`}
+      >
+        <Icon className="size-4" aria-hidden />
+        {label}
+      </Link>
+    );
+  };
+
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="min-h-0 flex-1">
@@ -99,26 +131,12 @@ export function PanelNav({
           <SettingsSidebarNav config={config} />
         ) : (
           <nav aria-label="Nawigacja panelu" className="flex flex-col gap-1">
-            {items.map(({ href, label, icon: Icon, exact }) => {
-              const active = exact
-                ? pathname === href
-                : pathname.startsWith(href);
-              return (
-                <Link
-                  key={href}
-                  href={href}
-                  aria-current={active ? "page" : undefined}
-                  className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none ${
-                    active
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                  }`}
-                >
-                  <Icon className="size-4" aria-hidden />
-                  {label}
-                </Link>
-              );
-            })}
+            {items.map(renderLink)}
+            <div
+              role="presentation"
+              className="mx-3 my-2 border-t border-border"
+            />
+            {drugaLinia.map(renderLink)}
           </nav>
         )}
       </div>

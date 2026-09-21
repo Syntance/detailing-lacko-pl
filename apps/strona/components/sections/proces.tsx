@@ -40,7 +40,7 @@ export function Proces() {
     <section id="jak" aria-labelledby="jak-heading" className="scroll-mt-24">
       <div className="mx-auto flex max-w-[1140px] flex-col gap-[34px] px-5 py-16 md:px-6 md:py-[68px]">
         <Reveal className="flex flex-col gap-2.5">
-          <p className="etykieta w-max -rotate-1 rounded-full border-2 border-ink bg-zolty px-3.5 py-1.5">
+          <p className="etykieta w-max -rotate-1 rounded-full border-2 border-ink bg-akcent px-3.5 py-1.5">
             03 · uczciwie
           </p>
           <h2
@@ -54,7 +54,7 @@ export function Proces() {
         <RevealStagger className="grid gap-[22px] sm:grid-cols-2 lg:grid-cols-4">
           {limity.map((limit) => (
             <RevealItem key={limit.title} className="h-full">
-              <div className="cien-zolty-6 flex h-full flex-col gap-3 rounded-2xl border-[3px] border-ink p-[22px]">
+              <div className="cien-akcent-6 flex h-full flex-col gap-3 rounded-2xl border-[3px] border-ink p-[22px]">
                 <div>
                   <h3 className="text-lg font-bold">{limit.title}</h3>
                   {limit.subtitle ? (
@@ -81,7 +81,7 @@ export function Proces() {
           ))}
         </RevealStagger>
 
-        <Reveal className="border-l-4 border-zolty pl-3.5">
+        <Reveal className="border-l-4 border-akcent pl-3.5">
           <p className="text-lg leading-[1.4] font-bold text-pretty">
             Jeśli po zdjęciu zobaczę, że efekt nie będzie wart ceny — odradzę
             i nie wezmę zlecenia.

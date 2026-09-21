@@ -59,7 +59,9 @@ export default async function HomePage() {
   const faq = faqData.items;
 
   return (
-    <>
+    // `data-kartka-strona` = root treści do sklonowania przy przekładaniu
+    // kartki na /wulkanizacja (components/marka/kartka.tsx).
+    <div data-kartka-strona>
       <a
         href="#cennik"
         className="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:left-3 focus:z-50 focus:rounded-lg focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground"
@@ -111,6 +113,6 @@ export default async function HomePage() {
         dostepnosc={dostepnosc}
         siteUrl={siteUrl}
       />
-    </>
+    </div>
   );
 }

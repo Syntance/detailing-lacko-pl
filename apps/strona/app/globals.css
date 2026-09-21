@@ -52,6 +52,17 @@
   /* Tekst akapitowy w kartach (ciemny, ale nie tak mocny jak kreska). */
   --tekst: #2a2d31;
   --zolty: #f8c000;
+  /* Czerwień komiksowa linii Wulkanizacja — dobrana tak, żeby CIEMNY tekst
+     na wypełnieniu dalej przechodził AA (kreska #0e0f11 na #f0392e: ~4,9:1,
+     tyle co na żółtym). Do tekstu/ikon/ringów na białym tle jest wariant
+     „mocny" (~6:1 na bieli) — odpowiednik --primary-strong dla żółtego. */
+  --czerwony: #f0392e;
+  --czerwony-mocny: oklch(0.5 0.19 27);
+  /* Akcent marki — semantyczny token, po którym renderują się sekcje.
+     Strona główna (detailing) = żółty; zakres [data-marka="wulkanizacja"]
+     niżej przepina go na czerwień, bez dotykania komponentów. */
+  --akcent: var(--zolty);
+  --akcent-mocny: var(--primary-strong);
   /* Tło sekcji „Efekty" — ciepła szarość między białymi sekcjami. */
   --piasek: #f4f3f1;
   /* Przerywana linia między pozycjami cennika. */
@@ -66,6 +77,21 @@
   --czerwony-jasny: oklch(0.72 0.19 27);
 }
 
+/**
+ * Linia Wulkanizacja — ta sama makieta, żółty podmieniony na komiksową
+ * czerwień. Zakres to atrybut na wrapperze strony /wulkanizacja, więc każdy
+ * komponent sekcji (cennik, rezerwacja, FAQ, kontakt) renderuje się
+ * w czerwieni bez własnych wariantów — zmienia się wyłącznie token.
+ * --primary idzie w parze, bo skip-link i ringi formularzy siedzą na nim.
+ */
+[data-marka="wulkanizacja"] {
+  --akcent: var(--czerwony);
+  --akcent-mocny: var(--czerwony-mocny);
+  --primary: var(--czerwony);
+  --primary-strong: var(--czerwony-mocny);
+  --ring: var(--czerwony-mocny);
+}
+
 @theme inline {
   /* Makieta używa Space Grotesk wszędzie; `font-serif` zostaje aliasem, żeby
      panel Magazyn i strony prawne nie wymagały przepisywania klas. */
@@ -77,6 +103,9 @@
   --color-ink: var(--ink);
   --color-tekst: var(--tekst);
   --color-zolty: var(--zolty);
+  --color-czerwony: var(--czerwony);
+  --color-akcent: var(--akcent);
+  --color-akcent-mocny: var(--akcent-mocny);
   --color-piasek: var(--piasek);
   --color-kreska: var(--kreska-przerywana);
   --color-noc: var(--noc);
@@ -134,11 +163,11 @@
 @utility cien-7 {
   box-shadow: 7px 7px 0 var(--ink);
 }
-@utility cien-zolty-3 {
-  box-shadow: 3px 3px 0 var(--zolty);
+@utility cien-akcent-3 {
+  box-shadow: 3px 3px 0 var(--akcent);
 }
-@utility cien-zolty-6 {
-  box-shadow: 6px 6px 0 var(--zolty);
+@utility cien-akcent-6 {
+  box-shadow: 6px 6px 0 var(--akcent);
 }
 /* Naklejka: żółty cień przylega do karty, a biała obwódka opływa CAŁĄ sylwetkę
    (kartę razem z cieniem) — czyli biel jest na zewnątrz żółtego, nie na nim.
@@ -156,7 +185,7 @@
    prostokątów: wokół karty (góra/lewo) i wokół cienia (dół/prawo). */
 @utility cien-naklejka {
   box-shadow:
-    7px 7px 0 0 var(--zolty),
+    7px 7px 0 0 var(--akcent),
     0 0 0 7px var(--piasek),
     7px 7px 0 7px var(--piasek);
 }
@@ -178,8 +207,8 @@
 @utility cien-mgla-5 {
   box-shadow: 5px 5px 0 color-mix(in srgb, var(--ink) 25%, transparent);
 }
-@utility cien-zolty-mgla-5 {
-  box-shadow: 5px 5px 0 color-mix(in srgb, var(--zolty) 30%, transparent);
+@utility cien-akcent-mgla-5 {
+  box-shadow: 5px 5px 0 color-mix(in srgb, var(--akcent) 30%, transparent);
 }
 
 @layer base {
@@ -198,7 +227,7 @@
   }
 
   ::selection {
-    background: rgb(248 192 0 / 0.28);
+    background: color-mix(in srgb, var(--akcent) 28%, transparent);
   }
 }
 
@@ -341,5 +370,132 @@
   .reveal-item {
     opacity: 1;
     transform: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Przekładanie kartki między liniami usług (/ ↔ /wulkanizacja).
+
+   Scena (`.kartka-scena`, stała, nad wszystkim) z warstwami-klonami stron —
+   patrz components/marka/kartka.tsx. Kartka nie obraca się jak sztywna deska
+   (poprzednie podejście), tylko ZAGINA SIĘ jak papier w komiksie: linia
+   zagięcia sunie po przekątnej, część arkusza za nią jest odbita na drugą
+   stronę i pokazuje REWERS (papier z cieniowaniem), a spod spodu wychodzi
+   druga strona. Geometrię (wielokąty `clip-path`, macierz odbicia, gradient
+   rewersu) liczy JS co klatkę — tutaj zostaje tylko układ warstw.
+
+   "dalej" = detailing → wulkanizacja (klon starej zagina się nad żywą nową),
+   "wstecz" = nowa rozprostowuje się z lewej nad klonem starej.
+--------------------------------------------------------------------------- */
+:root {
+  /* Czas zaginania. Czyta go JS (components/marka/kartka.tsx), więc tempo
+     przejścia ustawia się tutaj, razem z resztą stylu — i da się je spowolnić
+     przy oglądaniu klatek. Zapis w ms albo s. */
+  --kartka-czas: 1250ms;
+}
+
+.kartka-scena {
+  position: fixed;
+  inset: 0;
+  /* Nad banerem cookies (9999) — na czas przejścia nic nie ma prawa wystawać. */
+  z-index: 10050;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* Warstwa = klon strony. `overflow: hidden` robi z niej kontener przewijania,
+   więc `scrollTop` (ustawiany z JS) odtwarza scroll, a sticky nagłówek klonu
+   przykleja się do góry warstwy jak w żywej stronie. Tło jawne, bo strona
+   nie ma własnego — inaczej przez kartkę prześwitywałoby to, co pod spodem. */
+.kartka-warstwa {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: var(--background);
+}
+
+/* Klon nie żyje: żadnych animacji wejścia (hero-enter startowałby od
+   opacity 0), a sekcje `.reveal`, których IntersectionObserver jeszcze nie
+   odsłonił, mają być widoczne — do końca lotu żywa strona i tak je odsłoni. */
+.kartka-warstwa * {
+  animation: none !important;
+  transition: none !important;
+}
+.kartka-warstwa .reveal,
+.kartka-warstwa .reveal-item {
+  opacity: 1 !important;
+  transform: none !important;
+}
+/* Kliknięty lockup był w stanie hover (wyprostowany, pełna nieprzezroczystość)
+   — klon nie ma hovera, więc bez tej reguły nagłówek „skakałby" w chwili
+   zamrożenia ekranu, zanim kartka ruszy. */
+.kartka-warstwa .marka-karta[data-aktywna="false"] {
+  opacity: 1;
+  transform: perspective(700px) rotateY(0deg) translateY(-2px);
+}
+
+/* Strona pod spodem (tylko przy „wstecz" — przy „dalej" jest nią żywy DOM). */
+.kartka-warstwa[data-rola="spod"] {
+  z-index: 1;
+}
+/* Zaginany arkusz: `clip-path` obcina go do części LEŻĄCEJ PŁASKO (reszta
+   jest odbita i rysuje ją `.kartka-rewers`). Wielokąt przeliczany co klatkę. */
+.kartka-warstwa[data-rola="arkusz"] {
+  z-index: 2;
+  will-change: clip-path;
+}
+
+/* Rewers — spód zaginanego narożnika. Ten sam wielokąt co część zagięta, ale
+   odbity `matrix(...)` względem linii zagięcia, więc krawędzie stykają się
+   z arkuszem co do piksela. Tło to gradient papieru liczony w JS (ciemno przy
+   zgięciu → prześwit w środku → lekki cień na krawędzi), a `drop-shadow` idzie
+   za kształtem wielokąta i kładzie cień na odsłoniętej stronie. */
+.kartka-rewers {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  /* Macierz odbicia z JS jest liczona w układzie strony (0,0 = lewy górny róg
+     okna). Domyślne `50% 50%` dokładałoby do niej przesunięcie o wektor
+     środka i rewers lądowałby po złej stronie zagięcia. */
+  transform-origin: 0 0;
+  will-change: clip-path, transform;
+  filter: drop-shadow(0 2px 3px rgb(14 15 17 / 0.22))
+    drop-shadow(0 14px 32px rgb(14 15 17 / 0.3));
+}
+
+/* ---------------------------------------------------------------------------
+   Przełącznik marek w nagłówku: dwa lockupy (sygnet + nazwa, bez ramek —
+   wygląd jak dotychczasowe logo) po obu stronach ukośnika-grzbietu, jak
+   rozłożony komiks. Aktywna kartka leży płasko; nieaktywna jest odchylona
+   w głąb (rotateY w stronę grzbietu) i przygaszona — najazd albo fokus
+   prostuje ją i unosi, zapowiadając przełożenie kartki.
+   Kąt spoczynku podaje inline `--karta-kat` (lewa +, prawa −).
+--------------------------------------------------------------------------- */
+.marka-karta {
+  --karta-kat-teraz: var(--karta-kat, 0deg);
+  transform: perspective(700px) rotateY(var(--karta-kat-teraz)) translateY(0);
+  transition:
+    transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.35s ease;
+}
+.marka-karta[data-aktywna="true"] {
+  --karta-kat-teraz: 0deg;
+}
+.marka-karta[data-aktywna="false"] {
+  opacity: 0.62;
+}
+.marka-karta[data-aktywna="false"]:hover,
+.marka-karta[data-aktywna="false"]:focus-visible {
+  --karta-kat-teraz: 0deg;
+  opacity: 1;
+  transform: perspective(700px) rotateY(0deg) translateY(-2px);
+}
+.marka-karta[data-aktywna="false"]:active {
+  transform: perspective(700px) rotateY(0deg) translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marka-karta {
+    transition: none;
   }
 }

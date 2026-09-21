@@ -33,7 +33,7 @@ function Ciastko() {
           cx="22"
           cy="22"
           r="18"
-          fill="var(--zolty)"
+          fill="var(--akcent)"
           stroke="var(--ink)"
           strokeWidth="3"
         />
@@ -72,7 +72,7 @@ function Klawisz({
       type="button"
       onClick={onClick}
       className={`cien-3 inline-flex min-h-11 items-center justify-center rounded-xl border-[3px] border-ink px-4 py-2.5 text-[15px] font-bold transition-transform hover:-translate-y-0.5 focus-visible:ring-3 focus-visible:ring-ink/40 focus-visible:outline-none active:translate-y-0 motion-reduce:transition-none ${
-        glowny ? "bg-zolty" : "bg-background"
+        glowny ? "bg-akcent" : "bg-background"
       }`}
     >
       {children}
@@ -101,7 +101,7 @@ function ConsentCheckbox({
       // wyglądu kwadratu — sam kwadrat ma 24px, czyli minimum WCAG 2.2, a to
       // za mało na wygodne trafienie kciukiem.
       className={`relative mt-0.5 inline-flex size-6 shrink-0 items-center justify-center rounded-md border-[3px] border-ink transition-colors before:absolute before:-inset-2.5 before:content-[''] focus-visible:ring-3 focus-visible:ring-ink/40 focus-visible:outline-none ${
-        checked ? "bg-zolty" : "bg-background hover:bg-piasek"
+        checked ? "bg-akcent" : "bg-background hover:bg-piasek"
       }`}
     >
       {checked ? (
@@ -247,7 +247,7 @@ export function CookieConsent() {
                         <Link
                           href={config.privacyPolicyHref}
                           prefetch={false}
-                          className="font-semibold text-ink underline decoration-zolty decoration-[3px] underline-offset-2 hover:decoration-ink focus-visible:ring-3 focus-visible:ring-ink/40 focus-visible:outline-none"
+                          className="font-semibold text-ink underline decoration-akcent decoration-[3px] underline-offset-2 hover:decoration-ink focus-visible:ring-3 focus-visible:ring-ink/40 focus-visible:outline-none"
                         >
                           Polityka prywatności
                         </Link>
@@ -290,7 +290,7 @@ export function CookieConsent() {
                       nazwa="Niezbędne"
                       opis="Wymagane do działania strony i bezpieczeństwa. Nie można wyłączyć."
                       kontrolka={
-                        <span className="etykieta-sm mt-1 rounded-full bg-ink px-2.5 py-[5px] whitespace-nowrap text-zolty">
+                        <span className="etykieta-sm mt-1 rounded-full bg-ink px-2.5 py-[5px] whitespace-nowrap text-akcent">
                           zawsze aktywne
                         </span>
                       }

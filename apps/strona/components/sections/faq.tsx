@@ -16,7 +16,7 @@ export function Faq({ items }: { items: FaqItem[] }) {
     <section
       id="faq"
       aria-labelledby="faq-heading"
-      className="kropki scroll-mt-24 border-t-[3px] border-ink bg-zolty"
+      className="kropki scroll-mt-24 border-t-[3px] border-ink bg-akcent"
     >
       <div className="mx-auto flex max-w-[900px] flex-col gap-[30px] px-5 py-16 md:px-6 md:py-[68px]">
         <Reveal>

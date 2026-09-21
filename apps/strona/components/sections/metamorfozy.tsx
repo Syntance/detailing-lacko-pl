@@ -38,7 +38,7 @@ function Plakietka({ tekst, akcent }: { tekst: string; akcent: boolean }) {
     <span
       aria-hidden
       className={`etykieta-sm pointer-events-none absolute top-2.5 left-2.5 max-w-[calc(100%-20px)] truncate rounded-full border-2 border-ink px-[9px] py-1 ${
-        akcent ? "bg-zolty" : "bg-background"
+        akcent ? "bg-akcent" : "bg-background"
       }`}
     >
       {tekst}
@@ -208,7 +208,7 @@ export function Metamorfozy({ data }: { data: MetamorfozyData }) {
     >
       <div className="mx-auto flex max-w-[1140px] flex-col gap-[34px] px-5 py-16 md:px-6 md:py-[68px]">
         <Reveal className="flex flex-col gap-2.5">
-          <p className="etykieta w-max rotate-[1.5deg] rounded-full border-2 border-ink bg-zolty px-3.5 py-1.5">
+          <p className="etykieta w-max rotate-[1.5deg] rounded-full border-2 border-ink bg-akcent px-3.5 py-1.5">
             02 · efekty
           </p>
           <h2
@@ -275,7 +275,7 @@ export function Metamorfozy({ data }: { data: MetamorfozyData }) {
                 type="button"
                 onClick={close}
                 aria-label="Zamknij podgląd"
-                className="inline-flex size-11 shrink-0 items-center justify-center rounded-full border-[3px] border-ink transition-colors hover:bg-zolty focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+                className="inline-flex size-11 shrink-0 items-center justify-center rounded-full border-[3px] border-ink transition-colors hover:bg-akcent focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
               >
                 <X className="size-5" aria-hidden />
               </button>

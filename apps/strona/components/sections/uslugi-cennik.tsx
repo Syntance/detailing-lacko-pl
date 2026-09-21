@@ -8,8 +8,9 @@ import {
   type CennikData,
   type CennikItem,
 } from "@/lib/cennik";
+import type { KontaktData } from "@/lib/site";
 import { Reveal, RevealItem, RevealStagger } from "@/components/motion/reveal";
-import { BookingLink } from "./phone-link";
+import { BookingLink, PhoneLink } from "./phone-link";
 
 /**
  * Cennik 1:1 z makietą „kreskówka": karty kategorii z twardą kreską i
@@ -23,14 +24,25 @@ import { BookingLink } from "./phone-link";
  */
 
 /**
- * Pakiety idą do czarnego pasa POD kartami kategorii (nie jako czwarta
- * kolumna) — to podsumowanie oferty po przejrzeniu pełnego cennika: całe auto
- * w jednej wizycie.
+ * Układ sekcji per linia usług: które kategorie z panelu są kartami (i w jakiej
+ * kolejności), która jest filarem oferty (kolorowy nagłówek + cień w akcencie),
+ * która idzie do czarnego pasa pakietów i jakie naklejki narzędzi dostają
+ * karty. Sam komponent jest wspólny dla detailingu i wulkanizacji — różni się
+ * wyłącznie danymi (cennik z osobnego blobu) i tym układem; kolory bierze
+ * z tokenu `--akcent`, który strona /wulkanizacja przepina na czerwień.
  */
-const PAKIETY_CATEGORY_ID = "pakiety";
-
-/** Kolejność kolumn = kolejność z makiety (Wnętrze jako filar oferty). */
-const CARD_CATEGORY_IDS = ["wnetrze", "zewnatrz", "polerowanie-korekta"];
+export type UkladCennika = {
+  /** Kolejność kart z makiety; kategorie dodane w panelu lecą za nimi. */
+  kartyKategorii: readonly string[];
+  /** Kategoria-filar oferty. */
+  filar: string;
+  /**
+   * Pakiety idą do czarnego pasa POD kartami kategorii (nie jako czwarta
+   * kolumna) — to podsumowanie oferty po przejrzeniu pełnego cennika.
+   */
+  pakiety: string;
+  naklejki: Record<string, Naklejka>;
+};
 
 function stripBullet(name: string): string {
   return name.replace(/^•\s*/, "");
@@ -150,25 +162,24 @@ function CenaOsobno({
  * w źródle, żeby po przeskalowaniu dać na ekranie te same ~2,7 px. Liczone
  * są więc z docelowej szerokości wyświetlania, nie z szerokości pliku.
  */
-const NAKLEJKI: Record<
-  string,
-  {
-    src: string;
-    width: number;
-    height: number;
-    alt: string;
-    szerokosc: string;
-    /**
-     * Maksymalna szerokość WYŚWIETLANIA (nie pliku) — z niej next/image liczy
-     * srcset. Musi iść w parze z `szerokosc`: zaniżona da rozmyty raster,
-     * zawyżona pobiera nadmiarowe piksele.
-     */
-    sizes: string;
-    obrot: string;
-    /** Dodatkowe przesunięcie względem domyślnego rogu — `translate-x/y`. */
-    przesuniecie: string;
-  }
-> = {
+type Naklejka = {
+  src: string;
+  width: number;
+  height: number;
+  alt: string;
+  szerokosc: string;
+  /**
+   * Maksymalna szerokość WYŚWIETLANIA (nie pliku) — z niej next/image liczy
+   * srcset. Musi iść w parze z `szerokosc`: zaniżona da rozmyty raster,
+   * zawyżona pobiera nadmiarowe piksele.
+   */
+  sizes: string;
+  obrot: string;
+  /** Dodatkowe przesunięcie względem domyślnego rogu — `translate-x/y`. */
+  przesuniecie: string;
+};
+
+const NAKLEJKI_DETAILING: Record<string, Naklejka> = {
   wnetrze: {
     src: "/brand/odkurzacz.png",
     width: 1547,
@@ -199,6 +210,64 @@ const NAKLEJKI: Record<
     obrot: "rotate-[30deg]",
     przesuniecie: "",
   },
+};
+
+/**
+ * Naklejki linii Wulkanizacja — SVG rysowane ręcznie w tym samym języku
+ * (koło, klucz krzyżakowy, manometr), obwódki wypalone w pliku. Wszystkie
+ * niemal kwadratowe, więc dostają tę samą szerokość co sygnet lancy (96–112 px).
+ */
+const NAKLEJKI_WULKANIZACJA: Record<string, Naklejka> = {
+  // Tytuły kart wulkanizacji są dłuższe niż w detailingu („Wymiana
+  // i wyważanie", „Przechowywanie i koła"), więc naklejki wiszą bardziej NA
+  // ZEWNĄTRZ narożnika (mniejsze cofnięcie w lewo) i są o stopień mniejsze —
+  // inaczej zasłaniały ostatnie słowo nagłówka.
+  wymiana: {
+    src: "/brand/wulk-kolo-naklejka.svg",
+    width: 160,
+    height: 160,
+    alt: "Koło z oponą — przekładka i wyważanie",
+    szerokosc: "w-20 sm:w-24",
+    sizes: "96px",
+    obrot: "-rotate-[10deg]",
+    przesuniecie: "-translate-x-[6px] -translate-y-7",
+  },
+  naprawa: {
+    src: "/brand/wulk-klucz-naklejka.svg",
+    width: 200,
+    height: 200,
+    alt: "Klucz krzyżakowy — naprawa i serwis opon",
+    szerokosc: "w-20 sm:w-24",
+    sizes: "96px",
+    obrot: "rotate-0",
+    przesuniecie: "-translate-x-[4px] -translate-y-8",
+  },
+  kola: {
+    src: "/brand/wulk-manometr-naklejka.svg",
+    width: 200,
+    height: 200,
+    alt: "Manometr — ciśnienie w kołach",
+    szerokosc: "w-20 sm:w-24",
+    sizes: "96px",
+    obrot: "rotate-[12deg]",
+    przesuniecie: "-translate-x-[4px] -translate-y-8",
+  },
+};
+
+/** Kolejność kolumn = kolejność z makiety (Wnętrze jako filar oferty). */
+export const UKLAD_CENNIKA_DETAILING: UkladCennika = {
+  kartyKategorii: ["wnetrze", "zewnatrz", "polerowanie-korekta"],
+  filar: "wnetrze",
+  pakiety: "pakiety",
+  naklejki: NAKLEJKI_DETAILING,
+};
+
+/** Wulkanizacja: wymiana jako filar, pakiety sezonowe w czarnym pasie. */
+export const UKLAD_CENNIKA_WULKANIZACJA: UkladCennika = {
+  kartyKategorii: ["wymiana", "naprawa", "kola"],
+  filar: "wymiana",
+  pakiety: "sezonowe",
+  naklejki: NAKLEJKI_WULKANIZACJA,
 };
 
 /**
@@ -376,7 +445,7 @@ function PakietPozycja({
         <span className="min-w-0 text-[15px] font-semibold">
           {stripBullet(item.name)}
         </span>
-        <span className="text-right text-lg font-bold text-balance text-zolty tabular-nums">
+        <span className="text-right text-lg font-bold text-balance text-akcent tabular-nums">
           <CenaOsobno kwota={maKwote(item) ? item.compareAtPrice : 0} ciemne />
           {formatItemPrice(item)}
           {maKwote(item) ? <DopisekPodatek podatek={podatek} ciemne /> : null}
@@ -404,7 +473,7 @@ function PakietPozycja({
               <dt className="text-[13px] leading-[1.4] text-noc-szary">
                 {v.label}
               </dt>
-              <dd className="text-right text-[13px] font-bold whitespace-nowrap text-zolty tabular-nums">
+              <dd className="text-right text-[13px] font-bold whitespace-nowrap text-akcent tabular-nums">
                 <CenaOsobno
                   kwota={maKwote(item) ? v.compareAtPrice : 0}
                   ciemne
@@ -420,7 +489,7 @@ function PakietPozycja({
       {item.timeLabel || item.popular ? (
         <span className="etykieta-sm flex flex-wrap items-center gap-2">
           {item.popular ? (
-            <span className="rounded-full bg-zolty px-2 py-[3px] text-ink">
+            <span className="rounded-full bg-akcent px-2 py-[3px] text-ink">
               najczęściej wybierane
             </span>
           ) : null}
@@ -433,7 +502,20 @@ function PakietPozycja({
   );
 }
 
-export function UslugiCennik({ cennik }: { cennik: CennikData }) {
+export function UslugiCennik({
+  cennik,
+  uklad = UKLAD_CENNIKA_DETAILING,
+  kontaktCta,
+}: {
+  cennik: CennikData;
+  uklad?: UkladCennika;
+  /**
+   * Strona bez rezerwacji online (wulkanizacja): CTA w czarnym pasie dzwoni
+   * zamiast przewijać do widgetu terminów, którego na tej stronie nie ma.
+   * Treść przycisku dalej pochodzi z panelu (Ustawienia sekcji).
+   */
+  kontaktCta?: Pick<KontaktData, "phoneE164" | "phoneDisplay">;
+}) {
   const categories = cennik.categories.filter((c) => !c.disabled);
   /**
    * Ukrycie KATEGORII w panelu („Widoczna na stronie") ukrywa też wszystkie jej
@@ -467,11 +549,11 @@ export function UslugiCennik({ cennik }: { cennik: CennikData }) {
   // Kolumny: najpierw kategorie z makiety w jej kolejności, potem ewentualne
   // dodane w panelu — żadna nie znika ze strony po edycji.
   const cardCategories = [
-    ...CARD_CATEGORY_IDS.map((id) =>
-      categories.find((c) => c.id === id),
-    ).filter((c): c is NonNullable<typeof c> => Boolean(c)),
+    ...uklad.kartyKategorii
+      .map((id) => categories.find((c) => c.id === id))
+      .filter((c): c is NonNullable<typeof c> => Boolean(c)),
     ...categories.filter(
-      (c) => c.id !== PAKIETY_CATEGORY_ID && !CARD_CATEGORY_IDS.includes(c.id),
+      (c) => c.id !== uklad.pakiety && !uklad.kartyKategorii.includes(c.id),
     ),
   ];
 
@@ -479,9 +561,9 @@ export function UslugiCennik({ cennik }: { cennik: CennikData }) {
   // znaczy „kategoria wyłączona w panelu" — i wtedy czarny pas w ogóle nie
   // wchodzi do drzewa (warunek przy renderze), zamiast lecieć na fallbackowym
   // tytule „Pakiety" nad pozycjami, których nie powinno tam być.
-  const pakietyKategoria = categories.find((c) => c.id === PAKIETY_CATEGORY_ID);
+  const pakietyKategoria = categories.find((c) => c.id === uklad.pakiety);
   const pakiety = items
-    .filter((item) => item.categoryId === PAKIETY_CATEGORY_ID)
+    .filter((item) => item.categoryId === uklad.pakiety)
     .sort((a, b) => a.order - b.order);
 
   return (
@@ -501,7 +583,7 @@ export function UslugiCennik({ cennik }: { cennik: CennikData }) {
                 zabierała numeracji sekcji pierwszeństwa. Treść z panelu;
                 puste pole = zostaje sam badge sekcji. */}
             <div className="flex flex-wrap items-center gap-2.5">
-              <p className="etykieta w-max -rotate-[1.5deg] rounded-full border-2 border-ink bg-zolty px-3.5 py-1.5">
+              <p className="etykieta w-max -rotate-[1.5deg] rounded-full border-2 border-ink bg-akcent px-3.5 py-1.5">
                 01 · cennik
               </p>
               {plakietkaPodatek ? (
@@ -518,7 +600,7 @@ export function UslugiCennik({ cennik }: { cennik: CennikData }) {
             </h2>
           </div>
           {cennik.settings.subheading ? (
-            <p className="max-w-[34ch] border-l-4 border-zolty pl-3.5 text-[15px] leading-[1.5] font-medium text-pretty">
+            <p className="max-w-[34ch] border-l-4 border-akcent pl-3.5 text-[15px] leading-[1.5] font-medium text-pretty">
               {cennik.settings.subheading}
             </p>
           ) : null}
@@ -530,8 +612,8 @@ export function UslugiCennik({ cennik }: { cennik: CennikData }) {
               .filter((item) => item.categoryId === category.id)
               .sort((a, b) => a.order - b.order);
             if (!rows.length) return null;
-            const filar = category.id === "wnetrze";
-            const naklejka = NAKLEJKI[category.id];
+            const filar = category.id === uklad.filar;
+            const naklejka = uklad.naklejki[category.id];
             return (
               // relative: kotwica dla naklejki narzędzia — SIBLING <article>,
               // nie jego dziecko, bo <article> ma overflow-hidden (potrzebne
@@ -542,12 +624,12 @@ export function UslugiCennik({ cennik }: { cennik: CennikData }) {
               <RevealItem key={category.id} className="relative">
                 <article
                   className={`overflow-hidden rounded-2xl border-[3px] border-ink bg-background ${
-                    filar ? "cien-zolty-6" : "cien-6"
+                    filar ? "cien-akcent-6" : "cien-6"
                   }`}
                 >
                   <div
                     className={`flex items-center gap-3 border-b-[3px] border-ink px-5 py-[18px] ${
-                      filar ? "bg-zolty" : ""
+                      filar ? "bg-akcent" : ""
                     }`}
                   >
                     <h3 className="text-xl font-bold">{category.name}</h3>
@@ -594,10 +676,10 @@ export function UslugiCennik({ cennik }: { cennik: CennikData }) {
 
         {pakietyKategoria && pakiety.length ? (
           <Reveal>
-            <div className="cien-zolty-6 flex flex-col gap-[22px] rounded-2xl border-[3px] border-ink bg-ink px-[26px] py-6 text-background">
+            <div className="cien-akcent-6 flex flex-col gap-[22px] rounded-2xl border-[3px] border-ink bg-ink px-[26px] py-6 text-background">
               <div className="flex flex-wrap items-end justify-between gap-5">
                 <div className="flex flex-col gap-1.5">
-                  <p className="etykieta-sm text-zolty">pakiety</p>
+                  <p className="etykieta-sm text-akcent">pakiety</p>
                   <h3 className="text-[22px] leading-[1.1] font-bold">
                     {pakietyKategoria.name}
                   </h3>
@@ -607,12 +689,23 @@ export function UslugiCennik({ cennik }: { cennik: CennikData }) {
                     </p>
                   ) : null}
                 </div>
-                <BookingLink
-                  section="cennik"
-                  className="rounded-full border-[3px] border-zolty bg-zolty px-[22px] py-[13px] text-[15px] font-bold whitespace-nowrap text-ink focus-visible:ring-3 focus-visible:ring-background/60 focus-visible:outline-none"
-                >
-                  {cennik.settings.noteCtaLabel}
-                </BookingLink>
+                {kontaktCta ? (
+                  <PhoneLink
+                    phoneE164={kontaktCta.phoneE164}
+                    section="cennik"
+                    className="rounded-full border-[3px] border-akcent bg-akcent px-[22px] py-[13px] text-[15px] font-bold whitespace-nowrap text-ink focus-visible:ring-3 focus-visible:ring-background/60 focus-visible:outline-none"
+                    ariaLabel={`${cennik.settings.noteCtaLabel.replace(/\s*→\s*$/, "")} — zadzwoń: ${kontaktCta.phoneDisplay}`}
+                  >
+                    {cennik.settings.noteCtaLabel}
+                  </PhoneLink>
+                ) : (
+                  <BookingLink
+                    section="cennik"
+                    className="rounded-full border-[3px] border-akcent bg-akcent px-[22px] py-[13px] text-[15px] font-bold whitespace-nowrap text-ink focus-visible:ring-3 focus-visible:ring-background/60 focus-visible:outline-none"
+                  >
+                    {cennik.settings.noteCtaLabel}
+                  </BookingLink>
+                )}
               </div>
               {/* Kolumny CSS, nie grid: w gridzie oba pola jednego wiersza
                   mają wspólną wysokość, więc pakiet z trzema wariantami

@@ -6,14 +6,21 @@ import {
   DEFAULT_CENNIK,
   type CennikData,
 } from "./cennik";
+import { DEFAULT_CENNIK_WULKANIZACJA } from "./cennik-wulkanizacja";
 import {
   galeriaDataSchema,
   DEFAULT_GALERIA,
   type GaleriaData,
 } from "./galeria";
 import { seoDataSchema, DEFAULT_SEO, type SeoData } from "./seo";
+import {
+  seoStronySchema,
+  DEFAULT_SEO_WULKANIZACJA,
+  type SeoStrony,
+} from "./seo-wulkanizacja";
 import { kontaktSchema, DEFAULT_KONTAKT, type KontaktData } from "./site";
 import { faqDataSchema, DEFAULT_FAQ, type FaqData } from "./faq";
+import { DEFAULT_FAQ_WULKANIZACJA } from "./faq-wulkanizacja";
 import {
   metamorfozyDataSchema,
   DEFAULT_METAMORFOZY,
@@ -27,6 +34,12 @@ export const BLOB_KEYS = {
   metamorfozy: "metamorfozy",
   seo: "seo",
   faq: "faq",
+  // Linia Wulkanizacja: ten sam model danych, osobne bloby — cennik, FAQ i SEO
+  // strony różnią się w całości, a kontakt i godziny pracy są wspólne (jeden
+  // warsztat). Klucze z sufiksem, żeby stare bloby detailingu zostały nietknięte.
+  cennikWulkanizacja: "cennik-wulkanizacja",
+  faqWulkanizacja: "faq-wulkanizacja",
+  seoWulkanizacja: "seo-wulkanizacja",
 } as const;
 
 export async function getCennik(): Promise<CennikData> {
@@ -35,6 +48,18 @@ export async function getCennik(): Promise<CennikData> {
 
 export async function saveCennik(data: CennikData): Promise<void> {
   await writeBlob(BLOB_KEYS.cennik, data);
+}
+
+export async function getCennikWulkanizacja(): Promise<CennikData> {
+  return readBlob(
+    BLOB_KEYS.cennikWulkanizacja,
+    cennikDataSchema,
+    DEFAULT_CENNIK_WULKANIZACJA,
+  );
+}
+
+export async function saveCennikWulkanizacja(data: CennikData): Promise<void> {
+  await writeBlob(BLOB_KEYS.cennikWulkanizacja, data);
 }
 
 export async function getGaleria(): Promise<GaleriaData> {
@@ -61,6 +86,18 @@ export async function saveSeo(data: SeoData): Promise<void> {
   await writeBlob(BLOB_KEYS.seo, data);
 }
 
+export async function getSeoWulkanizacja(): Promise<SeoStrony> {
+  return readBlob(
+    BLOB_KEYS.seoWulkanizacja,
+    seoStronySchema,
+    DEFAULT_SEO_WULKANIZACJA,
+  );
+}
+
+export async function saveSeoWulkanizacja(data: SeoStrony): Promise<void> {
+  await writeBlob(BLOB_KEYS.seoWulkanizacja, data);
+}
+
 export async function getMetamorfozy(): Promise<MetamorfozyData> {
   return readBlob(
     BLOB_KEYS.metamorfozy,
@@ -79,4 +116,16 @@ export async function getFaq(): Promise<FaqData> {
 
 export async function saveFaq(data: FaqData): Promise<void> {
   await writeBlob(BLOB_KEYS.faq, data);
+}
+
+export async function getFaqWulkanizacja(): Promise<FaqData> {
+  return readBlob(
+    BLOB_KEYS.faqWulkanizacja,
+    faqDataSchema,
+    DEFAULT_FAQ_WULKANIZACJA,
+  );
+}
+
+export async function saveFaqWulkanizacja(data: FaqData): Promise<void> {
+  await writeBlob(BLOB_KEYS.faqWulkanizacja, data);
 }

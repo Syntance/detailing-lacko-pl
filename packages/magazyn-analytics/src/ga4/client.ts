@@ -1,12 +1,14 @@
 import "server-only";
 
 import { BetaAnalyticsDataClient } from "@google-analytics/data";
+import { getMagazynAnalyticsConfig } from "../configure";
 import { analyticsEnv } from "../env";
 import type {
 	AnalyticsKpi,
 	ChannelRow,
 	DailyPoint,
 	Ga4AnalyticsSlice,
+	SegmentRow,
 	TopPageRow,
 } from "../types";
 
@@ -56,6 +58,12 @@ function buildKpi(metrics: {
 	};
 }
 
+/** Ścieżka GA4 bez query i bez końcowego ukośnika (poza samym „/"). */
+function normalizePath(path: string): string {
+	const bare = path.split("?")[0] ?? "/";
+	return bare.length > 1 ? bare.replace(/\/+$/, "") : bare;
+}
+
 export async function fetchGa4Analytics(rangeDays: number): Promise<Ga4AnalyticsSlice> {
 	if (!analyticsEnv.ga4Configured) {
 		return {
@@ -70,41 +78,49 @@ export async function fetchGa4Analytics(rangeDays: number): Promise<Ga4Analytics
 		return { status: "disconnected", reason: "Brak konfiguracji GA4." };
 	}
 
+	const segmentsConfig = getMagazynAnalyticsConfig().segments;
+
 	try {
 		const client = new BetaAnalyticsDataClient({ credentials });
 		const property = `properties/${propertyId}`;
 		const range = dateRange(rangeDays);
 
-		const [baseOverviewReport, purchaseReport, trafficReport, channelsReport, pagesReport] =
-			await Promise.all([
-				client.runReport(
-					{
-						property,
-						dateRanges: [range],
-						metrics: [
-							{ name: "sessions" },
-							{ name: "activeUsers" },
-							{ name: "screenPageViews" },
-							{ name: "purchaseRevenue" },
-						],
-					},
-					{ timeout: FETCH_TIMEOUT_MS },
-				),
-				client.runReport(
-					{
-						property,
-						dateRanges: [range],
-						metrics: [{ name: "eventCount" }],
-						dimensionFilter: {
-							filter: {
-								fieldName: "eventName",
-								stringFilter: { matchType: "EXACT", value: "purchase" },
-							},
+		const [
+			baseOverviewReport,
+			purchaseReport,
+			trafficReport,
+			channelsReport,
+			pagesReport,
+			segmentPagesReport,
+		] = await Promise.all([
+			client.runReport(
+				{
+					property,
+					dateRanges: [range],
+					metrics: [
+						{ name: "sessions" },
+						{ name: "activeUsers" },
+						{ name: "screenPageViews" },
+						{ name: "purchaseRevenue" },
+					],
+				},
+				{ timeout: FETCH_TIMEOUT_MS },
+			),
+			client.runReport(
+				{
+					property,
+					dateRanges: [range],
+					metrics: [{ name: "eventCount" }],
+					dimensionFilter: {
+						filter: {
+							fieldName: "eventName",
+							stringFilter: { matchType: "EXACT", value: "purchase" },
 						},
 					},
-					{ timeout: FETCH_TIMEOUT_MS },
-				),
-				client.runReport(
+				},
+				{ timeout: FETCH_TIMEOUT_MS },
+			),
+			client.runReport(
 				{
 					property,
 					dateRanges: [range],
@@ -136,6 +152,25 @@ export async function fetchGa4Analytics(rangeDays: number): Promise<Ga4Analytics
 				},
 				{ timeout: FETCH_TIMEOUT_MS },
 			),
+			// Podział po segmentach = po ścieżkach stron (GA4 nie zna właściwości
+			// niestandardowych bez rejestracji wymiaru). Jedno zapytanie, agregacja
+			// po naszej stronie.
+			segmentsConfig
+				? client.runReport(
+						{
+							property,
+							dateRanges: [range],
+							dimensions: [{ name: "pagePath" }],
+							metrics: [
+								{ name: "sessions" },
+								{ name: "activeUsers" },
+								{ name: "screenPageViews" },
+							],
+							limit: 200,
+						},
+						{ timeout: FETCH_TIMEOUT_MS },
+					)
+				: Promise.resolve(null),
 		]);
 
 		const baseRow = baseOverviewReport[0]?.rows?.[0];
@@ -190,6 +225,31 @@ export async function fetchGa4Analytics(rangeDays: number): Promise<Ga4Analytics
 				};
 			}) ?? [];
 
+		let segments: SegmentRow[] | undefined;
+		if (segmentsConfig && segmentPagesReport) {
+			const byPath = new Map<string, { sessions: number; users: number; pageviews: number }>();
+			for (const row of segmentPagesReport[0]?.rows ?? []) {
+				const path = normalizePath(row.dimensionValues?.[0]?.value ?? "/");
+				const prev = byPath.get(path) ?? { sessions: 0, users: 0, pageviews: 0 };
+				byPath.set(path, {
+					sessions: prev.sessions + Number(row.metricValues?.[0]?.value ?? 0),
+					users: prev.users + Number(row.metricValues?.[1]?.value ?? 0),
+					pageviews: prev.pageviews + Number(row.metricValues?.[2]?.value ?? 0),
+				});
+			}
+			segments = segmentsConfig.values.map((segment) => {
+				const sum = { sessions: 0, users: 0, pageviews: 0 };
+				for (const path of segment.pagePaths) {
+					const hit = byPath.get(normalizePath(path));
+					if (!hit) continue;
+					sum.sessions += hit.sessions;
+					sum.users += hit.users;
+					sum.pageviews += hit.pageviews;
+				}
+				return { key: segment.key, label: segment.label, ...sum };
+			});
+		}
+
 		return {
 			status: "connected",
 			label: `GA4 · ${propertyId}`,
@@ -203,6 +263,7 @@ export async function fetchGa4Analytics(rangeDays: number): Promise<Ga4Analytics
 			traffic,
 			channels,
 			topPages,
+			...(segments ? { segments, segmentsLabel: segmentsConfig?.label } : {}),
 		};
 	} catch (error) {
 		const message = error instanceof Error ? error.message : "Nieznany błąd GA4";

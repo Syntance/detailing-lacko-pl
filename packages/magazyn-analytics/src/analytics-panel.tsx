@@ -14,7 +14,12 @@ import {
 } from "recharts";
 import { CheckCircle2, CircleOff } from "lucide-react";
 import { Badge, Card, Section, StatTile, formatKwota } from "@moduly/ui";
-import type { AnalyticsDashboardData, AnalyticsKpi, AnalyticsSourceState } from "./types";
+import type {
+	AnalyticsDashboardData,
+	AnalyticsKpi,
+	AnalyticsSourceState,
+	SegmentRow,
+} from "./types";
 
 const CHART_STROKE = "#AF7C61";
 
@@ -134,6 +139,106 @@ function TrafficChart({
 	);
 }
 
+function pct(part: number, total: number): string {
+	if (total <= 0) return "—";
+	return `${Math.round((part / total) * 1000) / 10}%`;
+}
+
+/**
+ * Podział po segmentach (np. linie usług): tabela z ruchem i — gdy źródło
+ * je zna — krokami lejka per segment plus konwersją (ostatni krok / odsłony).
+ * Paski udziału pod nazwą pokazują proporcję odsłon między segmentami.
+ */
+function SegmentsCard({
+	title,
+	source,
+	rows,
+	funnelLabels,
+}: {
+	title: string;
+	source: string;
+	rows: SegmentRow[];
+	funnelLabels?: string[];
+}) {
+	const totalViews = rows.reduce((sum, row) => sum + row.pageviews, 0);
+	const withFunnel = Boolean(funnelLabels?.length) && rows.some((row) => row.funnel?.length);
+	const lastStep = funnelLabels ? funnelLabels.length - 1 : -1;
+
+	return (
+		<Card>
+			<div className="mb-4 flex items-center justify-between gap-2">
+				<h2 className="font-serif text-lg text-foreground">{title}</h2>
+				<Badge tone="neutral">{source}</Badge>
+			</div>
+			<div className="overflow-x-auto">
+				<table className="w-full min-w-[520px] text-sm">
+					<thead>
+						<tr className="text-left text-xs text-muted-foreground">
+							<th className="pb-2 font-medium">Segment</th>
+							<th className="pb-2 text-right font-medium">Odsłony</th>
+							<th className="pb-2 text-right font-medium">Użytkownicy</th>
+							{rows.some((row) => row.sessions != null) ? (
+								<th className="pb-2 text-right font-medium">Sesje</th>
+							) : null}
+							{withFunnel
+								? funnelLabels?.slice(1).map((label) => (
+										<th key={label} className="pb-2 text-right font-medium">
+											{label}
+										</th>
+									))
+								: null}
+							{withFunnel && lastStep > 0 ? (
+								<th className="pb-2 text-right font-medium">Konwersja</th>
+							) : null}
+						</tr>
+					</thead>
+					<tbody>
+						{rows.map((row) => (
+							<tr key={row.key} className="border-t border-border">
+								<td className="py-2 pr-3">
+									<div className="font-medium text-foreground">{row.label}</div>
+									<div className="mt-1 h-1.5 w-32 rounded-full bg-muted">
+										<div
+											className="h-1.5 rounded-full bg-primary"
+											style={{
+												width: totalViews > 0 ? `${Math.min(100, (row.pageviews / totalViews) * 100)}%` : "0%",
+											}}
+										/>
+									</div>
+								</td>
+								<td className="py-2 text-right tabular-nums text-foreground">
+									{row.pageviews.toLocaleString("pl-PL")}
+									<span className="ml-1 text-xs text-muted-foreground">{pct(row.pageviews, totalViews)}</span>
+								</td>
+								<td className="py-2 text-right tabular-nums text-foreground">
+									{(row.users ?? 0).toLocaleString("pl-PL")}
+								</td>
+								{rows.some((r) => r.sessions != null) ? (
+									<td className="py-2 text-right tabular-nums text-foreground">
+										{(row.sessions ?? 0).toLocaleString("pl-PL")}
+									</td>
+								) : null}
+								{withFunnel
+									? funnelLabels?.slice(1).map((label, index) => (
+											<td key={label} className="py-2 text-right tabular-nums text-foreground">
+												{(row.funnel?.[index + 1] ?? 0).toLocaleString("pl-PL")}
+											</td>
+										))
+									: null}
+								{withFunnel && lastStep > 0 ? (
+									<td className="py-2 text-right font-medium tabular-nums text-foreground">
+										{pct(row.funnel?.[lastStep] ?? 0, row.funnel?.[0] ?? row.pageviews)}
+									</td>
+								) : null}
+							</tr>
+						))}
+					</tbody>
+				</table>
+			</div>
+		</Card>
+	);
+}
+
 export type AnalyticsPanelProps = {
 	data: AnalyticsDashboardData;
 	/** Podgląd demo — bez live API. */
@@ -161,6 +266,10 @@ export function AnalyticsPanel({ data, demo = false }: AnalyticsPanelProps) {
 		.filter((source) => source.status !== "connected")
 		.map((source) => source.reason)
 		.filter((reason): reason is string => Boolean(reason));
+
+	const funnel = data.posthog.funnel ?? [];
+	const funnelBadge =
+		funnel.length >= 2 ? `${funnel[0]?.event} → ${funnel[funnel.length - 1]?.event}` : null;
 
 	return (
 		<div className="flex flex-col gap-6">
@@ -218,6 +327,26 @@ export function AnalyticsPanel({ data, demo = false }: AnalyticsPanelProps) {
 				</Card>
 			) : null}
 
+			{/* Podział po segmentach (linie usług) — PostHog ma też lejek per
+			    segment, GA4 tylko ruch po stronach. W widoku „Łącznie" pierwszeństwo
+			    ma PostHog (pełniejszy), a GA4 pokazujemy, gdy PostHoga brak. */}
+			{(tab === "combined" || tab === "posthog") && data.posthog.segments?.length ? (
+				<SegmentsCard
+					title={data.posthog.segmentsLabel ?? "Segmenty"}
+					source="PostHog"
+					rows={data.posthog.segments}
+					funnelLabels={data.posthog.funnelLabels}
+				/>
+			) : null}
+			{(tab === "ga4" || (tab === "combined" && !data.posthog.segments?.length)) &&
+			data.ga4.segments?.length ? (
+				<SegmentsCard
+					title={data.ga4.segmentsLabel ?? "Segmenty"}
+					source="GA4 · wg ścieżki strony"
+					rows={data.ga4.segments}
+				/>
+			) : null}
+
 			<TrafficChart
 				title={tab === "posthog" ? "Odsłony (PostHog $pageview)" : "Sesje / ruch"}
 				points={trafficPoints.map((p) => ({ label: p.label, value: p.value }))}
@@ -262,15 +391,15 @@ export function AnalyticsPanel({ data, demo = false }: AnalyticsPanelProps) {
 				</div>
 			) : null}
 
-			{(tab === "combined" || tab === "posthog") && data.posthog.funnel?.length ? (
+			{(tab === "combined" || tab === "posthog") && funnel.length ? (
 				<Card>
 					<div className="mb-4 flex items-center justify-between gap-2">
-						<h2 className="font-serif text-lg text-foreground">Lejek e-commerce (PostHog)</h2>
-						<Badge tone="brand">product_view → purchase</Badge>
+						<h2 className="font-serif text-lg text-foreground">Lejek konwersji (PostHog)</h2>
+						{funnelBadge ? <Badge tone="brand">{funnelBadge}</Badge> : null}
 					</div>
 					<div className="space-y-3">
-						{data.posthog.funnel.map((step) => (
-							<div key={step.event}>
+						{funnel.map((step) => (
+							<div key={step.event + step.label}>
 								<div className="mb-1 flex justify-between text-sm">
 									<span className="text-foreground">{step.label}</span>
 									<span className="font-medium tabular-nums text-foreground">

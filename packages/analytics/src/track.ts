@@ -5,7 +5,7 @@ import {
 } from "@syntance/analytics-events";
 import { enabled } from "./config";
 import { hasConsent } from "./consent";
-import { withContext } from "./context";
+import { withContext, type TrackExtraContext } from "./context";
 import { sendGa4Event } from "./destinations/ga4";
 import { sendMetaEvent } from "./destinations/meta";
 import { sendPosthogEvent, ensurePosthogOptIn, ensurePosthogOptOut } from "./destinations/posthog";
@@ -13,10 +13,17 @@ import { sendClarityEvent } from "./destinations/clarity";
 
 let currentPathname = "/";
 let currentLocale = "pl-PL";
+/** Kontekst aplikacji dla bieżącej ścieżki (patrz AnalyticsProvider.resolveContext). */
+let currentExtra: TrackExtraContext = {};
 
-export function setTrackContext(pathname: string, locale?: string): void {
+export function setTrackContext(
+	pathname: string,
+	locale?: string,
+	extra?: TrackExtraContext,
+): void {
 	currentPathname = pathname;
 	if (locale) currentLocale = locale;
+	currentExtra = extra ?? {};
 }
 
 export function track<K extends EventKey>(name: K, payload: EventPayloads[K]): void {
@@ -27,6 +34,7 @@ export function track<K extends EventKey>(name: K, payload: EventPayloads[K]): v
 		currentPathname,
 		currentLocale,
 		payload as Record<string, unknown>,
+		currentExtra,
 	);
 
 	if (hasConsent("analytics")) {

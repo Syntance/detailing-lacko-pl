@@ -43,11 +43,27 @@ export type TopEventRow = {
 	count: number;
 };
 
+/**
+ * Wiersz podziału po segmencie (np. linii usług). `funnel` to liczności
+ * kroków lejka w kolejności `funnelLabels` slice'a — PostHog liczy je po
+ * właściwości zdarzenia, GA4 nie ma tu danych (rozdziela tylko ruch).
+ */
+export type SegmentRow = {
+	key: string;
+	label: string;
+	sessions?: number;
+	users?: number;
+	pageviews: number;
+	funnel?: number[];
+};
+
 export type Ga4AnalyticsSlice = AnalyticsSourceState & {
 	kpi?: AnalyticsKpi;
 	traffic?: DailyPoint[];
 	channels?: ChannelRow[];
 	topPages?: TopPageRow[];
+	segments?: SegmentRow[];
+	segmentsLabel?: string;
 };
 
 export type PosthogAnalyticsSlice = AnalyticsSourceState & {
@@ -55,6 +71,10 @@ export type PosthogAnalyticsSlice = AnalyticsSourceState & {
 	traffic?: DailyPoint[];
 	funnel?: FunnelStep[];
 	topEvents?: TopEventRow[];
+	segments?: SegmentRow[];
+	segmentsLabel?: string;
+	/** Etykiety kroków lejka — kolumny tabeli segmentów. */
+	funnelLabels?: string[];
 };
 
 export type AnalyticsDashboardData = {

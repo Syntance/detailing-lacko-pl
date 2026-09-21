@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" width="160" height="160">
+  <!-- Naklejka koła: ten sam sygnet co w nagłówku, z wypaloną obwódką jak
+       naklejki cennika detailingu (czarna kreska → biały pas → grafika). -->
+  <circle cx="80" cy="80" r="76" fill="#0e0f11"/>
+  <circle cx="80" cy="80" r="71" fill="#ffffff"/>
+  <g transform="translate(80 80) scale(1.12) translate(-60 -60)">
+    <circle cx="60" cy="60" r="56" fill="#0e0f11"/>
+    <circle cx="60" cy="60" r="47" fill="none" stroke="#ffffff" stroke-width="5" stroke-dasharray="6.2 8.56" stroke-dashoffset="3"/>
+    <path d="M10.2 41.9 A53 53 0 0 1 33.5 14.1" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="60" cy="60" r="38" fill="#f0392e" stroke="#0e0f11" stroke-width="4"/>
+    <g stroke-linecap="round">
+      <g stroke="#0e0f11" stroke-width="13">
+        <line x1="60" y1="52" x2="60" y2="27"/>
+        <line x1="60" y1="52" x2="60" y2="27" transform="rotate(72 60 60)"/>
+        <line x1="60" y1="52" x2="60" y2="27" transform="rotate(144 60 60)"/>
+        <line x1="60" y1="52" x2="60" y2="27" transform="rotate(216 60 60)"/>
+        <line x1="60" y1="52" x2="60" y2="27" transform="rotate(288 60 60)"/>
+      </g>
+      <g stroke="#ffffff" stroke-width="6">
+        <line x1="60" y1="52" x2="60" y2="27"/>
+        <line x1="60" y1="52" x2="60" y2="27" transform="rotate(72 60 60)"/>
+        <line x1="60" y1="52" x2="60" y2="27" transform="rotate(144 60 60)"/>
+        <line x1="60" y1="52" x2="60" y2="27" transform="rotate(216 60 60)"/>
+        <line x1="60" y1="52" x2="60" y2="27" transform="rotate(288 60 60)"/>
+      </g>
+    </g>
+    <circle cx="60" cy="60" r="11" fill="#ffffff" stroke="#0e0f11" stroke-width="4"/>
+    <circle cx="60" cy="60" r="3.5" fill="#0e0f11"/>
+  </g>
+</svg>

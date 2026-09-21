@@ -44,6 +44,14 @@ export const modulyConfig: ModulyConfig = {
         // własny edytor Magazyn → Galeria; opinie dodamy wraz z sekcją opinii).
         blocks: ["hero", "faq"],
       },
+      {
+        // Linia Wulkanizacja — osobny wiersz `page_content` (zdjęcie hero),
+        // edytowany w Magazyn → Treść → zakładka Wulkanizacja.
+        id: "wulkanizacja",
+        label: "Wulkanizacja",
+        path: "/wulkanizacja",
+        blocks: ["hero", "faq"],
+      },
     ],
     globalBlocks: ["socialLinks", "footerText"],
   },

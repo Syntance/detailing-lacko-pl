@@ -69,13 +69,37 @@ w `apps/strona/.env.local` i uruchom `pnpm migrate` (upsert).
 
 | Treść | Gdzie edytować | Storage |
 |-------|----------------|---------|
-| Hero, FAQ, galeria CMS, opinie | Magazyn → CMS → Strona główna | `page_content` |
-| Cennik (karty, pozycje, nagłówki) | Magazyn → Cennik | `site_blobs.cennik` |
+| Zdjęcie hero detailingu | Magazyn → CMS | `page_content` (`home`) |
+| Cennik detailingu (karty, pozycje, nagłówki) | Magazyn → Cennik | `site_blobs.cennik` |
+| FAQ detailingu | Magazyn → FAQ | `site_blobs.faq` |
+| SEO strony głównej + ustawienia całej witryny (indeksowanie, roboty AI) | Magazyn → SEO | `site_blobs.seo` |
+| Wulkanizacja: cennik | Magazyn → Wulkanizacja → Cennik | `site_blobs.cennik-wulkanizacja` |
+| Wulkanizacja: zdjęcie hero | Magazyn → Wulkanizacja → CMS | `page_content` (`wulkanizacja`) |
+| Wulkanizacja: FAQ | Magazyn → Wulkanizacja → FAQ | `site_blobs.faq-wulkanizacja` |
+| Wulkanizacja: SEO strony (tytuł, opis, obrazek) | Magazyn → Wulkanizacja → SEO | `site_blobs.seo-wulkanizacja` |
 | Zdjęcia galerii realizacji | Magazyn → Galeria | `site_blobs.galeria` |
-| Rezerwacje online (zgłoszenia) | Magazyn → Rezerwacje → Zgłoszenia | `reservations` (tabela) |
+| Rezerwacje online (tylko detailing) | Magazyn → Rezerwacje → Zgłoszenia | `reservations` (tabela) |
 | Dostępność terminów (dni, godziny, sloty, urlopy) | Magazyn → Rezerwacje → Dostępność | `site_blobs.dostepnosc` |
 | Telefon, adres, NIP, obszar dojazdu | Magazyn → Dane firmy | `site_blobs.kontakt` |
 | Definicje formularzy + skrzynka | Magazyn → Formularze | `form_definitions`, `contact_submissions` |
 | Maile transakcyjne | Magazyn → E-maile | `site_settings` |
 
-Strona główna: ISR 10 min + `revalidatePath("/")` przy każdym zapisie z panelu.
+Obie strony (`/` i `/wulkanizacja`): ISR 10 min + `revalidatePath` obu ścieżek
+przy każdym zapisie z panelu. Architektura dwóch linii usług: `docs/adr/002`.
+
+## Linia Wulkanizacja — checklist wdrożenia
+
+Bez migracji bazy: dane wulkanizacji to nowe wiersze w istniejących tabelach
+(`site_blobs`, `page_content`), a do czasu pierwszego zapisu z panelu strona
+czyta domyślne wartości z kodu. Wulkanizacja nie ma rezerwacji online — CTA
+prowadzą do telefonu i do „Wyślij zdjęcie opony".
+
+- [ ] Panel → Wulkanizacja → Cennik: potwierdź kwoty startowe (są propozycją
+      z kodu, `lib/cennik-wulkanizacja.ts`); → FAQ: przejrzyj odpowiedzi;
+      → CMS: wgraj zdjęcie hero (do tego czasu strona pokazuje ilustrację
+      koła); → SEO: pusty opis składa się sam z cen w cenniku.
+- [ ] GA4 → Administracja → Definicje niestandardowe → wymiar zdarzenia
+      `service_line` (zakres: zdarzenie). Bez rejestracji raporty GA4 rozdzielą
+      linie tylko po ścieżce strony; PostHog widzi właściwość od razu.
+- [ ] Wizytówka Google: dopisz kategorię „Serwis opon / wulkanizacja" i link
+      do `https://detailing-lacko.pl/wulkanizacja`.

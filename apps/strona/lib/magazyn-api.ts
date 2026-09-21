@@ -5,10 +5,13 @@ import { NextResponse } from "next/server";
 import type { z } from "zod";
 import { getAdminSessionEmail, requireAdminSessionForPanel } from "./auth";
 import { getPostgresClient } from "./db";
+import { LINIA_INFO, LINIE } from "./linie";
 
 /**
  * Wspólna obsługa PUT dla edytorów panelu (cennik / galeria / kontakt):
- * guard sesji admina → walidacja Zod → zapis → audit log → rewalidacja "/".
+ * guard sesji admina → walidacja Zod → zapis → audit log → rewalidacja
+ * stron obu linii (dane wspólne, jak kontakt czy dostępność, siedzą na obu;
+ * dwie rewalidacje więcej kosztują mniej niż mapa „który blob → która strona").
  *
  * Trzeci parametr typu ZodType (Input=unknown) — schematy z `.default()`
  * przyjmują na wejściu mniej pól, niż zwracają, a payload i tak jest
@@ -66,6 +69,6 @@ export async function handleMagazynPut<T>(
     console.error(`[audit] Zapis audytu ${options.resource}:`, error);
   }
 
-  revalidatePath("/");
+  for (const linia of LINIE) revalidatePath(LINIA_INFO[linia].path);
   return NextResponse.json({ ok: true });
 }

@@ -13,6 +13,7 @@ import type {
   CennikVariant,
 } from "@/lib/cennik";
 import { useMagazynHistory } from "@/hooks/use-magazyn-history";
+import { LINIA_INFO, type Linia } from "@/lib/linie";
 import {
   Checkbox,
   DragHandle,
@@ -80,7 +81,19 @@ function newItem(categoryId: string, order: number): CennikItem {
   };
 }
 
-export function CennikClient({ initial }: { initial: CennikData }) {
+/** Endpoint zapisu per linia — osobne bloby, ten sam edytor. */
+const ENDPOINT: Record<Linia, string> = {
+  detailing: "/api/magazyn/cennik",
+  wulkanizacja: "/api/magazyn/cennik-wulkanizacja",
+};
+
+export function CennikClient({
+  initial,
+  linia = "detailing",
+}: {
+  initial: CennikData;
+  linia?: Linia;
+}) {
   const router = useRouter();
   const [section, setSection] = useState<SectionId>("karty");
   const history = useMagazynHistory<CennikData>(initial);
@@ -94,7 +107,7 @@ export function CennikClient({ initial }: { initial: CennikData }) {
     setPending(true);
     setStatus(null);
     setError(false);
-    const result = await putEditorData("/api/magazyn/cennik", history.state);
+    const result = await putEditorData(ENDPOINT[linia], history.state);
     if (result.ok) {
       setStatus("Cennik zapisany — strona odświeży się w kilka sekund.");
       history.commitSaved();
@@ -137,9 +150,21 @@ export function CennikClient({ initial }: { initial: CennikData }) {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Cennik"
-        description={`${items.length} pozycji · ${categories.length} karty usług — publikowane w sekcji „Usługi i ceny"`}
+        title={`Cennik — ${LINIA_INFO[linia].etykieta}`}
+        description={`${items.length} pozycji · ${categories.length} karty usług — publikowane w sekcji „Usługi i ceny" na stronie ${LINIA_INFO[linia].path}`}
       />
+      {/* Te same opcje co w cenniku detailingu — ale część z nich zasila
+          wyłącznie widget rezerwacji, którego ta linia nie ma. Lepiej to
+          powiedzieć wprost, niż zostawić podpowiedzi „w rezerwacji klient…"
+          bez komentarza. */}
+      {LINIA_INFO[linia].rezerwacjaOnline ? null : (
+        <p className="rounded-xl border border-border bg-card p-4 text-sm text-pretty text-muted-foreground">
+          Ta linia nie ma rezerwacji online — klienci umawiają się telefonicznie.
+          Pola, które zasilają tylko rezerwacje („Czas realizacji (min)”
+          i „Zawiera w cenie”), nie wpływają na stronę i możesz je zostawić
+          puste. Podpowiedzi o rezerwacji przy polach dotyczą detailingu.
+        </p>
+      )}
       <UndoRedoToolbar
         canUndo={history.canUndo}
         canRedo={history.canRedo}

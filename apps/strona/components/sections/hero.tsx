@@ -1,7 +1,7 @@
-import ReactDOM from "react-dom";
-import Image, { getImageProps } from "next/image";
+import Image from "next/image";
 import type { HeroImages } from "@/lib/cms-content";
 import type { KontaktData } from "@/lib/site";
+import { HeroPicture } from "./hero-picture";
 import { BookingLink, PhoneLink } from "./phone-link";
 
 /**
@@ -13,89 +13,9 @@ import { BookingLink, PhoneLink } from "./phone-link";
  * Makieta jest jednym układem desktopowym (grid 1.05fr/.95fr) — poniżej lg
  * kolumny schodzą pod siebie w kolejności z DOM: najpierw copy i CTA, potem
  * karta ze zdjęciem. Zdjęcie w karcie pochodzi z panelu (Magazyn → Treść).
+ * Sam <picture> z art direction i preloadem LCP siedzi w hero-picture.tsx —
+ * wspólny z hero linii Wulkanizacja.
  */
-
-/** Podział art direction — dopełniające się warunki, bez luki i zakładki. */
-const MOBILE_MEDIA = "(max-width: 1023.5px)";
-const DESKTOP_MEDIA = "not all and (max-width: 1023.5px)";
-
-/**
- * `<link rel=preload>` wypisany jako JSX ląduje tam, gdzie stoi w drzewie —
- * czyli w <body>, tuż nad samym <img>, więc nic nie przyspiesza. ReactDOM
- * .preload() wynosi go do <head>, przed cały markup strony.
- */
-function preloadHero(
-  props: { srcSet?: string; sizes?: string; src?: string },
-  media?: string,
-): void {
-  if (!props.srcSet || !props.src) return;
-  ReactDOM.preload(props.src, {
-    as: "image",
-    imageSrcSet: props.srcSet,
-    imageSizes: props.sizes,
-    fetchPriority: "high",
-    ...(media ? { media } : {}),
-  });
-}
-
-/**
- * Zdjęcie hero z art direction: telefon dostaje kadr mobilny, desktop
- * desktopowy — przez <picture> + media query, więc przeglądarka pobiera
- * TYLKO jeden plik. Brak `priority`: `next/image` wystawiłby preload bez
- * media query i ściągnął oba kadry. Preload robimy więc sami, niżej.
- */
-function HeroPicture({
-  images,
-  imgClassName,
-}: {
-  images: HeroImages;
-  imgClassName: string;
-}) {
-  const common = {
-    alt: "Auto pokryte pianą aktywną podczas mycia detailingowego",
-    fill: true as const,
-    quality: 70,
-    // Karta zajmuje 88% prawej kolumny (~460 px), ale kadr jest powiększony
-    // 1,55×, więc prosimy o plik pod ~720 px, żeby zoom nie zmiękł.
-    sizes: "(max-width: 1024px) 88vw, 720px",
-  };
-  const mobile = getImageProps({ ...common, src: images.mobile });
-  const desktop = getImageProps({ ...common, src: images.desktop });
-  const { srcSet: desktopSrcSet, ...imgProps } = desktop.props;
-
-  // Preload LCP-a. Bez niego przeglądarka odkrywa <img> dopiero przy parsowaniu
-  // <body> — a w <head> stoi nad nim komplet preloadowanych fontów, stąd ~410 ms
-  // „opóźnienia ładowania zasobu" w PSI. <link rel=preload> UMIE media query
-  // (wbrew temu, co zakładał poprzedni komentarz w tym pliku), więc telefon
-  // pobiera wyłącznie kadr mobilny, a desktop desktopowy — dokładnie jak
-  // <source> niżej. Gdy panel nie wgrał osobnego kadru pod telefon, oba warianty
-  // to ten sam plik: wtedy jeden preload bez media query (React i tak scaliłby
-  // dwa linki o tym samym imageSrcSet, gubiąc przy tym warunek).
-  preloadHero(desktop.props, images.hasMobile ? DESKTOP_MEDIA : undefined);
-  if (images.hasMobile) preloadHero(mobile.props, MOBILE_MEDIA);
-
-  return (
-    <picture>
-      {/* `sizes` MUSI stać przy <source>: gdy warunek media pasuje, przeglądarka
-          czyta sizes z <source>, a nie z <img>. Bez niego przyjmowała domyślne
-          100vw i na telefonie brała kadr 750 px zamiast 640 px — a od czasu
-          preloadu (który liczy sizes poprawnie) pobierała OBA. */}
-      <source
-        media={MOBILE_MEDIA}
-        srcSet={mobile.props.srcSet ?? mobile.props.src}
-        sizes={mobile.props.sizes}
-      />
-      <img
-        {...imgProps}
-        srcSet={desktopSrcSet}
-        loading="eager"
-        fetchPriority="high"
-        className={imgClassName}
-      />
-    </picture>
-  );
-}
-
 export function Hero({
   images,
   kontakt,
@@ -107,9 +27,9 @@ export function Hero({
     <section
       id="hero"
       aria-label="Detailing Łącko"
-      className="kropki overflow-hidden border-b-[3px] border-ink bg-zolty"
+      className="kropki overflow-hidden border-b-[3px] border-ink bg-akcent"
     >
-      <div className="mx-auto grid max-w-[1140px] items-center gap-10 px-5 pt-12 pb-14 md:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:pt-16 lg:pb-[72px]">
+      <div className="mx-auto grid max-w-[1140px] items-center gap-10 px-5 pt-12 pb-14 md:px-6 md:pb-14 lg:grid-cols-[1.05fr_0.95fr] lg:pt-16 lg:pb-[72px]">
         <div className="flex flex-col gap-[22px]">
           <p className="etykieta hero-enter cien-3 w-max -rotate-2 rounded-full border-2 border-ink bg-background px-4 py-[7px]">
             {kontakt.addressLine} · {kontakt.postalCode} {kontakt.city}
@@ -163,6 +83,7 @@ export function Hero({
             <div className="relative aspect-[4/3] overflow-hidden rounded-[10px]">
               <HeroPicture
                 images={images}
+                alt="Auto pokryte pianą aktywną podczas mycia detailingowego"
                 imgClassName="scale-[1.55] object-cover origin-[50%_38%]"
               />
             </div>

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { FooterCookieSettings } from "@moduly/legal-consent";
 import type { KontaktData } from "@/lib/site";
+import { LINIA_INFO, LINIE, type Linia } from "@/lib/linie";
 import { ReviewLink } from "./review-link";
 
 /**
@@ -10,8 +11,18 @@ import { ReviewLink } from "./review-link";
  * ale polityka prywatności, deklaracja dostępności, zgłoszenie problemu
  * z dostępnością i ustawienia cookies są obowiązkiem prawnym — stopka zostaje
  * więc jako cicha kontynuacja czarnej sekcji, w tej samej typografii.
+ *
+ * Kolumna „Usługi" linkuje obie linie (detailing ↔ wulkanizacja) zwykłym
+ * <Link>, bez animacji kartki — to link nawigacyjny na dole strony, nie
+ * przełącznik; ważny dla Google (crawl obu stron z każdej z nich).
  */
-export function Stopka({ kontakt }: { kontakt: KontaktData }) {
+export function Stopka({
+  kontakt,
+  marka = "detailing",
+}: {
+  kontakt: KontaktData;
+  marka?: Linia;
+}) {
   const year = new Date().getFullYear();
 
   return (
@@ -21,6 +32,15 @@ export function Stopka({ kontakt }: { kontakt: KontaktData }) {
           <div>
             <p className="text-base font-bold tracking-[0.06em] uppercase">
               Detailing Łącko
+              {marka === "wulkanizacja" ? (
+                <>
+                  {" "}
+                  <span aria-hidden className="text-akcent">
+                    /
+                  </span>{" "}
+                  Wulkanizacja
+                </>
+              ) : null}
             </p>
             <p className="mt-1.5 text-sm text-noc-szary">
               {kontakt.addressLine}, {kontakt.postalCode} {kontakt.city}
@@ -38,10 +58,33 @@ export function Stopka({ kontakt }: { kontakt: KontaktData }) {
             {kontakt.googleReviewUrl ? (
               <ReviewLink
                 url={kontakt.googleReviewUrl}
-                className="mt-3 inline-block text-sm font-semibold text-zolty underline-offset-4 hover:underline"
+                className="mt-3 inline-block text-sm font-semibold text-akcent underline-offset-4 hover:underline"
               />
             ) : null}
           </div>
+
+          <nav aria-label="Usługi" className="flex flex-col gap-2 text-sm">
+            <p className="etykieta text-noc-szary">Usługi</p>
+            {LINIE.map((linia) => {
+              const info = LINIA_INFO[linia];
+              const aktywna = linia === marka;
+              return (
+                <Link
+                  key={linia}
+                  href={info.path}
+                  aria-current={aktywna ? "page" : undefined}
+                  className={
+                    aktywna
+                      ? "font-semibold text-background"
+                      : "text-noc-szary hover:text-background"
+                  }
+                >
+                  {info.nazwa}
+                  <span className="text-noc-szary"> · {info.podpis}</span>
+                </Link>
+              );
+            })}
+          </nav>
 
           <nav aria-label="Stopka" className="flex flex-col gap-2 text-sm">
             {/* prefetch={false}: linki prawne w stopce Next prefetchował z

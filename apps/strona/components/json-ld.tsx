@@ -1,5 +1,6 @@
 import type { FaqItem } from "@moduly/types";
 import { itemPriceRange, type CennikData } from "@/lib/cennik";
+import type { Linia } from "@/lib/linie";
 import type { DostepnoscData } from "@/lib/rezerwacje";
 import type { KontaktData } from "@/lib/site";
 
@@ -33,8 +34,43 @@ function buildOpeningHours(dostepnosc: DostepnoscData) {
 }
 
 /**
- * JSON-LD: LocalBusiness (AutoWash — najbliższy schema.org typ dla
- * detailingu) + FAQPage. NAP spójny z wizytówką Google (brief: SEO checklist).
+ * Typ schema.org per linia: AutoWash to najbliższy typ dla detailingu,
+ * AutoRepair (+ TireShop jako additionalType) dla wulkanizacji. Obie linie
+ * mają wspólny NAP, ale osobne `@id`/`url`, żeby Google nie sklejał ich
+ * w jedną stronę o dwóch nazwach.
+ */
+const SCHEMA_LINII: Record<
+  Linia,
+  {
+    typ: string;
+    additionalType: string;
+    nazwa: string;
+    idFragment: string;
+    sciezka: string;
+    obraz: string;
+  }
+> = {
+  detailing: {
+    typ: "AutoWash",
+    additionalType: "https://en.wikipedia.org/wiki/Auto_detailing",
+    nazwa: "Detailing Łącko",
+    idFragment: "#firma",
+    sciezka: "",
+    obraz: "/og.jpg",
+  },
+  wulkanizacja: {
+    typ: "AutoRepair",
+    additionalType: "https://schema.org/TireShop",
+    nazwa: "Wulkanizacja Łącko — Detailing Łącko",
+    idFragment: "#wulkanizacja",
+    sciezka: "/wulkanizacja",
+    obraz: "/og-wulkanizacja.jpg",
+  },
+};
+
+/**
+ * JSON-LD: LocalBusiness (typ wg linii) + FAQPage. NAP spójny z wizytówką
+ * Google (brief: SEO checklist).
  */
 export function JsonLd({
   kontakt,
@@ -42,13 +78,17 @@ export function JsonLd({
   faq,
   dostepnosc,
   siteUrl,
+  marka = "detailing",
 }: {
   kontakt: KontaktData;
   cennik: CennikData;
   faq: FaqItem[];
   dostepnosc: DostepnoscData;
   siteUrl: string;
+  marka?: Linia;
 }) {
+  const schema = SCHEMA_LINII[marka];
+
   // Widełki przez `itemPriceRange`, bo pozycja z wariantami ma własne
   // `priceFrom`/`priceTo` tylko poglądowo — realne kwoty siedzą w wariantach.
   //
@@ -60,7 +100,9 @@ export function JsonLd({
     cennik.categories.filter((c) => !c.disabled).map((c) => c.id),
   );
   const zakresy = cennik.items
-    .filter((i) => !i.disabled && widoczneKategorie.has(i.categoryId))
+    .filter(
+      (i) => !i.disabled && !i.priceHidden && widoczneKategorie.has(i.categoryId),
+    )
     .map((i) => itemPriceRange(i));
   const prices = zakresy.map((z) => z.from).filter((p) => p > 0);
   const minPrice = prices.length ? Math.min(...prices) : 100;
@@ -68,12 +110,12 @@ export function JsonLd({
 
   const localBusiness = {
     "@context": "https://schema.org",
-    "@type": "AutoWash",
-    additionalType: "https://en.wikipedia.org/wiki/Auto_detailing",
-    "@id": `${siteUrl}#firma`,
-    name: "Detailing Łącko",
-    url: siteUrl,
-    image: `${siteUrl}/og.jpg`,
+    "@type": schema.typ,
+    additionalType: schema.additionalType,
+    "@id": `${siteUrl}${schema.idFragment}`,
+    name: schema.nazwa,
+    url: `${siteUrl}${schema.sciezka}`,
+    image: `${siteUrl}${schema.obraz}`,
     telephone: kontakt.phoneE164,
     email: kontakt.email,
     priceRange: `${minPrice}–${maxPrice} PLN`,
@@ -101,6 +143,10 @@ export function JsonLd({
     })(),
     ...(kontakt.nip ? { taxID: kontakt.nip } : {}),
     ...(kontakt.googleMapsUrl ? { hasMap: kontakt.googleMapsUrl } : {}),
+    // Linia wulkanizacji jest częścią tej samej firmy — spinamy encje.
+    ...(marka === "wulkanizacja"
+      ? { parentOrganization: { "@id": `${siteUrl}#firma` } }
+      : {}),
   };
 
   const faqPage = faq.length

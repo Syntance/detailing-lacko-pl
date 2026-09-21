@@ -145,7 +145,7 @@ function WyborCallout({
     <div
       role="status"
       aria-live="polite"
-      className="cien-3 flex flex-col gap-2.5 rounded-xl border-2 border-ink bg-zolty px-4 py-3.5"
+      className="cien-3 flex flex-col gap-2.5 rounded-xl border-2 border-ink bg-akcent px-4 py-3.5"
     >
       <div className="flex items-start gap-2.5">
         <PackageCheck className="mt-0.5 size-[18px] shrink-0" aria-hidden />
@@ -244,7 +244,7 @@ function KafelekWariantow({
     <div
       className={`flex flex-col gap-2.5 rounded-xl border-2 px-3.5 py-3 ${
         wybrany
-          ? "cien-3 border-ink bg-zolty"
+          ? "cien-3 border-ink bg-akcent"
           : wPakiecie
             ? "border-dashed border-kreska bg-piasek"
             : "border-ink bg-background"
@@ -288,7 +288,7 @@ function KafelekWariantow({
                   // pigułek z godzinami obok.
                   className={`flex items-baseline gap-2 rounded-lg border-2 border-ink px-3 py-2.5 text-left transition-transform focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none motion-reduce:transition-none ${
                     active
-                      ? "bg-ink text-zolty"
+                      ? "bg-ink text-akcent"
                       : "bg-background hover:-translate-y-0.5"
                   }`}
                 >
@@ -320,7 +320,7 @@ function Krok({
     <span className="flex items-center gap-2.5">
       <span
         aria-hidden
-        className="grid size-7 shrink-0 place-items-center rounded-full border-2 border-ink bg-zolty text-xs font-bold"
+        className="grid size-7 shrink-0 place-items-center rounded-full border-2 border-ink bg-akcent text-xs font-bold"
       >
         {numer}
       </span>
@@ -332,7 +332,7 @@ function Krok({
 /** Komunikat o odbiorze auta dla wybranej godziny. */
 function OdbiorInfo({ slot }: { slot: SlotPropozycja }) {
   return (
-    <p className="cien-3 flex flex-wrap items-baseline gap-x-2 rounded-xl border-2 border-ink bg-zolty px-4 py-3 text-sm">
+    <p className="cien-3 flex flex-wrap items-baseline gap-x-2 rounded-xl border-2 border-ink bg-akcent px-4 py-3 text-sm">
       <span className="font-bold">
         {slot.sameDay
           ? `Auto do odbioru tego samego dnia ok. ${slot.pickupTime}.`
@@ -464,7 +464,7 @@ function Kalendarz({
               aria-label={formatDatePl(iso)}
               className={`grid aspect-square place-items-center rounded-lg border-2 text-sm font-semibold transition-transform focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none motion-reduce:transition-none ${
                 active
-                  ? "cien-3 border-ink bg-zolty"
+                  ? "cien-3 border-ink bg-akcent"
                   : dostepny
                     ? "border-ink bg-background hover:-translate-y-0.5"
                     : "border-transparent text-muted-foreground/60"
@@ -689,7 +689,7 @@ export function Rezerwacja({ config, kategorie, dopisekPodatek }: Props) {
     return (
       <div
         role="status"
-        className="cien-6 flex items-start gap-4 rounded-2xl border-[3px] border-ink bg-zolty p-6 sm:p-8"
+        className="cien-6 flex items-start gap-4 rounded-2xl border-[3px] border-ink bg-akcent p-6 sm:p-8"
       >
         <span className="grid size-12 shrink-0 place-items-center rounded-full border-[3px] border-ink bg-background">
           <Check className="size-6" aria-hidden />
@@ -719,9 +719,9 @@ export function Rezerwacja({ config, kategorie, dopisekPodatek }: Props) {
 
   return (
     <div className="cien-6 overflow-hidden rounded-2xl border-[3px] border-ink bg-background">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b-[3px] border-ink bg-zolty px-5 py-[18px]">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b-[3px] border-ink bg-akcent px-5 py-[18px]">
         <h3 className="text-xl font-bold">{config.heading}</h3>
-        <span className="etykieta-sm rounded-full bg-ink px-2.5 py-[5px] text-zolty">
+        <span className="etykieta-sm rounded-full bg-ink px-2.5 py-[5px] text-akcent">
           online 24/7
         </span>
       </div>
@@ -785,7 +785,7 @@ export function Rezerwacja({ config, kategorie, dopisekPodatek }: Props) {
                         }
                         className={`flex items-start justify-between gap-3 rounded-xl border-2 px-3.5 py-3 text-left transition-transform focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none motion-reduce:transition-none ${
                           active
-                            ? "cien-3 border-ink bg-zolty"
+                            ? "cien-3 border-ink bg-akcent"
                             : wPakiecie
                               ? "border-dashed border-kreska bg-piasek"
                               : "border-ink bg-background hover:-translate-y-0.5"
@@ -819,7 +819,7 @@ export function Rezerwacja({ config, kategorie, dopisekPodatek }: Props) {
                           aria-hidden
                           className={`mt-0.5 grid size-5 shrink-0 place-items-center rounded-md border-2 ${
                             active
-                              ? "border-ink bg-ink text-zolty"
+                              ? "border-ink bg-ink text-akcent"
                               : wPakiecie
                                 ? "border-kreska bg-background text-muted-foreground"
                                 : "border-ink bg-background"
@@ -918,7 +918,7 @@ export function Rezerwacja({ config, kategorie, dopisekPodatek }: Props) {
                           aria-pressed={active}
                           className={`min-w-[4.5rem] rounded-full border-2 border-ink px-4 py-2.5 text-[15px] font-semibold transition-transform focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none motion-reduce:transition-none ${
                             active
-                              ? "cien-3 bg-zolty"
+                              ? "cien-3 bg-akcent"
                               : "bg-background hover:-translate-y-0.5"
                           }`}
                         >
@@ -999,7 +999,7 @@ export function Rezerwacja({ config, kategorie, dopisekPodatek }: Props) {
                 <button
                   type="submit"
                   disabled={pending}
-                  className="cien-zolty-3 inline-flex min-h-12 items-center justify-center gap-2 rounded-full border-2 border-ink bg-ink px-6 py-3 text-[15px] font-bold text-background focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none disabled:opacity-70"
+                  className="cien-akcent-3 inline-flex min-h-12 items-center justify-center gap-2 rounded-full border-2 border-ink bg-ink px-6 py-3 text-[15px] font-bold text-background focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none disabled:opacity-70"
                 >
                   {pending ? (
                     <Loader2 className="size-4 animate-spin" aria-hidden />

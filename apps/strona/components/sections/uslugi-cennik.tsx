@@ -218,35 +218,36 @@ const NAKLEJKI_DETAILING: Record<string, Naklejka> = {
  * niemal kwadratowe, więc dostają tę samą szerokość co sygnet lancy (96–112 px).
  */
 const NAKLEJKI_WULKANIZACJA: Record<string, Naklejka> = {
-  // Tytuły kart wulkanizacji są dłuższe niż w detailingu („Wymiana
-  // i wyważanie", „Przechowywanie i koła"), więc naklejki wiszą bardziej NA
-  // ZEWNĄTRZ narożnika (mniejsze cofnięcie w lewo) i są o stopień mniejsze —
-  // inaczej zasłaniały ostatnie słowo nagłówka.
-  wymiana: {
-    src: "/brand/wulk-kolo-naklejka.svg",
-    width: 160,
-    height: 160,
-    alt: "Koło z oponą — przekładka i wyważanie",
-    szerokosc: "w-20 sm:w-24",
-    sizes: "96px",
-    obrot: "-rotate-[10deg]",
-    przesuniecie: "-translate-x-[6px] -translate-y-7",
-  },
-  naprawa: {
+  // Naklejka wisi na prawym górnym narożniku karty, więc dostają ją tylko
+  // karty z KRÓTKIM tytułem. Na „Naprawa i usługi pojedyncze" klucz zasłaniał
+  // koniec słowa już przy 1440 px, a przy 1024 px (węższe karty) także
+  // „Wymiana opon na felgach" wchodziłoby pod naklejkę. Wiszą bardziej NA
+  // ZEWNĄTRZ narożnika niż w detailingu i są o stopień mniejsze.
+  przekladka: {
     src: "/brand/wulk-klucz-naklejka.svg",
     width: 200,
     height: 200,
-    alt: "Klucz krzyżakowy — naprawa i serwis opon",
+    alt: "Klucz krzyżakowy — przekładka kół",
     szerokosc: "w-20 sm:w-24",
     sizes: "96px",
     obrot: "rotate-0",
     przesuniecie: "-translate-x-[4px] -translate-y-8",
   },
-  kola: {
+  hotel: {
+    src: "/brand/wulk-kolo-naklejka.svg",
+    width: 160,
+    height: 160,
+    alt: "Koło z oponą — przechowanie kół przez sezon",
+    szerokosc: "w-20 sm:w-24",
+    sizes: "96px",
+    obrot: "-rotate-[10deg]",
+    przesuniecie: "-translate-x-[6px] -translate-y-7",
+  },
+  tpms: {
     src: "/brand/wulk-manometr-naklejka.svg",
     width: 200,
     height: 200,
-    alt: "Manometr — ciśnienie w kołach",
+    alt: "Manometr — ciśnienie w kołach i czujniki TPMS",
     szerokosc: "w-20 sm:w-24",
     sizes: "96px",
     obrot: "rotate-[12deg]",
@@ -262,11 +263,16 @@ export const UKLAD_CENNIKA_DETAILING: UkladCennika = {
   naklejki: NAKLEJKI_DETAILING,
 };
 
-/** Wulkanizacja: wymiana jako filar, pakiety sezonowe w czarnym pasie. */
+/**
+ * Wulkanizacja: sześć kart w kolejności sekcji cennika właściciela (dwa rzędy
+ * po trzy), przekładka jako filar. Cennik nie ma pakietów, więc czarnego pasa
+ * nie ma — `pakiety` wskazuje id, którego w danych nie ma. Kategoria dodana
+ * w panelu dostaje id `karta-…` i staje jako kolejna karta, nie w pasie.
+ */
 export const UKLAD_CENNIKA_WULKANIZACJA: UkladCennika = {
-  kartyKategorii: ["wymiana", "naprawa", "kola"],
-  filar: "wymiana",
-  pakiety: "sezonowe",
+  kartyKategorii: ["przekladka", "wymiana", "naprawa", "tpms", "hotel", "dodatki"],
+  filar: "przekladka",
+  pakiety: "pakiety",
   naklejki: NAKLEJKI_WULKANIZACJA,
 };
 

@@ -1,10 +1,13 @@
 import type { FaqData } from "./faq";
 
 /**
- * FAQ linii Wulkanizacja — blob `faq-wulkanizacja` (panel Magazyn → FAQ →
- * zakładka Wulkanizacja). Kolejność jak w FAQ detailingu: najpierw realne
+ * FAQ linii Wulkanizacja — blob `faq-wulkanizacja` (panel Magazyn →
+ * Wulkanizacja → FAQ). Kolejność jak w FAQ detailingu: najpierw realne
  * dylematy klienta (kiedy, co wybrać), potem logistyka. Odpowiedzi edukują
  * i mówią wprost, czego NIE robimy — to buduje więcej zaufania niż obietnice.
+ *
+ * Kwot tu nie ma celowo: odpowiedzi odsyłają do cennika, żeby zmiana cen
+ * w panelu nie zostawiała w FAQ starych liczb.
  */
 export const DEFAULT_FAQ_WULKANIZACJA: FaqData = {
   items: [
@@ -19,7 +22,7 @@ export const DEFAULT_FAQ_WULKANIZACJA: FaqData = {
       id: "na-felgach-czy-przekladka",
       question: "Dwa komplety kół czy przekładanie opon na jednych felgach?",
       answer:
-        "Dwa komplety (opony na felgach) to szybka przekładka: 4 koła zdjąć, założyć, wyważyć — ok. 45 minut i mniejszy koszt co sezon. Jeden komplet felg oznacza ściąganie i zakładanie opon na te same felgi: dłużej, drożej i opona za każdym razem trochę cierpi. Jeśli jeździsz autem kilka lat, drugi komplet felg zwraca się po 2–3 sezonach.",
+        "Dwa komplety (opony na felgach) to szybka przekładka: 4 koła zdjąć, założyć, wyważyć — ok. 45 minut i mniejszy koszt co sezon. Jeden komplet felg oznacza ściąganie i zakładanie opon na te same felgi: dłużej, drożej i opona za każdym razem trochę cierpi. Różnicę dla swojego rozmiaru felgi zobaczysz w cenniku — przekładka i wymiana opon stoją obok siebie.",
       order: 1,
     },
     {
@@ -33,14 +36,14 @@ export const DEFAULT_FAQ_WULKANIZACJA: FaqData = {
       id: "przebita",
       question: "Mam przebitą oponę. Da się to naprawić?",
       answer:
-        "Zwykle tak: gwóźdź albo wkręt w bieżniku naprawiam od środka (łata z kołkiem), trwale, nie „na chwilę”. Nie naprawiam boku opony ani dziur powyżej 6 mm — wtedy opona idzie do wymiany i powiem to od razu, zanim policzę cokolwiek. Nie jedź długo na spuszczonym kole: bok niszczy się w kilka kilometrów.",
+        "Zwykle tak. Gwóźdź albo wkręt w bieżniku zakleję kołkiem (sznurem) bez zdejmowania opony albo naprawię od środka grzybkiem — z demontażem i wyważeniem. Obie naprawy mają cenę w cenniku, a ja podpowiem, która ma sens w Twoim przypadku. Nie naprawiam boku opony ani dziur powyżej 6 mm — wtedy opona idzie do wymiany i powiem to od razu, zanim policzę cokolwiek. Nie jedź długo na spuszczonym kole: bok niszczy się w kilka kilometrów.",
       order: 3,
     },
     {
       id: "przechowywanie",
       question: "Mogę zostawić drugi komplet kół u was?",
       answer:
-        "Tak. Komplet trafia opisany do suchego magazynu i czeka na kolejną przekładkę — płacisz za sezon, odbierasz przy następnej wymianie. Koniec z noszeniem kół do piwnicy i błotem w bagażniku.",
+        "Tak — same opony albo całe koła na felgach. Komplet trafia opisany do suchego magazynu i czeka na kolejną przekładkę — płacisz za sezon (ok. 6 miesięcy), odbierasz przy następnej wymianie. Koniec z noszeniem kół do piwnicy i błotem w bagażniku.",
       order: 4,
     },
     {
@@ -61,14 +64,14 @@ export const DEFAULT_FAQ_WULKANIZACJA: FaqData = {
       id: "suv-runflat",
       question: "SUV, dostawczak, opony run-flat?",
       answer:
-        "Robię. Koła od 19 cali, run-flat i dostawcze do 3,5 t wymagają więcej pracy na maszynie — dopłata wg cennika, zawsze ustalona przed rozpoczęciem, nigdy przy odbiorze.",
+        "Robię. SUV i 4x4, run-flat, niski profil i dostawcze na oponach C wymagają więcej pracy na maszynie — dopłaty za komplet masz w cenniku, a duże felgi mają swoje ceny w tabeli rozmiarów. Znasz je przed rozpoczęciem, nie przy odbiorze.",
       order: 7,
     },
     {
       id: "z-detailingiem",
       question: "Da się połączyć wymianę z myciem albo detailingiem?",
       answer:
-        "Tak. Pakiet „Sezonówka + felgi na błysk” z cennika to przekładka z myciem felg i dressingiem opon w jednej wizycie. Pranie tapicerki, kompleksowe wnętrze czy polerowanie umawiasz na stronie Detailing Łącko — najlepiej na ten sam dzień, auto i tak stoi u nas.",
+        "Tak. Mycie kół dorzucisz do przekładki — jest w cenniku wulkanizacji wśród usług dodatkowych. Pranie tapicerki, kompleksowe wnętrze czy polerowanie umawiasz na stronie Detailing Łącko — najlepiej na ten sam dzień, auto i tak stoi u nas.",
       order: 8,
     },
   ],

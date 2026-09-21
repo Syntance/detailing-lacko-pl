@@ -14,6 +14,7 @@ import type {
 } from "@/lib/cennik";
 import { useMagazynHistory } from "@/hooks/use-magazyn-history";
 import { LINIA_INFO, type Linia } from "@/lib/linie";
+import { odmiana } from "@/lib/odmiana";
 import {
   Checkbox,
   DragHandle,
@@ -151,7 +152,7 @@ export function CennikClient({
     <div className="space-y-6">
       <PageHeader
         title={`Cennik — ${LINIA_INFO[linia].etykieta}`}
-        description={`${items.length} pozycji · ${categories.length} karty usług — publikowane w sekcji „Usługi i ceny" na stronie ${LINIA_INFO[linia].path}`}
+        description={`${items.length} ${odmiana(items.length, "pozycja", "pozycje", "pozycji")} · ${categories.length} ${odmiana(categories.length, "karta usług", "karty usług", "kart usług")} — publikowane w sekcji „Usługi i ceny" na stronie ${LINIA_INFO[linia].path}`}
       />
       {/* Te same opcje co w cenniku detailingu — ale część z nich zasila
           wyłącznie widget rezerwacji, którego ta linia nie ma. Lepiej to

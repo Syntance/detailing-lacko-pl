@@ -18,11 +18,18 @@ import {
 	syncConsentFromState,
 } from "./consent";
 import { analyticsConfig, enabled } from "./config";
-import { captureFirstTouchUtm } from "./context";
+import { captureFirstTouchUtm, type TrackExtraContext } from "./context";
 
 type Props = {
 	children: ReactNode;
 	locale?: string;
+	/**
+	 * Kontekst aplikacji dla ścieżki — dopinany do KAŻDEGO zdarzenia (także
+	 * page_view): np. `service_line` dla stron kilku linii usług albo
+	 * `page_type: "storefront"` dla ścieżek, których heurystyka pakietu nie zna.
+	 * Czysta funkcja od pathname; wołana przy każdej zmianie ścieżki.
+	 */
+	resolveContext?: (pathname: string) => TrackExtraContext;
 };
 
 /**
@@ -48,7 +55,11 @@ function GoogleTag({ gaId }: { gaId: string }) {
 	);
 }
 
-export function AnalyticsProvider({ children, locale = "pl-PL" }: Props) {
+export function AnalyticsProvider({
+	children,
+	locale = "pl-PL",
+	resolveContext,
+}: Props) {
 	const pathname = usePathname() ?? "/";
 	const [analyticsGranted, setAnalyticsGranted] = useState(false);
 
@@ -84,7 +95,7 @@ export function AnalyticsProvider({ children, locale = "pl-PL" }: Props) {
 	// tej samej podstronie nie dublowało odsłony.
 	const lastPageViewPath = useRef<string | null>(null);
 	useEffect(() => {
-		setTrackContext(pathname, locale);
+		setTrackContext(pathname, locale, resolveContext?.(pathname));
 		if (!analyticsGranted) return;
 		if (lastPageViewPath.current === pathname) return;
 		lastPageViewPath.current = pathname;
@@ -92,7 +103,7 @@ export function AnalyticsProvider({ children, locale = "pl-PL" }: Props) {
 			page_path: pathname,
 			page_title: typeof document !== "undefined" ? document.title : undefined,
 		});
-	}, [pathname, locale, analyticsGranted]);
+	}, [pathname, locale, analyticsGranted, resolveContext]);
 
 	return (
 		<>

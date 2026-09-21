@@ -7,7 +7,12 @@ export {
 	subscribeConsentUpdates,
 	type ConsentCategory,
 } from "./consent";
-export { captureFirstTouchUtm, withContext, type AnalyticsContext } from "./context";
+export {
+	captureFirstTouchUtm,
+	withContext,
+	type AnalyticsContext,
+	type TrackExtraContext,
+} from "./context";
 export { track, setTrackContext, applyConsentToDestinations, type EventKey, type EventPayloads } from "./track";
 export { useAnalytics } from "./hooks";
 export { AnalyticsProvider } from "./provider";

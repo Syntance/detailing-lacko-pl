@@ -12,6 +12,16 @@ export type AnalyticsContext = {
 	utm_term?: string;
 };
 
+/**
+ * Kontekst dopinany przez aplikację do KAŻDEGO zdarzenia (np. linia usług,
+ * wariant strony). `page_type` może nadpisać heurystykę z `resolvePageType`
+ * — aplikacja wie lepiej, które jej ścieżki są storefrontem.
+ */
+export type TrackExtraContext = {
+	page_type?: AnalyticsContext["page_type"];
+	[key: string]: string | undefined;
+};
+
 type UtmParams = Pick<
 	AnalyticsContext,
 	"utm_source" | "utm_medium" | "utm_campaign" | "utm_content" | "utm_term"
@@ -99,6 +109,7 @@ export function withContext(
 	pathname: string,
 	locale: string,
 	payload: Record<string, unknown>,
+	extra: TrackExtraContext = {},
 ): Record<string, unknown> {
 	rememberUtmFromUrl();
 	const consented = hasConsent("analytics");
@@ -107,11 +118,14 @@ export function withContext(
 		: { ...memoryUtm };
 	if (consented) persistMemoryUtm();
 
+	const { page_type: pageTypeOverride, ...extraRest } = extra;
+
 	return {
-		page_type: resolvePageType(pathname),
+		page_type: pageTypeOverride ?? resolvePageType(pathname),
 		locale,
 		page_path: pathname,
 		...utm,
+		...extraRest,
 		...payload,
 	};
 }

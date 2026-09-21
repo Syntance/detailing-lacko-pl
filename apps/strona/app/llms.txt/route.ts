@@ -9,12 +9,19 @@ export const revalidate = 3600;
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://detailing-lacko.pl";
 
-/** Kategorie cennika jako lista punktów — widoczne, w kolejności z panelu. */
+/**
+ * Kategorie cennika jako lista punktów — widoczne, w kolejności z panelu.
+ * Czas tylko wtedy, gdy jest wpisany: cennik wulkanizacji go nie podaje,
+ * a puste „()" silnik AI przepisałby dosłownie.
+ */
 function listaUslug(cennik: CennikData): string {
   return cennik.categories
     .filter((c) => !c.disabled)
     .sort((a, b) => a.order - b.order)
-    .map((c) => `- ${c.name}: od ${c.priceFrom} zł (${c.timeLabel}). ${c.description}`)
+    .map((c) => {
+      const czas = c.timeLabel.trim() ? ` (${c.timeLabel.trim()})` : "";
+      return `- ${c.name}: od ${c.priceFrom} zł${czas}. ${c.description}`;
+    })
     .join("\n");
 }
 

@@ -39,6 +39,7 @@ import {
   type MetamorfozyTemat,
   type MetamorfozyZdjecie,
 } from "@/lib/metamorfozy";
+import { odmiana } from "@/lib/odmiana";
 import { useMagazynHistory } from "@/hooks/use-magazyn-history";
 import { ImageField } from "./image-dropzone";
 import {
@@ -81,17 +82,6 @@ function sortujTematy(list: MetamorfozyTemat[]): MetamorfozyTemat[] {
 
 function sortujPary(list: MetamorfozyPara[]): MetamorfozyPara[] {
   return [...list].sort((a, b) => a.order - b.order);
-}
-
-/** Polska odmiana przez liczbę: 1 grupa / 2 grupy / 5 grup. */
-function odmiana(n: number, jeden: string, kilka: string, wiele: string) {
-  if (n === 1) return jeden;
-  const dziesiatki = n % 100;
-  const jednosci = n % 10;
-  if (jednosci >= 2 && jednosci <= 4 && (dziesiatki < 12 || dziesiatki > 14)) {
-    return kilka;
-  }
-  return wiele;
 }
 
 /** Pierwsze wgrane zdjęcie tematu — miniatura na liście. */

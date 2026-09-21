@@ -94,10 +94,12 @@ Bez migracji bazy: dane wulkanizacji to nowe wiersze w istniejących tabelach
 czyta domyślne wartości z kodu. Wulkanizacja nie ma rezerwacji online — CTA
 prowadzą do telefonu i do „Wyślij zdjęcie opony".
 
-- [ ] Panel → Wulkanizacja → Cennik: potwierdź kwoty startowe (są propozycją
-      z kodu, `lib/cennik-wulkanizacja.ts`); → FAQ: przejrzyj odpowiedzi;
-      → CMS: wgraj zdjęcie hero (do tego czasu strona pokazuje ilustrację
-      koła); → SEO: pusty opis składa się sam z cen w cenniku.
+- [x] Panel → Wulkanizacja → Cennik: cennik właściciela (21.09.2026) jest
+      domyślną zawartością w `lib/cennik-wulkanizacja.ts`; kolejne zmiany cen
+      już w panelu (pierwszy zapis przenosi cennik do bazy).
+- [ ] Panel → Wulkanizacja → FAQ: przejrzyj odpowiedzi; → CMS: wgraj zdjęcie
+      hero (do tego czasu strona pokazuje ilustrację koła); → SEO: pusty opis
+      składa się sam z cen w cenniku.
 - [ ] GA4 → Administracja → Definicje niestandardowe → wymiar zdarzenia
       `service_line` (zakres: zdarzenie). Bez rejestracji raporty GA4 rozdzielą
       linie tylko po ścieżce strony; PostHog widzi właściwość od razu.

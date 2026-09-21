@@ -41,28 +41,44 @@ export const DEFAULT_SEO_WULKANIZACJA: SeoStrony = {
 };
 
 /**
- * Opis do wyników wyszukiwania złożony z realnych kwot cennika (pozycje-
- * kotwice: przekładka, naprawa przebicia, przechowywanie). Gdy żadnej z nich
- * nie ma albo mają ukrytą cenę — samo zdanie bez kwot. Trzymany w ~140
+ * Opis do wyników wyszukiwania złożony z realnych kwot cennika (kotwice:
+ * przekładka, naprawa przebicia, hotel oponiarski). Kotwica może łączyć kilka
+ * pozycji — naprawa to kołek za 50 zł i grzybek od 90 zł — i wtedy bierze
+ * najniższą kwotę z „od", jeśli któraś pozycja kosztuje więcej. Pozycje
+ * ukryte, bez kwoty albo z ukrytej kategorii (jej nie ma na stronie) się nie
+ * liczą; gdy nie zostanie żadna — samo zdanie bez kwot. Trzymany w ~150
  * znakach, bo Google ucina opis po ~155.
  */
 export function opisSeoZCennika(cennik: CennikData): string {
-  const kwota = (id: string, etykieta: string): string | null => {
-    const item = cennik.items.find(
-      (i) => i.id === id && !i.disabled && !i.priceHidden,
-    );
-    if (!item) return null;
-    const { from, to } = itemPriceRange(item);
-    if (from <= 0) return null;
+  const widoczneKategorie = new Set(
+    cennik.categories.filter((c) => !c.disabled).map((c) => c.id),
+  );
+  const kwota = (ids: readonly string[], etykieta: string): string | null => {
+    const zakresy = cennik.items
+      .filter(
+        (i) =>
+          ids.includes(i.id) &&
+          !i.disabled &&
+          !i.priceHidden &&
+          widoczneKategorie.has(i.categoryId),
+      )
+      .map((i) => itemPriceRange(i))
+      .filter((z) => z.from > 0);
+    if (!zakresy.length) return null;
+    const from = Math.min(...zakresy.map((z) => z.from));
+    const to = Math.max(...zakresy.map((z) => z.to));
     return `${etykieta} ${to > from ? "od " : ""}${from} zł`;
   };
   const kotwice = [
-    kwota("przekladka-sezonowa", "Przekładka kół z wyważeniem"),
-    kwota("naprawa-przebicia", "naprawa przebicia"),
-    kwota("przechowywanie-kol", "przechowywanie kół"),
+    kwota(["przekladka-sezonowa"], "Przekładka kół z wyważeniem"),
+    kwota(["naprawa-przebicia-kolek", "naprawa-przebicia"], "naprawa przebicia"),
+    kwota(
+      ["hotel-opony", "przechowywanie-kol", "hotel-duze-kola"],
+      "hotel oponiarski",
+    ),
   ].filter((k): k is string => Boolean(k));
   const ceny = kotwice.length
     ? `${kotwice.join(", ")} — ceny z góry`
-    : "Wymiana i wyważanie opon, naprawa przebić, przechowywanie kół — ceny z góry";
+    : "Przekładka i wymiana opon, naprawa przebić, hotel oponiarski — ceny z góry";
   return `${ceny}, bez kolejki. Czerniec 72, gmina Łącko.`;
 }

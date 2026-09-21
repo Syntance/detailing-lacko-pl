@@ -79,8 +79,9 @@ Opcja 2.
 - (+) Panel edytuje obie linie tymi samymi edytorami, bez migracji bazy.
 - (−) `UslugiCennik` zna układ kart przez parametr — id kategorii linii
   muszą zgadzać się z `UKLAD_CENNIKA_*` (jak dotąd z makietą).
-- (−) Kwoty startowe cennika wulkanizacji są propozycją — do potwierdzenia
-  w panelu przed publikacją.
+- (−) Cennik wulkanizacji (sześć sekcji właściciela) nie ma pakietów, więc
+  czarnego pasa nie ma; kategoria dodana w panelu staje jako kolejna karta.
+  Pakiety dla tej linii wymagają zmiany `UKLAD_CENNIKA_WULKANIZACJA`.
 - (−) Wymiar `service_line` w GA4 trzeba zarejestrować ręcznie
   (Administracja → Definicje niestandardowe), inaczej raporty GA4 rozdzielą
   linie tylko po ścieżce strony.

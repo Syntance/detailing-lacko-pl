@@ -6,9 +6,8 @@ import {
   SchematKapec,
   SchematLysyBieznik,
   SchematStaraGuma,
-  SchematStrefNaprawy,
-  KOLOR_STREFY,
 } from "./schematy-opon";
+import { KartaStrefNaprawy } from "./strefy-naprawy";
 
 /**
  * „03 · uczciwie" — co nie kwalifikuje się do naprawy. Przy oponach
@@ -49,12 +48,6 @@ export function Granice() {
     },
   ];
 
-  const strefy = [
-    { nazwa: "Środek bieżnika", opis: "grzybek albo łata, do 6–10 mm", kolor: KOLOR_STREFY.bieznik },
-    { nazwa: "Bark", opis: "łata radialna, do 3–6 mm", kolor: KOLOR_STREFY.bark },
-    { nazwa: "Bok", opis: "łata radialna, do 6–10 mm", kolor: KOLOR_STREFY.bok },
-  ];
-
   return (
     <section
       id="granice"
@@ -74,42 +67,7 @@ export function Granice() {
           </h2>
         </Reveal>
 
-        <Reveal className="cien-akcent-6 grid items-center gap-6 rounded-2xl border-[3px] border-ink bg-background p-4 sm:p-6 lg:grid-cols-[1.15fr_0.85fr] lg:gap-10">
-          <div className="kropki rounded-xl border-2 border-ink bg-piasek px-3 py-5 sm:px-6">
-            <SchematStrefNaprawy />
-          </div>
-          <div className="flex flex-col gap-4 lg:pr-2">
-            <h3 className="text-2xl leading-[1.15] font-bold text-balance">
-              Naprawiam według tabeli producenta łatek
-            </h3>
-            <p className="text-[15px] leading-[1.55] text-pretty text-tekst">
-              Da się naprawić nie tylko środek bieżnika — bark i bok też, łatą
-              radialną z&nbsp;wulkanizacją. Ale tylko do rozmiaru, na który
-              pozwala tabela dla indeksu prędkości Twojej opony. Powyżej
-              limitu opona idzie do wymiany.
-            </p>
-            <ul className="flex flex-col gap-2.5">
-              {strefy.map((strefa, index) => (
-                <li key={strefa.nazwa} className="flex items-start gap-3">
-                  <span
-                    aria-hidden
-                    className="grid size-7 shrink-0 place-items-center rounded-full border-[3px] border-ink text-sm font-bold"
-                    style={{ background: strefa.kolor }}
-                  >
-                    {index + 1}
-                  </span>
-                  <p className="text-[15px] leading-[1.4]">
-                    <span className="font-bold">{strefa.nazwa}</span>
-                    <span className="text-tekst"> — {strefa.opis}</span>
-                  </p>
-                </li>
-              ))}
-            </ul>
-            <p className="etykieta-sm text-muted-foreground">
-              limity dla indeksu H · przy Q i T tabela pozwala na więcej
-            </p>
-          </div>
-        </Reveal>
+        <KartaStrefNaprawy />
 
         <RevealStagger className="grid gap-[22px] sm:grid-cols-2 lg:grid-cols-3">
           {przypadki.map(({ Schemat, tytul, opis }) => (

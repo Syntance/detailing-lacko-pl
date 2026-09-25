@@ -5,10 +5,9 @@ import { HeroMapa } from "./hero-mapa";
 
 /**
  * Hero linii Wulkanizacja — ten sam układ co hero detailingu (naklejka
- * lokalizacji → H1 → lead → kafel ceny → dwa CTA | przekrzywiona karta),
- * tylko w czerwieni (token `--akcent` przepięty na wrapperze strony) i z
- * własnymi rekwizytami: nakrętki zamiast bąbli piany. Karta pokazuje mapę
- * Google z pinezką warsztatu.
+ * lokalizacji → H1 → lead → kafel ceny → CTA | przekrzywiona karta), tylko
+ * w czerwieni (token `--akcent` przepięty na wrapperze strony). Karta pokazuje
+ * mapę Google z pinezką warsztatu.
  *
  * CTA inne niż w detailingu: wulkanizacja nie ma rezerwacji online, więc
  * jedyny przycisk dzwoni.
@@ -28,43 +27,6 @@ function cenaKotwicy(cennik: CennikData): string | null {
   const { from, to } = itemPriceRange(item);
   if (from <= 0) return null;
   return to > from ? `od ${from} zł` : `${from} zł`;
-}
-
-/** Trzy nakrętki — odpowiednik bąbli piany pod kartą hero detailingu. */
-function Nakretki() {
-  const nakretka = (size: number, className: string) => (
-    <svg
-      viewBox="0 0 40 40"
-      width={size}
-      height={size}
-      className={className}
-      aria-hidden
-      focusable="false"
-    >
-      <path
-        d="M20 3 L34.7 11.5 V28.5 L20 37 L5.3 28.5 V11.5 Z"
-        fill="var(--background)"
-        stroke="var(--ink)"
-        strokeWidth="3.5"
-        strokeLinejoin="round"
-      />
-      <circle
-        cx="20"
-        cy="20"
-        r="7"
-        fill="var(--akcent)"
-        stroke="var(--ink)"
-        strokeWidth="3.5"
-      />
-    </svg>
-  );
-  return (
-    <div aria-hidden className="absolute -bottom-3 left-0 flex items-end">
-      {nakretka(38, "rotate-[8deg]")}
-      {nakretka(26, "-ml-1.5 mb-2 -rotate-[14deg]")}
-      {nakretka(17, "-ml-1 mb-5 rotate-[22deg]")}
-    </div>
-  );
 }
 
 export function HeroWulkanizacja({
@@ -137,7 +99,6 @@ export function HeroWulkanizacja({
             </div>
           </div>
 
-          <Nakretki />
         </div>
       </div>
     </section>

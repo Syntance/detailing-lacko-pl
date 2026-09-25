@@ -258,3 +258,42 @@ export function SchematLysyBieznik() {
     </Plansza>
   );
 }
+
+/** Miniatura przekroju opony z jedną podświetloną strefą — do nagłówków tabeli napraw. */
+export function MiniStrefa({ strefa }: { strefa: keyof typeof KOLOR_STREFY }) {
+  const segmenty = {
+    bieznik: ["M196,60 L324,60"],
+    bark: ["M82,132 A72,72 0 0 1 154,60 L196,60", "M324,60 L366,60 A72,72 0 0 1 438,132"],
+    bok: ["M96,262 C82,222 80,172 82,132", "M438,132 C440,172 438,222 424,262"],
+  } as const;
+  return (
+    <svg viewBox="40 10 440 280" aria-hidden focusable="false" className="h-auto w-[92px]">
+      {[164, 200, 236, 272, 308, 344].map((x) => (
+        <rect key={x} x={x} y="26" width="22" height="18" rx="3" fill={INK} />
+      ))}
+      <path
+        d="M96,262 C82,222 80,172 82,132 A72,72 0 0 1 154,60 L366,60 A72,72 0 0 1 438,132 C440,172 438,222 424,262"
+        fill="none"
+        stroke={INK}
+        strokeWidth="48"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M96,262 C82,222 80,172 82,132 A72,72 0 0 1 154,60 L366,60 A72,72 0 0 1 438,132 C440,172 438,222 424,262"
+        fill="none"
+        stroke={TLO}
+        strokeWidth="30"
+      />
+      {segmenty[strefa].map((d) => (
+        <path
+          key={d}
+          d={d}
+          fill="none"
+          stroke={strefa === "bieznik" ? AKCENT : KOLOR_STREFY[strefa]}
+          strokeWidth="30"
+        />
+      ))}
+    </svg>
+  );
+}

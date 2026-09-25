@@ -11,8 +11,7 @@ import {
 } from "@/components/sections/uslugi-cennik";
 import { Granice } from "@/components/sections/wulkanizacja/granice";
 import { HeroWulkanizacja } from "@/components/sections/wulkanizacja/hero-wulkanizacja";
-import { Przebieg } from "@/components/sections/wulkanizacja/przebieg";
-import { getHeroImages } from "@/lib/cms-content";
+import { Zasady } from "@/components/sections/wulkanizacja/zasady";
 import { opisSeoZCennika } from "@/lib/seo-wulkanizacja";
 import {
   getCennikWulkanizacja,
@@ -62,8 +61,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function WulkanizacjaPage() {
   // Dostępność = godziny pracy warsztatu (wspólne z detailingiem) — tu
   // wyłącznie do JSON-LD; rezerwacji online wulkanizacja nie ma.
-  const [heroImages, cennik, kontakt, dostepnosc, faqData] = await Promise.all([
-    getHeroImages("wulkanizacja"),
+  const [cennik, kontakt, dostepnosc, faqData] = await Promise.all([
     getCennikWulkanizacja(),
     getKontakt(),
     getDostepnosc(),
@@ -87,20 +85,20 @@ export default async function WulkanizacjaPage() {
 
       <Navbar kontakt={kontakt} marka="wulkanizacja" />
 
-      {/* Kolejność jak na stronie detailingu: hero → cennik (01) → jak to
-          wygląda (02) → co naprawię, a czego nie (03) → FAQ → kontakt.
-          Zamiast Efektów przed/po (przy oponach nie ma czego pokazać) idzie
-          przebieg wizyty z czasem — to bariera klienta opon. Bez sekcji
+      {/* Kolejność jak na stronie detailingu: hero → cennik (01) → jak
+          pracuję (02) → co nie kwalifikuje się do naprawy (03) → FAQ → kontakt.
+          Zamiast Efektów przed/po (przy oponach nie ma czego pokazać) idą
+          zasady pracy — główne wyróżniki warsztatu. Bez sekcji
           rezerwacji: wulkanizację umawia się telefonicznie, więc wszystkie
           CTA prowadzą do telefonu (i do zdjęcia opony jako drogi pobocznej). */}
       <main>
-        <HeroWulkanizacja images={heroImages} kontakt={kontakt} cennik={cennik} />
+        <HeroWulkanizacja kontakt={kontakt} cennik={cennik} />
         <UslugiCennik
           cennik={cennik}
           uklad={UKLAD_CENNIKA_WULKANIZACJA}
           kontaktCta={kontakt}
         />
-        <Przebieg />
+        <Zasady />
         <Granice />
         <Faq items={faq} />
         <Kontakt kontakt={kontakt} marka="wulkanizacja" />
@@ -113,8 +111,8 @@ export default async function WulkanizacjaPage() {
         sections={[
           { id: "hero", name: "Hero" },
           { id: "cennik", name: "Usługi i cennik" },
-          { id: "przebieg", name: "Jak to wygląda" },
-          { id: "granice", name: "Co naprawię, a czego nie" },
+          { id: "zasady", name: "Jak pracuję" },
+          { id: "granice", name: "Co nie kwalifikuje się do naprawy" },
           { id: "faq", name: "FAQ" },
           { id: "kontakt", name: "Kontakt" },
         ]}

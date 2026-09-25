@@ -297,3 +297,110 @@ export function MiniStrefa({ strefa }: { strefa: keyof typeof KOLOR_STREFY }) {
     </svg>
   );
 }
+
+const WYMIAR_ETYKIETA = {
+  fontFamily: "var(--font-sans)",
+  fontWeight: 700,
+} as const;
+
+/** Odcinek wymiarowy z „wąsami" na końcach, jak na rysunku technicznym. */
+function Wymiar({ x1, y1, x2, y2 }: { x1: number; y1: number; x2: number; y2: number }) {
+  const pion = x1 === x2;
+  const t = 6;
+  return (
+    <g stroke={INK} strokeWidth="2.5" strokeLinecap="round">
+      <line x1={x1} y1={y1} x2={x2} y2={y2} />
+      {pion ? (
+        <>
+          <line x1={x1 - t} y1={y1} x2={x1 + t} y2={y1} />
+          <line x1={x2 - t} y1={y2} x2={x2 + t} y2={y2} />
+        </>
+      ) : (
+        <>
+          <line x1={x1} y1={y1 - t} x2={x1} y2={y1 + t} />
+          <line x1={x2} y1={y2 - t} x2={x2} y2={y2 + t} />
+        </>
+      )}
+    </g>
+  );
+}
+
+/** Fragment opony z pionowymi nitkami osnowy — tło dla schematów pomiaru. */
+function Plat({ nitki = true }: { nitki?: boolean }) {
+  return (
+    <>
+      <rect x="20" y="14" width="150" height="100" rx="10" fill={TLO} stroke={INK} strokeWidth="3" />
+      {nitki
+        ? [34, 48, 62, 76, 90, 104, 118, 132, 146, 160].map((x) => (
+            <line key={x} x1={x} y1="16" x2={x} y2="112" stroke={INK} strokeOpacity="0.16" strokeWidth="2" />
+          ))
+        : null}
+    </>
+  );
+}
+
+/** CØ — średnica okrągłej dziury na wylot. */
+export function SchematCO() {
+  return (
+    <svg viewBox="0 0 190 128" aria-hidden focusable="false" className="h-auto w-full">
+      <Plat nitki={false} />
+      <circle cx="95" cy="72" r="17" fill={INK} />
+      <line x1="78" y1="72" x2="78" y2="38" stroke={INK} strokeWidth="1.5" strokeDasharray="3 3" />
+      <line x1="112" y1="72" x2="112" y2="38" stroke={INK} strokeWidth="1.5" strokeDasharray="3 3" />
+      <Wymiar x1={78} y1={38} x2={112} y2={38} />
+      <text x="95" y="30" textAnchor="middle" fontSize="17" fill={INK} style={WYMIAR_ETYKIETA}>
+        CØ
+      </text>
+    </svg>
+  );
+}
+
+/** A i R — wymiary podłużnego przecięcia: R wzdłuż nitek osnowy, A wzdłuż obwodu. */
+export function SchematAR() {
+  return (
+    <svg viewBox="0 0 190 128" aria-hidden focusable="false" className="h-auto w-full">
+      <Plat />
+      <ellipse cx="80" cy="62" rx="9" ry="30" fill={INK} />
+      <line x1="80" y1="32" x2="124" y2="32" stroke={INK} strokeWidth="1.5" strokeDasharray="3 3" />
+      <line x1="80" y1="92" x2="124" y2="92" stroke={INK} strokeWidth="1.5" strokeDasharray="3 3" />
+      <Wymiar x1={124} y1={32} x2={124} y2={92} />
+      <text x="140" y="68" textAnchor="middle" fontSize="18" fill={INK} style={WYMIAR_ETYKIETA}>
+        R
+      </text>
+      <line x1="71" y1="62" x2="71" y2="104" stroke={INK} strokeWidth="1.5" strokeDasharray="3 3" />
+      <line x1="89" y1="62" x2="89" y2="104" stroke={INK} strokeWidth="1.5" strokeDasharray="3 3" />
+      <Wymiar x1={71} y1={104} x2={89} y2={104} />
+      <text x="80" y="126" textAnchor="middle" fontSize="18" fill={INK} style={WYMIAR_ETYKIETA}>
+        A
+      </text>
+    </svg>
+  );
+}
+
+/** S — rozmiar uszkodzenia w barku. */
+export function SchematS() {
+  return (
+    <svg viewBox="40 0 440 300" aria-hidden focusable="false" className="h-auto w-full">
+      <path
+        d="M96,262 C82,222 80,172 82,132 A72,72 0 0 1 154,60 L366,60 A72,72 0 0 1 438,132 C440,172 438,222 424,262"
+        fill="none"
+        stroke={INK}
+        strokeWidth="48"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M96,262 C82,222 80,172 82,132 A72,72 0 0 1 154,60 L366,60 A72,72 0 0 1 438,132 C440,172 438,222 424,262"
+        fill="none"
+        stroke={TLO}
+        strokeWidth="30"
+      />
+      <path d="M324,60 L366,60 A72,72 0 0 1 438,132" fill="none" stroke={KOLOR_STREFY.bark} strokeWidth="30" />
+      <circle cx="400" cy="84" r="14" fill={INK} />
+      <line x1="356" y1="160" x2="390" y2="100" stroke={INK} strokeWidth="4" strokeLinecap="round" />
+      <text x="338" y="200" fontSize="48" fill={INK} style={WYMIAR_ETYKIETA}>
+        S
+      </text>
+    </svg>
+  );
+}

@@ -71,7 +71,7 @@ ${kontakt.serviceAreas.join(", ")}.
 
 ## Strony
 - [Detailing — cennik, efekty przed/po, FAQ, rezerwacja online](${siteUrl})
-- [Wulkanizacja — cennik wymiany opon, przebieg wizyty, FAQ, termin telefonicznie](${siteUrl}/wulkanizacja)
+- [Wulkanizacja — cennik wymiany opon, zasady pracy, FAQ, termin telefonicznie](${siteUrl}/wulkanizacja)
 `;
 
   return new Response(body, {

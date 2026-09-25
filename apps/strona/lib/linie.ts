@@ -54,7 +54,7 @@ export const LINIA_INFO: Record<Linia, LiniaInfo> = {
     podpis: "opony · wyważanie",
     nawigacja: [
       { href: "#cennik", label: "Cennik" },
-      { href: "#przebieg", label: "Jak to wygląda" },
+      { href: "#zasady", label: "Jak pracuję" },
       { href: "#faq", label: "FAQ" },
     ],
     etykieta: "Wulkanizacja",

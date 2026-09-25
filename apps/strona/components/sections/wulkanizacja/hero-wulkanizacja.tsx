@@ -1,22 +1,17 @@
-import Image from "next/image";
 import { itemPriceRange, type CennikData } from "@/lib/cennik";
-import type { HeroImages } from "@/lib/cms-content";
-import { buildPhotoContactHref } from "@/lib/photo-contact";
 import type { KontaktData } from "@/lib/site";
-import { HeroPicture } from "../hero-picture";
-import { PhoneLink, PhotoLink } from "../phone-link";
-import { IlustracjaKola } from "./ilustracja-kola";
+import { PhoneLink } from "../phone-link";
+import { HeroMapa } from "./hero-mapa";
 
 /**
  * Hero linii Wulkanizacja — ten sam układ co hero detailingu (naklejka
  * lokalizacji → H1 → lead → kafel ceny → dwa CTA | przekrzywiona karta),
  * tylko w czerwieni (token `--akcent` przepięty na wrapperze strony) i z
- * własnymi rekwizytami: klucz krzyżakowy w narożniku zamiast lancy, nakrętki
- * zamiast bąbli piany. Karta pokazuje zdjęcie z panelu (Magazyn →
- * Wulkanizacja → CMS), a dopóki go nie ma — ilustrację koła.
+ * własnymi rekwizytami: nakrętki zamiast bąbli piany. Karta pokazuje mapę
+ * Google z pinezką warsztatu.
  *
  * CTA inne niż w detailingu: wulkanizacja nie ma rezerwacji online, więc
- * główny przycisk dzwoni, a drugi wysyła zdjęcie opony (czy da się naprawić).
+ * jedyny przycisk dzwoni.
  *
  * Kafel ceny bierze kwotę z cennika (pozycja `przekladka-sezonowa`), żeby
  * hero nigdy nie obiecywał innej ceny niż sekcja 01 po edycji w panelu.
@@ -73,11 +68,9 @@ function Nakretki() {
 }
 
 export function HeroWulkanizacja({
-  images,
   kontakt,
   cennik,
 }: {
-  images: HeroImages;
   kontakt: KontaktData;
   cennik: CennikData;
 }) {
@@ -100,9 +93,8 @@ export function HeroWulkanizacja({
           </h1>
 
           <p className="hero-enter max-w-[42ch] text-[17px] leading-[1.5] font-medium text-pretty [animation-delay:90ms] lg:text-[19px]">
-            Sezonowa przekładka kół, wyważanie, naprawa przebitej opony
-            i&nbsp;przechowywanie drugiego kompletu — na umówioną godzinę, bez
-            kolejki
+            Wymiana opon i&nbsp;całych kół, wyważanie i&nbsp;naprawa opon —
+            od&nbsp;ręki
           </p>
 
           <div className="hero-enter cien-5 flex w-max max-w-full rotate-[1.2deg] flex-col gap-0.5 rounded-xl border-[3px] border-ink bg-background px-[18px] py-[13px] [animation-delay:180ms]">
@@ -129,51 +121,21 @@ export function HeroWulkanizacja({
                 umówisz godzinę od ręki
               </span>
             </PhoneLink>
-
-            <PhotoLink
-              href={buildPhotoContactHref(kontakt)}
-              section="hero"
-              className="cien-mgla-5 flex items-center rounded-xl border-[3px] border-ink bg-background px-[22px] py-3.5 text-[16.5px] font-semibold focus-visible:ring-3 focus-visible:ring-ink/40 focus-visible:outline-none"
-            >
-              Wyślij zdjęcie opony
-            </PhotoLink>
           </div>
         </div>
 
         <div className="relative flex justify-center">
           <div className="cien-7 w-[88%] rotate-2 rounded-2xl border-[3px] border-ink bg-background p-3.5">
-            <div className="relative aspect-[4/3] overflow-hidden rounded-[10px]">
-              {images.desktop ? (
-                <HeroPicture
-                  images={images}
-                  alt="Koło samochodowe na maszynie do wyważania w warsztacie wulkanizacyjnym"
-                  imgClassName="object-cover"
-                />
-              ) : (
-                <div className="kropki absolute inset-0 bg-piasek p-4">
-                  <IlustracjaKola />
-                </div>
-              )}
-            </div>
+            <HeroMapa
+              adres={`${kontakt.addressLine}, ${kontakt.postalCode} ${kontakt.city}`}
+              mapsUrl={kontakt.googleMapsUrl}
+            />
             <div className="mt-3 flex justify-center">
               <p className="etykieta text-muted-foreground">
-                psss... tym razem to opona
+                {kontakt.addressLine} · {kontakt.city}
               </p>
             </div>
           </div>
-
-          {/* Klucz krzyżakowy w narożniku karty — odpowiednik lancy z hero
-              detailingu. SVG z wypaloną obwódką (w pliku), więc bez filtrów
-              CSS; next/image serwuje SVG bez optymalizacji, ale `sizes`
-              i lazy zostają dla spójności z resztą naklejek. */}
-          <Image
-            src="/brand/wulk-klucz-naklejka.svg"
-            alt="Klucz krzyżakowy do kół"
-            width={200}
-            height={200}
-            sizes="(max-width: 1023px) 30vw, 150px"
-            className="absolute top-[-8%] right-[-1%] z-[2] h-auto w-[30%] sm:right-[-7%] sm:w-[27%]"
-          />
 
           <Nakretki />
         </div>

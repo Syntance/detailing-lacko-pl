@@ -36,7 +36,7 @@ export const DEFAULT_FAQ_WULKANIZACJA: FaqData = {
       id: "przebita",
       question: "Mam przebitą oponę. Da się to naprawić?",
       answer:
-        "Zwykle tak. Gwóźdź albo wkręt w bieżniku zakleję kołkiem (sznurem) bez zdejmowania opony albo naprawię od środka grzybkiem — z demontażem i wyważeniem. Obie naprawy mają cenę w cenniku, a ja podpowiem, która ma sens w Twoim przypadku. Nie naprawiam boku opony ani dziur powyżej 6 mm — wtedy opona idzie do wymiany i powiem to od razu, zanim policzę cokolwiek. Nie jedź długo na spuszczonym kole: bok niszczy się w kilka kilometrów.",
+        "Zwykle tak. Gwóźdź albo wkręt w bieżniku zakleję kołkiem (sznurem) bez zdejmowania opony albo naprawię od środka grzybkiem — z demontażem i wyważeniem. Obie naprawy mają cenę w cenniku, a ja podpowiem, która ma sens w Twoim przypadku. Bark i bok też da się naprawić łatą radialną, ale tylko do rozmiaru z tabeli producenta łatek — większe uszkodzenie oznacza wymianę opony i powiem to od razu, zanim policzę cokolwiek. Nie jedź długo na spuszczonym kole: bok niszczy się w kilka kilometrów.",
       order: 3,
     },
     {

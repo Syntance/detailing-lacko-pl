@@ -214,7 +214,7 @@ const NAKLEJKI_DETAILING: Record<string, Naklejka> = {
 
 /**
  * Naklejki linii Wulkanizacja — SVG rysowane ręcznie w tym samym języku
- * (koło, klucz krzyżakowy, manometr), obwódki wypalone w pliku. Wszystkie
+ * (koło, manometr), obwódki wypalone w pliku. Wszystkie
  * niemal kwadratowe, więc dostają tę samą szerokość co sygnet lancy (96–112 px).
  */
 const NAKLEJKI_WULKANIZACJA: Record<string, Naklejka> = {
@@ -223,16 +223,6 @@ const NAKLEJKI_WULKANIZACJA: Record<string, Naklejka> = {
   // koniec słowa już przy 1440 px, a przy 1024 px (węższe karty) także
   // „Wymiana opon na felgach" wchodziłoby pod naklejkę. Wiszą bardziej NA
   // ZEWNĄTRZ narożnika niż w detailingu i są o stopień mniejsze.
-  przekladka: {
-    src: "/brand/wulk-klucz-naklejka.svg",
-    width: 200,
-    height: 200,
-    alt: "Klucz krzyżakowy — przekładka kół",
-    szerokosc: "w-20 sm:w-24",
-    sizes: "96px",
-    obrot: "rotate-0",
-    przesuniecie: "-translate-x-[4px] -translate-y-8",
-  },
   hotel: {
     src: "/brand/wulk-kolo-naklejka.svg",
     width: 160,

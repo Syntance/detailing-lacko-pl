@@ -39,6 +39,7 @@ const CSP = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
+  "frame-src https://www.google.com",
   // R2 S3 API — przeglądarka PUTuje duże zdjęcia presignem prosto na bucket
   // (omija limit body Vercel ~4,5 MB). Bez tego hosta CSP blokuje upload.
   // GA4 wysyła beacon na region1.google-analytics.com — stąd wildcard.

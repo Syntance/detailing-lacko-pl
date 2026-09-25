@@ -1,7 +1,9 @@
 /**
  * Tabela napraw opon łatkami radialnymi (RAD) — przepisana z tabeli producenta
  * łatek, którą warsztat stosuje. Liczby to maksymalny rozmiar uszkodzenia
- * w mm; `null` = w tej strefie danej łatki nie wolno użyć.
+ * w mm; `null` = w tej strefie danej łatki nie wolno użyć. Litery jak u producenta:
+ * CØ średnica okrągłej dziury, R długość wzdłuż nitek osnowy, A szerokość wzdłuż
+ * obwodu, S rozmiar dziury w barku.
  *
  * Kolejność stref jak na schemacie strony (1 bieżnik, 2 bark, 3 bok), a nie
  * jak w oryginale producenta (tam bok ma numer 1).
@@ -16,7 +18,7 @@ type Mm = number | null;
 
 export type WierszNaprawy = {
   rad: string;
-  bieznik: [c: Mm, a: Mm, r: Mm];
+  bieznik: [cSrednica: Mm, a: Mm, r: Mm];
   bark: Mm;
   /** Na boku producent czasem dopuszcza dwa kształty uszkodzenia (A×R) dla jednej łatki. */
   bok: [a: Mm, r: Mm][];

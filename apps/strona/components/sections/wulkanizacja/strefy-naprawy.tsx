@@ -4,7 +4,14 @@ import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { Maximize2, Table2, X } from "lucide-react";
 import { Reveal } from "@/components/motion/reveal";
 import { PROFILE, TABELE_NAPRAW, type TabelaNapraw } from "@/lib/tabela-napraw";
-import { KOLOR_STREFY, MiniStrefa, SchematStrefNaprawy } from "./schematy-opon";
+import {
+  KOLOR_STREFY,
+  MiniStrefa,
+  SchematAR,
+  SchematCO,
+  SchematS,
+  SchematStrefNaprawy,
+} from "./schematy-opon";
 
 const STREFY = [
   { nazwa: "Środek bieżnika", opis: "grzybek albo łata, do 6–10 mm", kolor: KOLOR_STREFY.bieznik },
@@ -153,7 +160,7 @@ function Tabela({ tabela }: { tabela: TabelaNapraw }) {
             <NaglowekStrefy n={3} nazwa="Bok" strefa="bok" colSpan={2} />
           </tr>
           <tr className="text-ink">
-            {["C", "A", "R"].map((k) => (
+            {["CØ", "A", "R"].map((k) => (
               <th key={`b-${k}`} scope="col" className={podnaglowek} style={{ background: tlo(bieznik, 40) }}>
                 {k}
               </th>
@@ -367,6 +374,77 @@ function KluczRozmiarow({ tabela }: { tabela: TabelaNapraw }) {
   );
 }
 
+/** Co znaczą litery w nagłówkach tabeli — z rysunków w tabeli producenta łatek. */
+function LegendaWymiarow() {
+  const pozycje = [
+    {
+      Schemat: SchematCO,
+      litery: [
+        {
+          litera: "CØ",
+          tekst: "Średnica okrągłej dziury przebitej na wylot — np. po gwoździu albo wkręcie w bieżniku.",
+        },
+      ],
+    },
+    {
+      Schemat: SchematAR,
+      litery: [
+        {
+          litera: "R",
+          tekst: "Długość przecięcia wzdłuż nitek osnowy (pionowe kreski na rysunku): na boku — od felgi w stronę bieżnika, w bieżniku — w poprzek, od barku do barku.",
+        },
+        {
+          litera: "A",
+          tekst: "Szerokość przecięcia wzdłuż obwodu opony, czyli w kierunku toczenia. Takie cięcie przecina wiele nitek naraz, dlatego limit A jest zwykle mniejszy niż R.",
+        },
+      ],
+    },
+    {
+      Schemat: SchematS,
+      litery: [
+        {
+          litera: "S",
+          tekst: "Rozmiar dziury w barku — tam, gdzie bieżnik przechodzi w bok. Bark pracuje najmocniej, więc limit jest najmniejszy, a przy oponach ZR barku w ogóle się nie naprawia.",
+        },
+      ],
+    },
+  ];
+
+  return (
+    <section aria-labelledby="legenda-wymiarow" className="flex flex-col gap-4">
+      <h4 id="legenda-wymiarow" className="text-lg font-bold">
+        Co znaczą litery w tabeli
+      </h4>
+      <div className="grid gap-4 md:grid-cols-3">
+        {pozycje.map(({ Schemat, litery }) => (
+          <div
+            key={litery[0]!.litera}
+            className="flex flex-col gap-3 rounded-xl border-2 border-ink bg-background p-4"
+          >
+            <div className="kropki mx-auto w-full max-w-[220px] rounded-lg bg-piasek p-2">
+              <Schemat />
+            </div>
+            <dl className="flex flex-col gap-2.5">
+              {litery.map(({ litera, tekst }) => (
+                <div key={litera} className="flex items-start gap-3">
+                  <dt className="grid h-7 min-w-9 shrink-0 place-items-center rounded-md border-2 border-ink bg-akcent px-1.5 font-mono text-sm font-bold">
+                    {litera}
+                  </dt>
+                  <dd className="text-sm leading-[1.5] text-pretty text-tekst">{tekst}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+        ))}
+      </div>
+      <p className="text-sm text-pretty text-muted-foreground">
+        Wszystkie wymiary mierzę po oczyszczeniu i przygotowaniu miejsca naprawy,
+        bo dopiero wtedy widać prawdziwą wielkość uszkodzenia.
+      </p>
+    </section>
+  );
+}
+
 function PopupTabeli({ onClose }: { onClose: () => void }) {
   const [aktywna, setAktywna] = useState<TabelaNapraw>(TABELE_NAPRAW[0]!);
   const closeRef = useRef<HTMLButtonElement>(null);
@@ -467,6 +545,8 @@ function PopupTabeli({ onClose }: { onClose: () => void }) {
             </p>
           </div>
 
+          <LegendaWymiarow />
+
           <dl className="grid gap-4 rounded-xl border-2 border-ink bg-piasek p-4 text-sm sm:grid-cols-2 md:p-5">
             {tabela.podzial === "indeks" ? (
               <div>
@@ -480,8 +560,8 @@ function PopupTabeli({ onClose }: { onClose: () => void }) {
               <div>
                 <dt className="font-bold">Dwie liczby na boku</dt>
                 <dd className="mt-1 text-pretty text-tekst">
-                  Łatka zamknie uszkodzenie jednego z dwóch kształtów — krótsze
-                  i szersze albo dłuższe i węższe (np. 15 × 60 lub 20 × 50 mm).
+                  Łatka zamknie przecięcie jednego z dwóch kształtów A × R —
+                  np. 15 × 60 albo 20 × 50 mm. Wystarczy, że mieści się w jednym.
                 </dd>
               </div>
             )}
@@ -490,13 +570,6 @@ function PopupTabeli({ onClose }: { onClose: () => void }) {
               <dd className="mt-1 text-pretty text-tekst">
                 Numer łatki radialnej — większy numer to większa łatka, która
                 zamyka większe uszkodzenie.
-              </dd>
-            </div>
-            <div>
-              <dt className="font-bold">C, A, R, S</dt>
-              <dd className="mt-1 text-pretty text-tekst">
-                Wymiary uszkodzenia mierzone w kierunkach oznaczonych w tabeli
-                producenta łatek, osobno dla każdej strefy.
               </dd>
             </div>
             <div>

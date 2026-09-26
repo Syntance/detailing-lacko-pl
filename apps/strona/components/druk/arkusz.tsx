@@ -75,7 +75,7 @@ export function Arkusz({
       </header>
 
       <div data-arkusz-tresc className="min-h-0 flex-1 overflow-hidden">
-        <div className="flex flex-col gap-4">{children}</div>
+        <div className="flex flex-col gap-4 pr-2 pb-2">{children}</div>
       </div>
 
       <footer className="flex items-center justify-center gap-2.5 border-t-2 border-ink pt-2.5">

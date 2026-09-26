@@ -15,7 +15,6 @@ import {
   Building2,
   CalendarClock,
   CircleDollarSign,
-  Disc3,
   HelpCircle,
   Images,
   Printer,
@@ -100,18 +99,6 @@ export function PanelNav({
   const insertAt = statsCount === -1 ? 1 : statsCount + 1;
   const items = [...base.slice(0, insertAt), ...custom, ...base.slice(insertAt)];
 
-  // Druga linia usług — osobna zakładka pod kreską, bo wszystko powyżej
-  // (Cennik, CMS, FAQ, SEO…) dotyczy detailingu. W środku te same edytory
-  // podpięte pod dane wulkanizacji (app/magazyn/panel/wulkanizacja).
-  const drugaLinia: NavItem[] = [
-    {
-      href: `${panel}/wulkanizacja`,
-      label: "Wulkanizacja",
-      icon: Disc3,
-      exact: false,
-    },
-  ];
-
   const renderLink = ({ href, label, icon: Icon, exact }: NavItem) => {
     const active = exact ? pathname === href : pathname.startsWith(href);
     return (
@@ -139,11 +126,6 @@ export function PanelNav({
         ) : (
           <nav aria-label="Nawigacja panelu" className="flex flex-col gap-1">
             {items.map(renderLink)}
-            <div
-              role="presentation"
-              className="mx-3 my-2 border-t border-border"
-            />
-            {drugaLinia.map(renderLink)}
           </nav>
         )}
       </div>

@@ -117,6 +117,17 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       { source: "/panel", destination: "/magazyn", permanent: false },
+      // Dawna osobna sekcja „Wulkanizacja" — teraz przełącznik linii w każdej zakładce.
+      {
+        source: "/magazyn/panel/wulkanizacja",
+        destination: "/magazyn/panel/cennik?linia=wulkanizacja",
+        permanent: true,
+      },
+      {
+        source: "/magazyn/panel/wulkanizacja/:sekcja(cennik|cms|faq|seo)",
+        destination: "/magazyn/panel/:sekcja?linia=wulkanizacja",
+        permanent: true,
+      },
       { source: "/panel/:path*", destination: "/magazyn", permanent: false },
       // Moduły sklepowe (Medusa) wyłączone — bezpośrednie URL-e nie mogą dać 500.
       {

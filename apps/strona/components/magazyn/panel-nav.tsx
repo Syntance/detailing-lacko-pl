@@ -18,6 +18,7 @@ import {
   Disc3,
   HelpCircle,
   Images,
+  Printer,
   Search,
 } from "lucide-react";
 
@@ -83,6 +84,12 @@ export function PanelNav({
       href: `${panel}/seo`,
       label: "SEO",
       icon: Search,
+      exact: false,
+    },
+    {
+      href: `${panel}/materialy`,
+      label: "Materiały do druku",
+      icon: Printer,
       exact: false,
     },
   ];

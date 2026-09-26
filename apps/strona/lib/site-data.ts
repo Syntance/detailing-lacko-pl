@@ -1,6 +1,6 @@
 import "server-only";
 
-import { readBlob, writeBlob } from "./blobs";
+import { readBlob, readBlobStrict, writeBlob } from "./blobs";
 import {
   cennikDataSchema,
   DEFAULT_CENNIK,
@@ -21,6 +21,13 @@ import {
 import { kontaktSchema, DEFAULT_KONTAKT, type KontaktData } from "./site";
 import { faqDataSchema, DEFAULT_FAQ, type FaqData } from "./faq";
 import { DEFAULT_FAQ_WULKANIZACJA } from "./faq-wulkanizacja";
+import {
+  edycjaDrukuSchema,
+  kluczBlobuDruku,
+  PUSTA_EDYCJA,
+  type EdycjaDruku,
+  type PlakatEdytowalny,
+} from "./druk-edycja";
 import {
   metamorfozyDataSchema,
   DEFAULT_METAMORFOZY,
@@ -44,6 +51,19 @@ export const BLOB_KEYS = {
 
 export async function getCennik(): Promise<CennikData> {
   return readBlob(BLOB_KEYS.cennik, cennikDataSchema, DEFAULT_CENNIK);
+}
+
+/** Cennik do wydruku — bez cichego fallbacku (patrz `readBlobStrict`). */
+export async function getCennikDoDruku(): Promise<CennikData> {
+  return readBlobStrict(BLOB_KEYS.cennik, cennikDataSchema, DEFAULT_CENNIK);
+}
+
+export async function getCennikWulkanizacjaDoDruku(): Promise<CennikData> {
+  return readBlobStrict(
+    BLOB_KEYS.cennikWulkanizacja,
+    cennikDataSchema,
+    DEFAULT_CENNIK_WULKANIZACJA,
+  );
 }
 
 export async function saveCennik(data: CennikData): Promise<void> {
@@ -128,4 +148,12 @@ export async function getFaqWulkanizacja(): Promise<FaqData> {
 
 export async function saveFaqWulkanizacja(data: FaqData): Promise<void> {
   await writeBlob(BLOB_KEYS.faqWulkanizacja, data);
+}
+
+export async function getEdycjaDruku(id: PlakatEdytowalny): Promise<EdycjaDruku> {
+  return readBlob(kluczBlobuDruku(id), edycjaDrukuSchema, PUSTA_EDYCJA);
+}
+
+export async function saveEdycjaDruku(id: PlakatEdytowalny, data: EdycjaDruku): Promise<void> {
+  await writeBlob(kluczBlobuDruku(id), data);
 }

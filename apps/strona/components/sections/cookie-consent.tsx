@@ -209,7 +209,7 @@ export function CookieConsent() {
   return (
     <>
       {mounted ? (
-        <div className="pointer-events-none fixed inset-0 z-[9999] flex items-end justify-center p-4 sm:p-6">
+        <div className="druk-ukryj pointer-events-none fixed inset-0 z-[9999] flex items-end justify-center p-4 sm:p-6">
           <div
             role="dialog"
             aria-modal="false"

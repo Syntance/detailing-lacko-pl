@@ -1,7 +1,8 @@
 import Image from "next/image";
 import {
   bezCeny,
-  formatItemPrice,
+  dopisekCeny,
+  formatItemKwota,
   formatVariantPrice,
   itemRequires,
   itemVariants,
@@ -77,13 +78,13 @@ function maKwote(item: CennikItem): boolean {
  * i `font-bold` kwoty, więc dopisek nie konkuruje z liczbą — tak jak reszta
  * meta w kartach (czas realizacji, plakietki).
  */
-type UstawieniaDopisku = {
+export type UstawieniaDopisku = {
   tekst: string;
   /** Stopień pisma w px — z panelu, patrz `vatSuffixSize`. */
   rozmiar: number;
 };
 
-function DopisekPodatek({
+export function DopisekPodatek({
   podatek,
   ciemne = false,
 }: {
@@ -95,9 +96,15 @@ function DopisekPodatek({
     <span
       // `fontSize` inline, bo wartość jest z panelu — klasa Tailwinda musiałaby
       // istnieć w kodzie dla każdego dopuszczalnego stopnia (JIT skanuje
-      // źródła, nie runtime), a `etykieta-sm` i tak zostaje: niesie krój mono,
-      // grubość, tracking i wersaliki, a nadpisujemy z niej tylko rozmiar.
-      style={{ fontSize: `${podatek.rozmiar}px` }}
+      // źródła, nie runtime). `etykieta-sm` niesie krój mono, grubość
+      // i wersaliki; stopień to 90% wartości z panelu, a tracking i odstęp
+      // między słowami są ciaśniejsze niż w etykietach, żeby dopisek był
+      // zwarty i nie konkurował z kwotą.
+      style={{
+        fontSize: `${(podatek.rozmiar * 0.9).toFixed(1)}px`,
+        letterSpacing: "0.04em",
+        wordSpacing: "-0.15em",
+      }}
       className={`etykieta-sm block leading-none ${
         ciemne ? "text-noc-szary" : "text-tekst"
       }`}
@@ -105,6 +112,23 @@ function DopisekPodatek({
       {podatek.tekst}
     </span>
   );
+}
+
+/**
+ * Dopisek pozycji z panelu (pole „Dopisek": „za szt.", „za 4 szt.") pod kwotą
+ * — dokładnie w tym samym miejscu i stylu co dopisek przy każdej cenie
+ * (`DopisekPodatek`, rozmiar z Ustawień sekcji).
+ */
+export function DopisekCeny({
+  item,
+  rozmiar,
+  ciemne = false,
+}: {
+  item: CennikItem;
+  rozmiar: number;
+  ciemne?: boolean;
+}) {
+  return <DopisekPodatek podatek={{ tekst: dopisekCeny(item), rozmiar }} ciemne={ciemne} />;
 }
 
 /**
@@ -329,7 +353,8 @@ function WymaganeDodatki({
   );
 }
 
-function PozycjaCennika({
+/** Wiersz pozycji w karcie kategorii — ten sam na stronie i na plakacie A4. */
+export function PozycjaCennika({
   item,
   allItems,
   podatek,
@@ -377,9 +402,10 @@ function PozycjaCennika({
             Dopisek o podatku idzie POD kwotą (patrz `DopisekPodatek`), więc
             nie wchodzi w te szerokości — mierzone są dalej samą kwotą. */}
         {bezCeny(item) ? null : (
-          <span className="max-w-[145px] text-right text-lg font-bold text-balance tabular-nums">
+          <span className="max-w-[155px] text-right text-xl font-bold text-balance tabular-nums">
             <CenaOsobno kwota={maKwote(item) ? item.compareAtPrice : 0} />
-            {formatItemPrice(item)}
+            {formatItemKwota(item)}
+            <DopisekCeny item={item} rozmiar={podatek.rozmiar} />
             {maKwote(item) ? <DopisekPodatek podatek={podatek} /> : null}
           </span>
         )}
@@ -423,9 +449,10 @@ function PakietPozycja({
           {stripBullet(item.name)}
         </span>
         {bezCeny(item) ? null : (
-          <span className="text-right text-lg font-bold text-balance text-akcent tabular-nums">
+          <span className="text-right text-xl font-bold text-balance text-akcent tabular-nums">
             <CenaOsobno kwota={maKwote(item) ? item.compareAtPrice : 0} ciemne />
-            {formatItemPrice(item)}
+            {formatItemKwota(item)}
+            <DopisekCeny item={item} rozmiar={podatek.rozmiar} ciemne />
             {maKwote(item) ? <DopisekPodatek podatek={podatek} ciemne /> : null}
           </span>
         )}

@@ -24,16 +24,13 @@ import { BookingLink, PhoneLink } from "./phone-link";
  */
 
 /**
- * Układ sekcji per linia usług: które kategorie z panelu są kartami (i w jakiej
- * kolejności), która jest filarem oferty (kolorowy nagłówek + cień w akcencie),
+ * Układ sekcji per linia usług: która kategoria jest filarem oferty (kolorowy nagłówek + cień w akcencie),
  * która idzie do czarnego pasa pakietów i jakie naklejki narzędzi dostają
  * karty. Sam komponent jest wspólny dla detailingu i wulkanizacji — różni się
  * wyłącznie danymi (cennik z osobnego blobu) i tym układem; kolory bierze
  * z tokenu `--akcent`, który strona /wulkanizacja przepina na czerwień.
  */
 export type UkladCennika = {
-  /** Kolejność kart z makiety; kategorie dodane w panelu lecą za nimi. */
-  kartyKategorii: readonly string[];
   /** Kategoria-filar oferty. */
   filar: string;
   /**
@@ -245,22 +242,18 @@ const NAKLEJKI_WULKANIZACJA: Record<string, Naklejka> = {
   },
 };
 
-/** Kolejność kolumn = kolejność z makiety (Wnętrze jako filar oferty). */
+/** Wnętrze jako filar oferty. Kolejność kart = kolejność kategorii w panelu. */
 export const UKLAD_CENNIKA_DETAILING: UkladCennika = {
-  kartyKategorii: ["wnetrze", "zewnatrz", "polerowanie-korekta"],
   filar: "wnetrze",
   pakiety: "pakiety",
   naklejki: NAKLEJKI_DETAILING,
 };
 
 /**
- * Wulkanizacja: sześć kart w kolejności sekcji cennika właściciela (dwa rzędy
- * po trzy), przekładka jako filar. Cennik nie ma pakietów, więc czarnego pasa
- * nie ma — `pakiety` wskazuje id, którego w danych nie ma. Kategoria dodana
- * w panelu dostaje id `karta-…` i staje jako kolejna karta, nie w pasie.
+ * Wulkanizacja: przekładka jako filar. Cennik nie ma pakietów, więc czarnego
+ * pasa nie ma — `pakiety` wskazuje id, którego w danych nie ma.
  */
 export const UKLAD_CENNIKA_WULKANIZACJA: UkladCennika = {
-  kartyKategorii: ["przekladka", "wymiana", "naprawa", "tpms", "hotel", "dodatki"],
   filar: "przekladka",
   pakiety: "pakiety",
   naklejki: NAKLEJKI_WULKANIZACJA,
@@ -557,16 +550,10 @@ export function UslugiCennik({
   };
   const plakietkaPodatek = cennik.settings.vatNote.trim();
 
-  // Kolumny: najpierw kategorie z makiety w jej kolejności, potem ewentualne
-  // dodane w panelu — żadna nie znika ze strony po edycji.
-  const cardCategories = [
-    ...uklad.kartyKategorii
-      .map((id) => categories.find((c) => c.id === id))
-      .filter((c): c is NonNullable<typeof c> => Boolean(c)),
-    ...categories.filter(
-      (c) => c.id !== uklad.pakiety && !uklad.kartyKategorii.includes(c.id),
-    ),
-  ];
+  // Karty w kolejności z panelu (przeciąganie w Cennik → Karty usług).
+  const cardCategories = categories
+    .filter((c) => c.id !== uklad.pakiety)
+    .sort((a, b) => a.order - b.order);
 
   // Karty układamy w trzech kolumnach „na najniższą": każda kolejna kategoria
   // trafia pod najkrótszą dotąd kolumnę. W zwykłym gridzie wiersz miał wysokość

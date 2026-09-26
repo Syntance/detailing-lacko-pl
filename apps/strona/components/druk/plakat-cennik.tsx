@@ -21,12 +21,7 @@ export function PlakatCennik({ cennik, uklad }: { cennik: CennikData; uklad: Ukl
   const pozycje = cennik.items.filter((i) => !i.disabled).sort((a, b) => a.order - b.order);
   const wKategorii = (id: string) => pozycje.filter((i) => i.categoryId === id);
 
-  const karty = [
-    ...uklad.kartyKategorii
-      .map((id) => kategorie.find((c) => c.id === id))
-      .filter((c): c is CennikCategory => Boolean(c)),
-    ...kategorie.filter((c) => c.id !== uklad.pakiety && !uklad.kartyKategorii.includes(c.id)),
-  ].filter((c) => wKategorii(c.id).length);
+  const karty = kategorie.filter((c) => c.id !== uklad.pakiety && wKategorii(c.id).length);
 
   const pakietyKategoria = kategorie.find((c) => c.id === uklad.pakiety);
   const pakiety = pakietyKategoria ? wKategorii(pakietyKategoria.id) : [];

@@ -266,6 +266,21 @@ export const UKLAD_CENNIKA_WULKANIZACJA: UkladCennika = {
   naklejki: NAKLEJKI_WULKANIZACJA,
 };
 
+/** Szacunek wysokości karty (w „wierszach") do układania kolumn. */
+function wysokoscKarty(rows: CennikItem[]): number {
+  return (
+    2 +
+    rows.reduce(
+      (suma, item) =>
+        suma +
+        1.5 +
+        Math.ceil(item.description.length / 45) +
+        itemVariants(item).length,
+      0,
+    )
+  );
+}
+
 /**
  * Warianty pod opisem pozycji: etykieta ↔ cena, jedna linia na wariant.
  *
@@ -553,6 +568,26 @@ export function UslugiCennik({
     ),
   ];
 
+  // Karty układamy w trzech kolumnach „na najniższą": każda kolejna kategoria
+  // trafia pod najkrótszą dotąd kolumnę. W zwykłym gridzie wiersz miał wysokość
+  // najdłuższej karty i pod krótszymi zostawała dziura przez całą szerokość.
+  const karty = cardCategories
+    .map((category, index) => ({
+      category,
+      index,
+      rows: items
+        .filter((item) => item.categoryId === category.id)
+        .sort((a, b) => a.order - b.order),
+    }))
+    .filter((karta) => karta.rows.length);
+  const kolumny: (typeof karty)[] = [[], [], []];
+  const wysokosci = [0, 0, 0];
+  for (const karta of karty) {
+    const cel = wysokosci.indexOf(Math.min(...wysokosci));
+    kolumny[cel]!.push(karta);
+    wysokosci[cel]! += wysokoscKarty(karta.rows);
+  }
+
   // `pakietyKategoria` bierze się z listy PO odsianiu ukrytych, więc jego brak
   // znaczy „kategoria wyłączona w panelu" — i wtedy czarny pas w ogóle nie
   // wchodzi do drzewa (warunek przy renderze), zamiast lecieć na fallbackowym
@@ -602,72 +637,73 @@ export function UslugiCennik({
           ) : null}
         </Reveal>
 
-        <RevealStagger className="grid items-start gap-[22px] lg:grid-cols-3">
-          {cardCategories.map((category) => {
-            const rows = items
-              .filter((item) => item.categoryId === category.id)
-              .sort((a, b) => a.order - b.order);
-            if (!rows.length) return null;
-            const filar = category.id === uklad.filar;
-            const naklejka = uklad.naklejki[category.id];
-            return (
-              // relative: kotwica dla naklejki narzędzia — SIBLING <article>,
-              // nie jego dziecko, bo <article> ma overflow-hidden (potrzebne
-              // dla zaokrąglonych rogów nagłówka) i przyciąłby naklejkę
-              // wychodzącą poza kartę. Ten sam wzorzec co lanca w hero:
-              // sekcja nadrzędna (bez overflow-hidden) jest jedynym
-              // ograniczeniem, karta go nie ma.
-              <RevealItem key={category.id} className="relative">
-                <article
-                  className={`overflow-hidden rounded-2xl border-[3px] border-ink bg-background ${
-                    filar ? "cien-akcent-6" : "cien-6"
-                  }`}
+        {/* Poniżej lg kolumny są `contents`, więc karty lecą jedną listą, a `order`
+            przywraca ich kolejność z cennika (inaczej szłyby kolumnami). */}
+        <RevealStagger className="flex flex-col gap-[22px] lg:grid lg:grid-cols-3 lg:items-start">
+          {kolumny.map((kolumna, i) => (
+            <div key={i} className="contents lg:flex lg:flex-col lg:gap-[22px]">
+              {kolumna.map(({ category, index, rows }, wKolumnie) => {
+                const filar = category.id === uklad.filar;
+                const naklejka = uklad.naklejki[category.id];
+                return (
+                  <RevealItem
+                  key={category.id}
+                  // Naklejka wystaje nad kartę — pod inną kartą w kolumnie potrzebuje miejsca.
+                  className={naklejka && wKolumnie > 0 ? "relative lg:mt-6" : "relative"}
+                  style={{ order: index }}
                 >
-                  <div
-                    className={`flex items-center gap-3 border-b-[3px] border-ink px-5 py-[18px] ${
-                      filar ? "bg-akcent" : ""
-                    }`}
-                  >
-                    <h3 className="text-xl font-bold">{category.name}</h3>
-                  </div>
-                  <ul className="flex flex-col">
-                    {rows.map((item) => (
-                      <PozycjaCennika
-                        key={item.id}
-                        item={item}
-                        allItems={items}
-                        podatek={podatek}
+                    <article
+                      className={`overflow-hidden rounded-2xl border-[3px] border-ink bg-background ${
+                        filar ? "cien-akcent-6" : "cien-6"
+                      }`}
+                    >
+                      <div
+                        className={`flex items-center gap-3 border-b-[3px] border-ink px-5 py-[18px] ${
+                          filar ? "bg-akcent" : ""
+                        }`}
+                      >
+                        <h3 className="text-xl font-bold">{category.name}</h3>
+                      </div>
+                      <ul className="flex flex-col">
+                        {rows.map((item) => (
+                          <PozycjaCennika
+                            key={item.id}
+                            item={item}
+                            allItems={items}
+                            podatek={podatek}
+                          />
+                        ))}
+                      </ul>
+                    </article>
+                    {naklejka ? (
+                      // next/image, nie surowy <img>: pliki źródłowe mają 1360–1789
+                      // px szerokości (obwódki wypalane w dużym rastrze), a na
+                      // ekranie schodzą do 96–168 px. Surowe PNG-i szły w całości —
+                      // 686 KB pobierane EAGER, zanim jeszcze ktokolwiek doscrollował
+                      // do cennika, konkurując pasmem ze zdjęciem hero (LCP).
+                      // Optymalizator skaluje do srcsetu z `sizes` i podaje AVIF/WebP,
+                      // a domyślny `loading="lazy"` zdejmuje je ze ścieżki krytycznej.
+                      // `h-auto`: szerokość narzuca klasa, więc wysokość musi zostać
+                      // policzona z proporcji pliku, nie z atrybutu `height`.
+                      <Image
+                        src={naklejka.src}
+                        alt={naklejka.alt}
+                        width={naklejka.width}
+                        height={naklejka.height}
+                        sizes={naklejka.sizes}
+                        // Zwis w prawo dopiero od `sm`: obrót o 30° rozszerza
+                        // prostokąt otaczający o ~10–16 px z każdej strony, więc na
+                        // 375 px sam zwis 28 px wypychał stronę do 399 px. Poziome
+                        // przepełnienie rozciąga layout viewport, przez co
+                        // `position: fixed` podglądu Efektów wychodzi poza ekran.
+                        className={`pointer-events-none absolute -top-[14px] right-0 z-10 h-auto sm:-right-[28px] ${naklejka.szerokosc} ${naklejka.obrot} ${naklejka.przesuniecie}`}
                       />
-                    ))}
-                  </ul>
-                </article>
-                {naklejka ? (
-                  // next/image, nie surowy <img>: pliki źródłowe mają 1360–1789
-                  // px szerokości (obwódki wypalane w dużym rastrze), a na
-                  // ekranie schodzą do 96–168 px. Surowe PNG-i szły w całości —
-                  // 686 KB pobierane EAGER, zanim jeszcze ktokolwiek doscrollował
-                  // do cennika, konkurując pasmem ze zdjęciem hero (LCP).
-                  // Optymalizator skaluje do srcsetu z `sizes` i podaje AVIF/WebP,
-                  // a domyślny `loading="lazy"` zdejmuje je ze ścieżki krytycznej.
-                  // `h-auto`: szerokość narzuca klasa, więc wysokość musi zostać
-                  // policzona z proporcji pliku, nie z atrybutu `height`.
-                  <Image
-                    src={naklejka.src}
-                    alt={naklejka.alt}
-                    width={naklejka.width}
-                    height={naklejka.height}
-                    sizes={naklejka.sizes}
-                    // Zwis w prawo dopiero od `sm`: obrót o 30° rozszerza
-                    // prostokąt otaczający o ~10–16 px z każdej strony, więc na
-                    // 375 px sam zwis 28 px wypychał stronę do 399 px. Poziome
-                    // przepełnienie rozciąga layout viewport, przez co
-                    // `position: fixed` podglądu Efektów wychodzi poza ekran.
-                    className={`pointer-events-none absolute -top-[14px] right-0 z-10 h-auto sm:-right-[28px] ${naklejka.szerokosc} ${naklejka.obrot} ${naklejka.przesuniecie}`}
-                  />
-                ) : null}
-              </RevealItem>
-            );
-          })}
+                    ) : null}
+                  </RevealItem>
+                );
+              })}
+            </div>
+          ))}
         </RevealStagger>
 
         {pakietyKategoria && pakiety.length ? (

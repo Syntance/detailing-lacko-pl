@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, type CSSProperties, type ReactNode } from "react";
 
 /**
  * Sygnaturowy reveal projektu: miękkie uniesienie + fade przy wejściu
@@ -94,12 +94,14 @@ export function RevealStagger({
 export function RevealItem({
   children,
   className,
+  style,
 }: {
   children: ReactNode;
   className?: string;
+  style?: CSSProperties;
 }) {
   return (
-    <div className={className ? `reveal-item ${className}` : "reveal-item"}>
+    <div className={className ? `reveal-item ${className}` : "reveal-item"} style={style}>
       {children}
     </div>
   );

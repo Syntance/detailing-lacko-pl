@@ -73,7 +73,7 @@ const METAMORFOZY = {
  * Czas realizacji pozycji w MINUTACH — źródło prawdy dla rezerwacji online
  * (godzina odbioru, dzienny limit). Wartości wyprowadzone z opisowych
  * `timeLabel` (środek widełek; „1 dzień" = 480 min pracy). 1:1 z
- * DEFAULT_CENNIK w lib/cennik.ts.
+ * cennik w bazie (panel Magazyn → Cennik).
  */
 const CENNIK_DURATIONS = {
   "odswiezenie-in-out": 180,

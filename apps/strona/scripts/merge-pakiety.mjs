@@ -66,7 +66,7 @@ const ITEM_ORDER = [
 try {
   const rows = await sql`select data from site_blobs where key = 'cennik' limit 1`;
   if (!rows[0]) {
-    console.log("• site_blobs.cennik nie istnieje — strona użyje DEFAULT_CENNIK.");
+    console.log("• site_blobs.cennik nie istnieje — strona pokaże pusty cennik (cennik jest tylko w bazie)");
     process.exit(0);
   }
 

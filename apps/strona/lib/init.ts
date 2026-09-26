@@ -35,9 +35,9 @@ export function initModuly(): void {
    * świeżo utworzonego projektu. Store podłączamy tylko gdy env jest;
    * bez niego runtime dostanie czytelny błąd przy pierwszym użyciu.
    */
-  // Direct (unpooled) ma pierwszeństwo — patrz resolveDatabaseUrl w db.ts.
+  // Pooler ma pierwszeństwo — patrz resolveDatabaseUrl w db.ts.
   const databaseUrl =
-    process.env.DATABASE_URL_UNPOOLED?.trim() || process.env.DATABASE_URL?.trim();
+    process.env.DATABASE_URL?.trim() || process.env.DATABASE_URL_UNPOOLED?.trim();
   if (databaseUrl) {
     setDataStore(createPostgresStore(databaseUrl));
   } else {

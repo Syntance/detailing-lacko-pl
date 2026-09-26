@@ -1,12 +1,7 @@
 import "server-only";
 
 import { readBlob, readBlobStrict, writeBlob } from "./blobs";
-import {
-  cennikDataSchema,
-  DEFAULT_CENNIK,
-  type CennikData,
-} from "./cennik";
-import { DEFAULT_CENNIK_WULKANIZACJA } from "./cennik-wulkanizacja";
+import { cennikDataSchema, PUSTY_CENNIK, type CennikData } from "./cennik";
 import {
   galeriaDataSchema,
   DEFAULT_GALERIA,
@@ -49,21 +44,13 @@ export const BLOB_KEYS = {
   seoWulkanizacja: "seo-wulkanizacja",
 } as const;
 
+/**
+ * Cennik zawsze z bazy (panel). Błąd odczytu RZUCA zamiast podstawiać dane —
+ * strony z ISR zostają wtedy przy ostatniej dobrej wersji, a nie pokazują
+ * cudzych cen. Brak wiersza (świeża instalacja) = pusty cennik.
+ */
 export async function getCennik(): Promise<CennikData> {
-  return readBlob(BLOB_KEYS.cennik, cennikDataSchema, DEFAULT_CENNIK);
-}
-
-/** Cennik do wydruku — bez cichego fallbacku (patrz `readBlobStrict`). */
-export async function getCennikDoDruku(): Promise<CennikData> {
-  return readBlobStrict(BLOB_KEYS.cennik, cennikDataSchema, DEFAULT_CENNIK);
-}
-
-export async function getCennikWulkanizacjaDoDruku(): Promise<CennikData> {
-  return readBlobStrict(
-    BLOB_KEYS.cennikWulkanizacja,
-    cennikDataSchema,
-    DEFAULT_CENNIK_WULKANIZACJA,
-  );
+  return readBlobStrict(BLOB_KEYS.cennik, cennikDataSchema, PUSTY_CENNIK);
 }
 
 export async function saveCennik(data: CennikData): Promise<void> {
@@ -71,11 +58,7 @@ export async function saveCennik(data: CennikData): Promise<void> {
 }
 
 export async function getCennikWulkanizacja(): Promise<CennikData> {
-  return readBlob(
-    BLOB_KEYS.cennikWulkanizacja,
-    cennikDataSchema,
-    DEFAULT_CENNIK_WULKANIZACJA,
-  );
+  return readBlobStrict(BLOB_KEYS.cennikWulkanizacja, cennikDataSchema, PUSTY_CENNIK);
 }
 
 export async function saveCennikWulkanizacja(data: CennikData): Promise<void> {

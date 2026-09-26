@@ -209,38 +209,8 @@ const NAKLEJKI_DETAILING: Record<string, Naklejka> = {
   },
 };
 
-/**
- * Naklejki linii Wulkanizacja — SVG rysowane ręcznie w tym samym języku
- * (koło, manometr), obwódki wypalone w pliku. Wszystkie
- * niemal kwadratowe, więc dostają tę samą szerokość co sygnet lancy (96–112 px).
- */
-const NAKLEJKI_WULKANIZACJA: Record<string, Naklejka> = {
-  // Naklejka wisi na prawym górnym narożniku karty, więc dostają ją tylko
-  // karty z KRÓTKIM tytułem. Na „Naprawa i usługi pojedyncze" klucz zasłaniał
-  // koniec słowa już przy 1440 px, a przy 1024 px (węższe karty) także
-  // „Wymiana opon na felgach" wchodziłoby pod naklejkę. Wiszą bardziej NA
-  // ZEWNĄTRZ narożnika niż w detailingu i są o stopień mniejsze.
-  hotel: {
-    src: "/brand/wulk-kolo-naklejka.svg",
-    width: 160,
-    height: 160,
-    alt: "Koło z oponą — przechowanie kół przez sezon",
-    szerokosc: "w-20 sm:w-24",
-    sizes: "96px",
-    obrot: "-rotate-[10deg]",
-    przesuniecie: "-translate-x-[6px] -translate-y-7",
-  },
-  tpms: {
-    src: "/brand/wulk-manometr-naklejka.svg",
-    width: 200,
-    height: 200,
-    alt: "Manometr — ciśnienie w kołach i czujniki TPMS",
-    szerokosc: "w-20 sm:w-24",
-    sizes: "96px",
-    obrot: "rotate-[12deg]",
-    przesuniecie: "-translate-x-[4px] -translate-y-8",
-  },
-};
+/** Linia Wulkanizacja nie ma naklejek na kartach cennika. */
+const NAKLEJKI_WULKANIZACJA: Record<string, Naklejka> = {};
 
 /** Wnętrze jako filar oferty. Kolejność kart = kolejność kategorii w panelu. */
 export const UKLAD_CENNIKA_DETAILING: UkladCennika = {

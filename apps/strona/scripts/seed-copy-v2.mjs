@@ -128,7 +128,7 @@ try {
     `;
     console.log("✓ site_blobs.cennik — settings v2, PRO 1000–1300, korekta off");
   } else {
-    console.log("• site_blobs.cennik nie istnieje — strona użyje DEFAULT_CENNIK");
+    console.log("• site_blobs.cennik nie istnieje — strona pokaże pusty cennik (cennik jest tylko w bazie)");
   }
 
   console.log("Gotowe. Strona przeładuje treść przy najbliższej rewalidacji (ISR 10 min) albo po redeployu.");

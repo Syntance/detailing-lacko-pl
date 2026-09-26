@@ -49,7 +49,7 @@ export async function readBlob<S extends z.ZodTypeAny>(
 }
 
 /**
- * Odczyt bez cichego fallbacku do wartości z kodu — dla materiałów do druku.
+ * Odczyt bez cichego fallbacku do wartości z kodu (cenniki: strona i wydruk).
  * Brak wiersza w bazie nadal daje `fallback` (strona pokazuje wtedy to samo),
  * ale brak połączenia, błąd zapytania i niezgodność ze schematem rzucają
  * wyjątek, żeby nikt nie wydrukował cennika z domyślnych cen.
@@ -61,15 +61,22 @@ export async function readBlobStrict<S extends z.ZodTypeAny>(
 ): Promise<z.infer<S>> {
   if (!hasDb()) throw new Error("Brak połączenia z bazą (DATABASE_URL).");
   const { sql } = getPostgresClient();
-  const rows = await sql<{ data: unknown }[]>`
-    select data from site_blobs where key = ${key} limit 1
-  `;
+  let rows: { data: unknown }[];
+  try {
+    rows = await sql<{ data: unknown }[]>`
+      select data from site_blobs where key = ${key} limit 1
+    `;
+  } catch (error) {
+    console.error(`[site_blobs] Odczyt "${key}" nie powiódł się — bez danych zastępczych:`, error);
+    throw error;
+  }
   const row = rows[0];
   if (!row) return fallback;
   const raw = typeof row.data === "string" ? JSON.parse(row.data) : row.data;
   const parsed = schema.safeParse(raw);
   if (!parsed.success) {
-    throw new Error(`Cennik w bazie ("${key}") ma nieprawidłowy format.`);
+    console.error(`[site_blobs] Blob "${key}" nie przeszedł walidacji:`, parsed.error.issues.slice(0, 5));
+    throw new Error(`Dane w bazie ("${key}") mają nieprawidłowy format.`);
   }
   return parsed.data;
 }

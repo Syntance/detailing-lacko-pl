@@ -22,7 +22,7 @@ import {
 import { requireAdminSessionForPanel } from "@/lib/auth";
 import { plakatPoId } from "@/lib/plakaty";
 import { jestEdytowalny } from "@/lib/druk-edycja";
-import { getCennikDoDruku, getCennikWulkanizacjaDoDruku, getEdycjaDruku, getKontakt } from "@/lib/site-data";
+import { getCennik, getCennikWulkanizacja, getEdycjaDruku, getKontakt } from "@/lib/site-data";
 
 export const dynamic = "force-dynamic";
 
@@ -84,7 +84,7 @@ export default async function DrukPage({
   let kartki: ReactNode;
   switch (plakat.id) {
     case "cennik-detailing": {
-      const wynik = await wczytaj(getCennikDoDruku);
+      const wynik = await wczytaj(getCennik);
       if ("blad" in wynik) {
         kartki = <BladDanych komunikat={wynik.blad} />;
         break;
@@ -103,7 +103,7 @@ export default async function DrukPage({
       break;
     }
     case "cennik-wulkanizacja": {
-      const wynik = await wczytaj(getCennikWulkanizacjaDoDruku);
+      const wynik = await wczytaj(getCennikWulkanizacja);
       if ("blad" in wynik) {
         kartki = <BladDanych komunikat={wynik.blad} />;
         break;

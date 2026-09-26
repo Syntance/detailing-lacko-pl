@@ -10,16 +10,17 @@ import type { DataStore } from "@moduly/types";
 let client: PostgresClient | null = null;
 
 /**
- * Preferujemy połączenie BEZPOŚREDNIE (unpooled). Sterownik postgres.js używa
- * prepared statements, które psują się na poolerze Neona (PgBouncer) pod
- * współbieżnością. Integracja Neon na Vercelu wstrzykuje oba: `DATABASE_URL`
- * (pooled) i `DATABASE_URL_UNPOOLED` (direct) — bierzemy direct.
+ * Aplikacja łączy się przez POOLER (`DATABASE_URL`). Bezpośrednie połączenie
+ * (`DATABASE_URL_UNPOOLED`) na serverless wyczerpywało limit slotów Neona —
+ * każda instancja funkcji trzymała własną pulę — i strona dostawała błąd
+ * 53300. Prepared statements, które psują się na PgBouncerze, wyłącza
+ * `createPostgresClient` dla adresu z `-pooler`. Direct zostaje dla migracji.
  */
 function resolveDatabaseUrl(databaseUrl?: string): string {
   const url =
-    databaseUrl ??
-    process.env.DATABASE_URL_UNPOOLED?.trim() ??
-    process.env.DATABASE_URL?.trim();
+    databaseUrl ||
+    process.env.DATABASE_URL?.trim() ||
+    process.env.DATABASE_URL_UNPOOLED?.trim();
   if (!url) {
     throw new Error(
       "[detailing-lacko] Brak DATABASE_URL — ustaw zmienną w .env.local.",

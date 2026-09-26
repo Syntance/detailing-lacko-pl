@@ -1,5 +1,6 @@
 import Image from "next/image";
 import {
+  bezCeny,
   formatItemPrice,
   formatVariantPrice,
   itemRequires,
@@ -375,11 +376,13 @@ function PozycjaCennika({
             wtedy dzieli go na równe linie zamiast jednego wiersza + ogona.
             Dopisek o podatku idzie POD kwotą (patrz `DopisekPodatek`), więc
             nie wchodzi w te szerokości — mierzone są dalej samą kwotą. */}
-        <span className="max-w-[145px] text-right text-lg font-bold text-balance tabular-nums">
-          <CenaOsobno kwota={maKwote(item) ? item.compareAtPrice : 0} />
-          {formatItemPrice(item)}
-          {maKwote(item) ? <DopisekPodatek podatek={podatek} /> : null}
-        </span>
+        {bezCeny(item) ? null : (
+          <span className="max-w-[145px] text-right text-lg font-bold text-balance tabular-nums">
+            <CenaOsobno kwota={maKwote(item) ? item.compareAtPrice : 0} />
+            {formatItemPrice(item)}
+            {maKwote(item) ? <DopisekPodatek podatek={podatek} /> : null}
+          </span>
+        )}
       </div>
       <WariantyPozycji item={item} podatek={podatek} />
     </li>
@@ -419,11 +422,13 @@ function PakietPozycja({
         <span className="min-w-0 text-[15px] font-semibold">
           {stripBullet(item.name)}
         </span>
-        <span className="text-right text-lg font-bold text-balance text-akcent tabular-nums">
-          <CenaOsobno kwota={maKwote(item) ? item.compareAtPrice : 0} ciemne />
-          {formatItemPrice(item)}
-          {maKwote(item) ? <DopisekPodatek podatek={podatek} ciemne /> : null}
-        </span>
+        {bezCeny(item) ? null : (
+          <span className="text-right text-lg font-bold text-balance text-akcent tabular-nums">
+            <CenaOsobno kwota={maKwote(item) ? item.compareAtPrice : 0} ciemne />
+            {formatItemPrice(item)}
+            {maKwote(item) ? <DopisekPodatek podatek={podatek} ciemne /> : null}
+          </span>
+        )}
       </div>
       {item.description ? (
         <span className="text-[13px] leading-[1.5] text-pretty text-noc-szary">

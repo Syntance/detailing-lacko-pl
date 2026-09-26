@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import {
+  bezCeny,
   formatItemPrice,
   formatVariantPrice,
   itemVariants,
@@ -166,6 +167,7 @@ function Pozycja({ item }: { item: CennikItem }) {
 }
 
 function Cena({ item, naCiemnym = false }: { item: CennikItem; naCiemnym?: boolean }) {
+  if (bezCeny(item)) return null;
   return (
     <p className="shrink-0 text-right text-[12px] leading-tight font-bold whitespace-nowrap tabular-nums">
       {item.compareAtPrice > 0 ? (

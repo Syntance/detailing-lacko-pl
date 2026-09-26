@@ -216,6 +216,15 @@ function priceLabel(item: CennikItem, from: number, to: number): string {
   return item.unit ? `${withPrefix} ${item.unit}` : withPrefix;
 }
 
+/**
+ * Pozycja bez własnej kwoty: w panelu cena „od" i „do" = 0 (i nie jest to cena
+ * ukryta z tekstem, np. „Wycena indywidualna"). Cennik nie pokazuje wtedy nic
+ * po prawej, a nazwa i opis zajmują całą szerokość — kwoty stoją w wariantach.
+ */
+export function bezCeny(item: CennikItem): boolean {
+  return !item.priceHidden && item.priceFrom === 0 && (item.priceTo || 0) === 0;
+}
+
 /** Format ceny pozycji: „250–350 zł", „600 zł", „80 zł za parę", „od 1200 zł", „+150 zł". */
 export function formatItemPrice(item: CennikItem): string {
   const { from, to } = itemPriceRange(item);

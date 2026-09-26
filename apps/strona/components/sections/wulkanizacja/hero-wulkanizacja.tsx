@@ -88,10 +88,7 @@ export function HeroWulkanizacja({
 
         <div className="relative flex justify-center">
           <div className="cien-7 w-[88%] rotate-2 rounded-2xl border-[3px] border-ink bg-background p-3.5">
-            <HeroMapa
-              adres={`${kontakt.addressLine}, ${kontakt.postalCode} ${kontakt.city}`}
-              mapsUrl={kontakt.googleMapsUrl}
-            />
+            <HeroMapa adres={`${kontakt.addressLine}, ${kontakt.postalCode} ${kontakt.city}`} />
             <div className="mt-3 flex justify-center">
               <p className="etykieta text-muted-foreground">
                 {kontakt.addressLine} · {kontakt.city}

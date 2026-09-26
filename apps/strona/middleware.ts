@@ -7,13 +7,16 @@ import { modulyConfig } from "./moduly.config";
  */
 const SESSION_COOKIE = modulyConfig.auth.cookieName;
 const PANEL_PREFIX = `${modulyConfig.basePath}/panel`;
+/** Materiały do druku — poza layoutem panelu (bez sidebara), ale za tym samym logowaniem. */
+const DRUK_PREFIX = `${modulyConfig.basePath}/druk`;
 const LOGIN_PATH = modulyConfig.basePath;
 
 export function middleware(request: NextRequest): NextResponse {
   const { pathname } = request.nextUrl;
 
-  const isPanel =
-    pathname === PANEL_PREFIX || pathname.startsWith(`${PANEL_PREFIX}/`);
+  const isPanel = [PANEL_PREFIX, DRUK_PREFIX].some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+  );
   if (!isPanel) return NextResponse.next();
 
   const hasSession = Boolean(request.cookies.get(SESSION_COOKIE)?.value);
@@ -25,5 +28,5 @@ export function middleware(request: NextRequest): NextResponse {
 }
 
 export const config = {
-  matcher: ["/magazyn/panel/:path*"],
+  matcher: ["/magazyn/panel/:path*", "/magazyn/druk/:path*"],
 };

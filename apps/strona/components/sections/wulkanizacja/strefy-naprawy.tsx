@@ -13,7 +13,7 @@ import {
   SchematStrefNaprawy,
 } from "./schematy-opon";
 
-const STREFY = [
+export const STREFY = [
   { nazwa: "Środek bieżnika", opis: "grzybek albo łata, do 6–10 mm", kolor: KOLOR_STREFY.bieznik },
   { nazwa: "Bark", opis: "łata radialna, do 3–6 mm", kolor: KOLOR_STREFY.bark },
   { nazwa: "Bok", opis: "łata radialna, do 6–10 mm", kolor: KOLOR_STREFY.bok },
@@ -23,7 +23,7 @@ const STREFY = [
 const tlo = (kolor: string, procent: number) =>
   `color-mix(in srgb, ${kolor} ${procent}%, var(--background))`;
 
-function Numer({ n, kolor }: { n: number; kolor: string }) {
+export function Numer({ n, kolor }: { n: number; kolor: string }) {
   return (
     <span
       aria-hidden
@@ -61,36 +61,44 @@ function Komorka({
   wartosci,
   kolor,
   max,
+  kompakt,
 }: {
   wartosci: (number | null)[];
   kolor: string;
   max: number;
+  kompakt: boolean;
 }) {
   const liczby = wartosci.filter((v): v is number => v !== null);
+  const d = (mm: number) => srednica(mm, max) * (kompakt ? 0.6 : 1);
   return (
     <td
-      className="border-t-2 border-l-2 border-ink/15 px-2 py-2 text-[15px] font-bold tabular-nums"
+      className={`border-t-2 border-l-2 border-ink/15 font-bold tabular-nums ${
+        kompakt ? "px-1.5 py-1 text-[13px]" : "px-2 py-2 text-[15px]"
+      }`}
       style={{ background: tlo(kolor, liczby.length ? 22 : 8) }}
     >
       {liczby.length === 0 ? (
         <span className="flex items-center justify-center">
-          <span className="sr-only">nie naprawiam</span>
+          <span className="sr-only">naprawa niedozwolona</span>
           <X aria-hidden className="size-4 text-muted-foreground" strokeWidth={2.5} />
         </span>
       ) : (
-        <span className="flex flex-col items-center gap-1">
+        <span className={`flex flex-col items-center ${kompakt ? "gap-0" : "gap-1"}`}>
           {liczby.map((mm, i) => (
             <span key={i} className="flex flex-col items-center">
               {i > 0 ? (
-                <span className="etykieta-sm text-[9px] font-medium text-muted-foreground">
+                <span className="etykieta-sm text-[8px] leading-none font-medium text-muted-foreground">
                   lub
                 </span>
               ) : null}
-              <span className="flex items-center justify-center gap-2">
-                <span className="grid size-7 shrink-0 place-items-center" aria-hidden>
+              <span className={`flex items-center justify-center ${kompakt ? "gap-1.5" : "gap-2"}`}>
+                <span
+                  className={`grid shrink-0 place-items-center ${kompakt ? "size-[17px]" : "size-7"}`}
+                  aria-hidden
+                >
                   <span
                     className="rounded-full border-2 border-ink bg-ink"
-                    style={{ width: srednica(mm, max), height: srednica(mm, max) }}
+                    style={{ width: d(mm), height: d(mm) }}
                   />
                 </span>
                 <span className="w-8 text-left">{mm}</span>
@@ -108,22 +116,26 @@ function NaglowekStrefy({
   nazwa,
   strefa,
   colSpan,
+  kompakt,
 }: {
   n: number;
   nazwa: string;
   strefa: keyof typeof KOLOR_STREFY;
   colSpan?: number;
+  kompakt: boolean;
 }) {
   const kolor = KOLOR_STREFY[strefa];
   return (
     <th
       colSpan={colSpan}
       scope="colgroup"
-      className="border-l-[3px] border-ink px-3 pt-3 pb-2.5 text-left text-[13px] font-bold text-ink"
+      className={`border-l-[3px] border-ink text-left text-[13px] font-bold text-ink ${
+        kompakt ? "px-2 py-1.5" : "px-3 pt-3 pb-2.5"
+      }`}
       style={{ background: tlo(kolor, strefa === "bieznik" ? 100 : 70) }}
     >
       <span className="flex flex-col items-start gap-2">
-        <MiniStrefa strefa={strefa} />
+        {kompakt ? null : <MiniStrefa strefa={strefa} />}
         <span className="flex items-center gap-2">
           <Numer n={n} kolor={kolor} /> {nazwa}
         </span>
@@ -132,7 +144,8 @@ function NaglowekStrefy({
   );
 }
 
-function Tabela({ tabela }: { tabela: TabelaNapraw }) {
+/** `kompakt` — wersja na plakat A4: bez miniatur, poziomego scrolla i przyklejonej kolumny. */
+export function Tabela({ tabela, kompakt = false }: { tabela: TabelaNapraw; kompakt?: boolean }) {
   const { bieznik, bark, bok } = KOLOR_STREFY;
   const max = maxMm(tabela);
   const poIndeksie = tabela.podzial === "indeks";
@@ -140,8 +153,8 @@ function Tabela({ tabela }: { tabela: TabelaNapraw }) {
     "etykieta-sm border-t-2 border-l-2 border-ink/15 px-2 py-1.5 text-center";
 
   return (
-    <div className="overflow-x-auto rounded-xl border-[3px] border-ink">
-      <table className="w-full min-w-[720px] border-collapse md:min-w-[780px]">
+    <div className={`rounded-xl border-[3px] border-ink ${kompakt ? "overflow-hidden" : "overflow-x-auto"}`}>
+      <table className={`w-full border-collapse ${kompakt ? "" : "min-w-[720px] md:min-w-[780px]"}`}>
         <caption className="sr-only">
           Tabela napraw opon — {tabela.nazwa}: maksymalny rozmiar uszkodzenia
           w milimetrach dla strefy, {poIndeksie ? "indeksu prędkości" : "grupy rozmiarów"}{" "}
@@ -149,15 +162,21 @@ function Tabela({ tabela }: { tabela: TabelaNapraw }) {
         </caption>
         <thead>
           <tr className="bg-ink text-background">
-            <th rowSpan={2} scope="col" className="etykieta-sm sticky left-0 z-[2] w-[86px] bg-ink px-2.5 py-2.5 text-left align-bottom md:w-[132px] md:px-3">
+            <th
+              rowSpan={2}
+              scope="col"
+              className={`etykieta-sm bg-ink px-2.5 py-2.5 text-left align-bottom ${
+                kompakt ? "w-[110px]" : "sticky left-0 z-[2] w-[86px] md:w-[132px] md:px-3"
+              }`}
+            >
               {poIndeksie ? "Indeks prędkości" : "Grupa rozmiarów"}
             </th>
             <th rowSpan={2} scope="col" className="etykieta-sm w-[76px] border-l-2 border-background/25 px-2.5 py-2.5 text-left align-bottom md:w-[92px] md:px-3">
               Łatka RAD
             </th>
-            <NaglowekStrefy n={1} nazwa="Środek bieżnika" strefa="bieznik" colSpan={3} />
-            <NaglowekStrefy n={2} nazwa="Bark" strefa="bark" />
-            <NaglowekStrefy n={3} nazwa="Bok" strefa="bok" colSpan={2} />
+            <NaglowekStrefy n={1} nazwa="Środek bieżnika" strefa="bieznik" colSpan={3} kompakt={kompakt} />
+            <NaglowekStrefy n={2} nazwa="Bark" strefa="bark" kompakt={kompakt} />
+            <NaglowekStrefy n={3} nazwa="Bok" strefa="bok" colSpan={2} kompakt={kompakt} />
           </tr>
           <tr className="text-ink">
             {["CØ", "A", "R"].map((k) => (
@@ -183,7 +202,9 @@ function Tabela({ tabela }: { tabela: TabelaNapraw }) {
                   <th
                     rowSpan={grupa.wiersze.length}
                     scope="rowgroup"
-                    className="sticky left-0 z-[1] bg-piasek px-2.5 py-2 text-left align-middle shadow-[3px_0_0_var(--ink)] md:px-3"
+                    className={`bg-piasek px-2.5 text-left align-middle shadow-[3px_0_0_var(--ink)] ${
+                      kompakt ? "py-1" : "sticky left-0 z-[1] py-2 md:px-3"
+                    }`}
                   >
                     {poIndeksie ? (
                       <>
@@ -217,16 +238,18 @@ function Tabela({ tabela }: { tabela: TabelaNapraw }) {
                 ) : null}
                 <th
                   scope="row"
-                  className="border-t-2 border-l-2 border-ink/15 bg-background px-2.5 py-2 text-left font-mono text-sm font-medium whitespace-nowrap md:px-3"
+                  className={`border-t-2 border-l-2 border-ink/15 bg-background px-2.5 text-left font-mono text-sm font-medium whitespace-nowrap ${
+                    kompakt ? "py-1" : "py-2 md:px-3"
+                  }`}
                 >
                   {wiersz.rad}
                 </th>
                 {wiersz.bieznik.map((mm, k) => (
-                  <Komorka key={`b${k}`} wartosci={[mm]} kolor={bieznik} max={max} />
+                  <Komorka key={`b${k}`} wartosci={[mm]} kolor={bieznik} max={max} kompakt={kompakt} />
                 ))}
-                <Komorka wartosci={[wiersz.bark]} kolor={bark} max={max} />
-                <Komorka wartosci={wiersz.bok.map(([a]) => a)} kolor={bok} max={max} />
-                <Komorka wartosci={wiersz.bok.map(([, r]) => r)} kolor={bok} max={max} />
+                <Komorka wartosci={[wiersz.bark]} kolor={bark} max={max} kompakt={kompakt} />
+                <Komorka wartosci={wiersz.bok.map(([a]) => a)} kolor={bok} max={max} kompakt={kompakt} />
+                <Komorka wartosci={wiersz.bok.map(([, r]) => r)} kolor={bok} max={max} kompakt={kompakt} />
               </tr>
             ))}
           </tbody>
@@ -258,7 +281,7 @@ function SylwetkaProfilu({ profil }: { profil: string }) {
 
 const PRZYKLAD = { grupa: "2", profil: "75-70" } as const;
 
-function KluczRozmiarow({ tabela }: { tabela: TabelaNapraw }) {
+export function KluczRozmiarow({ tabela, kompakt = false }: { tabela: TabelaNapraw; kompakt?: boolean }) {
   return (
     <div className="flex flex-col gap-4">
       <div className="grid gap-4 rounded-xl border-2 border-ink bg-piasek p-4 md:grid-cols-[auto_1fr] md:items-center md:gap-8 md:p-5">
@@ -298,14 +321,19 @@ function KluczRozmiarow({ tabela }: { tabela: TabelaNapraw }) {
         </ol>
       </div>
 
-      <div className="overflow-x-auto rounded-xl border-[3px] border-ink">
-        <table className="w-full min-w-[720px] border-collapse">
+      <div className={`rounded-xl border-[3px] border-ink ${kompakt ? "overflow-hidden" : "overflow-x-auto"}`}>
+        <table className={`w-full border-collapse ${kompakt ? "" : "min-w-[720px]"}`}>
           <caption className="sr-only">
             Klucz rozmiarów: do której grupy należy opona o danym profilu i szerokości
           </caption>
           <thead>
             <tr className="bg-ink text-background">
-              <th scope="col" className="etykieta-sm sticky left-0 z-[2] w-[86px] bg-ink px-2.5 py-2.5 text-left align-bottom md:w-[132px] md:px-3">
+              <th
+                scope="col"
+                className={`etykieta-sm bg-ink px-2.5 py-2.5 text-left align-bottom ${
+                  kompakt ? "w-[110px]" : "sticky left-0 z-[2] w-[86px] md:w-[132px] md:px-3"
+                }`}
+              >
                 Grupa
               </th>
               {PROFILE.map((profil) => (
@@ -327,7 +355,9 @@ function KluczRozmiarow({ tabela }: { tabela: TabelaNapraw }) {
               <tr key={grupa.nazwa} className="border-t-[3px] border-ink">
                 <th
                   scope="row"
-                  className="sticky left-0 z-[1] bg-piasek px-2.5 py-2.5 text-left align-middle shadow-[3px_0_0_var(--ink)] md:px-3"
+                  className={`bg-piasek px-2.5 py-2.5 text-left align-middle shadow-[3px_0_0_var(--ink)] ${
+                    kompakt ? "" : "sticky left-0 z-[1] md:px-3"
+                  }`}
                 >
                   <span className="block text-2xl leading-none font-bold">{grupa.nazwa}</span>
                   <span className="mt-1 block text-[12px] leading-tight font-medium text-pretty text-tekst">
@@ -375,17 +405,8 @@ function KluczRozmiarow({ tabela }: { tabela: TabelaNapraw }) {
 }
 
 /** Co znaczą litery w nagłówkach tabeli — z rysunków w tabeli producenta łatek. */
-function LegendaWymiarow() {
+export function LegendaWymiarow() {
   const pozycje = [
-    {
-      Schemat: SchematCO,
-      litery: [
-        {
-          litera: "CØ",
-          tekst: "Średnica okrągłej dziury przebitej na wylot — np. po gwoździu albo wkręcie w bieżniku.",
-        },
-      ],
-    },
     {
       Schemat: SchematAR,
       litery: [
@@ -396,6 +417,15 @@ function LegendaWymiarow() {
         {
           litera: "A",
           tekst: "Szerokość przecięcia wzdłuż obwodu opony, czyli w kierunku toczenia. Takie cięcie przecina wiele nitek naraz, dlatego limit A jest zwykle mniejszy niż R.",
+        },
+      ],
+    },
+    {
+      Schemat: SchematCO,
+      litery: [
+        {
+          litera: "CØ",
+          tekst: "Średnica okrągłej dziury przebitej na wylot — np. po gwoździu albo wkręcie w bieżniku.",
         },
       ],
     },
@@ -415,18 +445,30 @@ function LegendaWymiarow() {
       <h4 id="legenda-wymiarow" className="text-lg font-bold">
         Co znaczą litery w tabeli
       </h4>
-      <div className="grid gap-4 md:grid-cols-3">
-        {pozycje.map(({ Schemat, litery }) => (
+      {/* Karta A/R (dwa wymiary) po lewej na całą wysokość, CØ i S jedna pod drugą po prawej. */}
+      <div className="grid gap-4 md:grid-cols-2">
+        {pozycje.map(({ Schemat, litery }, index) => (
           <div
             key={litery[0]!.litera}
-            className="flex flex-col gap-3 rounded-xl border-2 border-ink bg-background p-4"
+            className={`flex gap-3 rounded-xl border-2 border-ink bg-background p-4 ${
+              index === 0
+                ? "flex-col md:row-span-2"
+                : "flex-col sm:flex-row sm:items-center"
+            }`}
           >
-            <div className="kropki mx-auto w-full max-w-[220px] rounded-lg bg-piasek p-2">
+            <div
+              className={`kropki w-full rounded-lg bg-piasek p-2 ${
+                index === 0 ? "mx-auto max-w-[260px]" : "mx-auto max-w-[220px] sm:mx-0 sm:w-[34%] sm:shrink-0"
+              }`}
+            >
               <Schemat />
             </div>
             <dl className="flex flex-col gap-2.5">
               {litery.map(({ litera, tekst }) => (
-                <div key={litera} className="flex items-start gap-3">
+                <div
+                  key={litera}
+                  className={index === 0 ? "flex items-start gap-3" : "flex flex-col items-start gap-1.5"}
+                >
                   <dt className="grid h-7 min-w-9 shrink-0 place-items-center rounded-md border-2 border-ink bg-akcent px-1.5 font-mono text-sm font-bold">
                     {litera}
                   </dt>
@@ -438,8 +480,8 @@ function LegendaWymiarow() {
         ))}
       </div>
       <p className="text-sm text-pretty text-muted-foreground">
-        Wszystkie wymiary mierzę po oczyszczeniu i przygotowaniu miejsca naprawy,
-        bo dopiero wtedy widać prawdziwą wielkość uszkodzenia.
+        Wszystkie wymiary mierzy się po oczyszczeniu i przygotowaniu miejsca
+        naprawy, bo dopiero wtedy widać prawdziwą wielkość uszkodzenia.
       </p>
     </section>
   );

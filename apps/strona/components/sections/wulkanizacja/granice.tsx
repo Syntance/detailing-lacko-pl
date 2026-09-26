@@ -9,44 +9,47 @@ import {
 } from "./schematy-opon";
 import { KartaStrefNaprawy } from "./strefy-naprawy";
 
+/** Przypadki do wymiany — wspólne dla sekcji na stronie i plakatu do druku. */
+export const PRZYPADKI_DO_WYMIANY = [
+  {
+    Schemat: SchematDuzaDziura,
+    tytul: "Uszkodzenie większe niż limit",
+    opis: "Każda strefa ma w tabeli maksymalny rozmiar dziury lub przecięcia. Większe uszkodzenie to za dużo przeciętego kordu — opona do wymiany.",
+  },
+  {
+    Schemat: SchematDwaPrzebicia,
+    tytul: "Dwa przebicia blisko siebie",
+    opis: "Łaty nachodziłyby na siebie i osłabiały to samo miejsce. Taka opona nie wraca na koło.",
+  },
+  {
+    Schemat: SchematBabel,
+    tytul: "Bąbel na boku",
+    opis: "Wybrzuszenie to zerwane nitki kordu po uderzeniu w krawężnik albo dziurę. Może pęknąć w trasie.",
+  },
+  {
+    Schemat: SchematKapec,
+    tytul: "Jazda bez powietrza",
+    opis: "Nawet krótki odcinek na kapciu mieli oponę od środka. Z zewnątrz wygląda dobrze, w środku jest przetarta.",
+  },
+  {
+    Schemat: SchematStaraGuma,
+    tytul: "Spękana, stara guma",
+    opis: "Opona starsza niż 8–10 lat (data w kodzie DOT) twardnieje i pęka — nawet z dobrym bieżnikiem.",
+  },
+  {
+    Schemat: SchematLysyBieznik,
+    tytul: "Bieżnik poniżej 1,6 mm",
+    opis: "To prawne minimum w Polsce. Łatanie takiej opony nie ma sensu — i tak trzeba ją wymienić.",
+  },
+];
+
 /**
  * „03 · uczciwie" — co nie kwalifikuje się do naprawy. Przy oponach
  * uczciwość to bezpieczeństwo: lepiej, żeby klient zobaczył to na schemacie
  * tutaj, niż usłyszał dopiero w warsztacie z kołem w ręku.
  */
 export function Granice() {
-  const przypadki = [
-    {
-      Schemat: SchematDuzaDziura,
-      tytul: "Uszkodzenie większe niż limit",
-      opis: "Każda strefa ma w tabeli maksymalny rozmiar dziury lub przecięcia. Większe uszkodzenie to za dużo przeciętego kordu — opona do wymiany.",
-    },
-    {
-      Schemat: SchematDwaPrzebicia,
-      tytul: "Dwa przebicia blisko siebie",
-      opis: "Łaty nachodziłyby na siebie i osłabiały to samo miejsce. Taka opona nie wraca na koło.",
-    },
-    {
-      Schemat: SchematBabel,
-      tytul: "Bąbel na boku",
-      opis: "Wybrzuszenie to zerwane nitki kordu po uderzeniu w krawężnik albo dziurę. Może pęknąć w trasie.",
-    },
-    {
-      Schemat: SchematKapec,
-      tytul: "Jazda bez powietrza",
-      opis: "Nawet krótki odcinek na kapciu mieli oponę od środka. Z zewnątrz wygląda dobrze, w środku jest przetarta.",
-    },
-    {
-      Schemat: SchematStaraGuma,
-      tytul: "Spękana, stara guma",
-      opis: "Opona starsza niż 8–10 lat (data w kodzie DOT) twardnieje i pęka — nawet z dobrym bieżnikiem.",
-    },
-    {
-      Schemat: SchematLysyBieznik,
-      tytul: "Bieżnik poniżej 1,6 mm",
-      opis: "To prawne minimum w Polsce. Łatanie takiej opony nie ma sensu — i tak trzeba ją wymienić.",
-    },
-  ];
+  const przypadki = PRZYPADKI_DO_WYMIANY;
 
   return (
     <section

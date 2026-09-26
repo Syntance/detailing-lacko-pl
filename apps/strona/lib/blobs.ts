@@ -48,6 +48,32 @@ export async function readBlob<S extends z.ZodTypeAny>(
   }
 }
 
+/**
+ * Odczyt bez cichego fallbacku do wartości z kodu — dla materiałów do druku.
+ * Brak wiersza w bazie nadal daje `fallback` (strona pokazuje wtedy to samo),
+ * ale brak połączenia, błąd zapytania i niezgodność ze schematem rzucają
+ * wyjątek, żeby nikt nie wydrukował cennika z domyślnych cen.
+ */
+export async function readBlobStrict<S extends z.ZodTypeAny>(
+  key: string,
+  schema: S,
+  fallback: z.infer<S>,
+): Promise<z.infer<S>> {
+  if (!hasDb()) throw new Error("Brak połączenia z bazą (DATABASE_URL).");
+  const { sql } = getPostgresClient();
+  const rows = await sql<{ data: unknown }[]>`
+    select data from site_blobs where key = ${key} limit 1
+  `;
+  const row = rows[0];
+  if (!row) return fallback;
+  const raw = typeof row.data === "string" ? JSON.parse(row.data) : row.data;
+  const parsed = schema.safeParse(raw);
+  if (!parsed.success) {
+    throw new Error(`Cennik w bazie ("${key}") ma nieprawidłowy format.`);
+  }
+  return parsed.data;
+}
+
 export async function writeBlob(key: string, data: unknown): Promise<void> {
   const { sql } = getPostgresClient();
   // Podwójne rzutowanie ::text::jsonb jest konieczne. Przy samym ${json}::jsonb

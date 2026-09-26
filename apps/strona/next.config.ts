@@ -39,7 +39,7 @@ const CSP = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
-  "frame-src https://www.google.com",
+  "frame-src 'self' https://www.google.com",
   // R2 S3 API — przeglądarka PUTuje duże zdjęcia presignem prosto na bucket
   // (omija limit body Vercel ~4,5 MB). Bez tego hosta CSP blokuje upload.
   // GA4 wysyła beacon na region1.google-analytics.com — stąd wildcard.
@@ -66,6 +66,14 @@ const SECURITY_HEADERS = [
   },
   { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
 ] as const;
+
+const SECURITY_HEADERS_DRUK = SECURITY_HEADERS.map((header) => {
+  if (header.key === "X-Frame-Options") return { ...header, value: "SAMEORIGIN" };
+  if (header.key === "Content-Security-Policy") {
+    return { ...header, value: CSP.replace("frame-ancestors 'none'", "frame-ancestors 'self'") };
+  }
+  return header;
+});
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
@@ -97,7 +105,12 @@ const nextConfig: NextConfig = {
     "/**": ["../../packages/data-store/src/postgres/migrations/*.sql"],
   },
   async headers() {
-    return [{ source: "/(.*)", headers: [...SECURITY_HEADERS] }];
+    return [
+      { source: "/((?!magazyn/druk).*)", headers: [...SECURITY_HEADERS] },
+      // Plakaty do druku panel pokazuje jako miniatury w <iframe> — tylko ta
+      // ścieżka i tylko z własnej domeny; reszta strony zostaje przy DENY.
+      { source: "/magazyn/druk/:path*", headers: SECURITY_HEADERS_DRUK },
+    ];
   },
   // Panel żyje pod /magazyn (login) → /magazyn/panel. Wpisanie /panel(/…)
   // kierujemy do wejścia panelu, żeby skrót z pamięci nie dawał 404.

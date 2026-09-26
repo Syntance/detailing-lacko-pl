@@ -499,3 +499,73 @@
     transition: none;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Materiały do druku (/magazyn/druk) — kartka A4 1:1 w milimetrach, więc
+   podgląd na ekranie i wydruk mają ten sam układ. Kolory tła drukują się
+   dzięki print-color-adjust; bez tego przeglądarka wycina akcenty i karty.
+--------------------------------------------------------------------------- */
+.arkusz-a4 {
+  width: 210mm;
+  height: 297mm;
+  padding: 10mm 11mm 9mm;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 3mm;
+  overflow: hidden;
+  background: var(--background);
+  color: var(--ink);
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+  break-after: page;
+}
+
+.arkusz-a4:last-child {
+  break-after: auto;
+}
+
+.druk-edytuj [data-edytowalny] {
+  cursor: text;
+  border-radius: 2px;
+}
+
+.druk-edytuj [data-edytowalny]:hover {
+  outline: 1.5px dashed #2563eb;
+  outline-offset: 1px;
+}
+
+.druk-edytuj [data-edytowalny]:focus {
+  outline: 2px solid #2563eb;
+  outline-offset: 1px;
+  background: rgb(37 99 235 / 0.08);
+}
+
+@media screen {
+  .arkusz-a4 {
+    margin: 0 auto 10mm;
+    box-shadow: 0 4px 28px rgb(0 0 0 / 0.18);
+  }
+}
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 0;
+  }
+
+  html,
+  body {
+    background: #fff !important;
+  }
+
+  .druk-ukryj {
+    display: none !important;
+  }
+
+  /* Powiększenie podglądu jest tylko ekranowe — wydruk zawsze 1:1. */
+  .druk-skala {
+    zoom: 1 !important;
+    margin-top: 0 !important;
+  }
+}

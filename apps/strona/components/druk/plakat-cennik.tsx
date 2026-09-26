@@ -1,14 +1,19 @@
 import type { ReactNode } from "react";
 import {
   bezCeny,
-  formatItemPrice,
-  formatVariantPrice,
+  formatItemKwota,
   itemVariants,
   type CennikCategory,
   type CennikData,
   type CennikItem,
 } from "@/lib/cennik";
-import type { UkladCennika } from "@/components/sections/uslugi-cennik";
+import {
+  DopisekCeny,
+  DopisekPodatek,
+  PozycjaCennika,
+  type UkladCennika,
+  type UstawieniaDopisku,
+} from "@/components/sections/uslugi-cennik";
 
 /**
  * Cennik na A4 — te same dane i ta sama kolejność kategorii co sekcja
@@ -22,6 +27,10 @@ export function PlakatCennik({ cennik, uklad }: { cennik: CennikData; uklad: Ukl
   const pozycje = cennik.items.filter((i) => !i.disabled).sort((a, b) => a.order - b.order);
   const wKategorii = (id: string) => pozycje.filter((i) => i.categoryId === id);
 
+  const podatek: UstawieniaDopisku = {
+    tekst: cennik.settings.vatSuffix.trim(),
+    rozmiar: cennik.settings.vatSuffixSize,
+  };
   const karty = kategorie.filter((c) => c.id !== uklad.pakiety && wKategorii(c.id).length);
 
   const pakietyKategoria = kategorie.find((c) => c.id === uklad.pakiety);
@@ -32,7 +41,15 @@ export function PlakatCennik({ cennik, uklad }: { cennik: CennikData; uklad: Ukl
     return {
       id: kategoria.id,
       wysokosc: wysokoscKarty(pozycjeKategorii),
-      tresc: <KartaKategorii kategoria={kategoria} pozycje={pozycjeKategorii} />,
+      tresc: (
+        <KartaKategorii
+          kategoria={kategoria}
+          pozycje={pozycjeKategorii}
+          wszystkie={pozycje}
+          podatek={podatek}
+          filar={kategoria.id === uklad.filar}
+        />
+      ),
     };
   });
   // Pakiety idą na koniec jako ciemna karta — trafiają do niższej kolumny,
@@ -41,14 +58,14 @@ export function PlakatCennik({ cennik, uklad }: { cennik: CennikData; uklad: Ukl
     bloki.push({
       id: pakietyKategoria.id,
       wysokosc: wysokoscKarty(pakiety) + 1,
-      tresc: <KartaPakietow nazwa={pakietyKategoria.name} pakiety={pakiety} />,
+      tresc: <KartaPakietow nazwa={pakietyKategoria.name} pakiety={pakiety} podatek={podatek} />,
     });
   }
 
   return (
-    <div className="grid grid-cols-2 items-start gap-4">
+    <div className="grid grid-cols-2 items-start gap-5">
       {rozdzielNaKolumny(bloki).map((kolumna, i) => (
-        <div key={i} className="flex flex-col gap-4">
+        <div key={i} className="flex flex-col gap-5">
           {kolumna.map((blok) => (
             <div key={blok.id}>{blok.tresc}</div>
           ))}
@@ -64,7 +81,7 @@ type Blok = { id: string; wysokosc: number; tresc: ReactNode };
 function wysokoscKarty(pozycje: CennikItem[]): number {
   const wiersze = pozycje.reduce(
     (suma, item) =>
-      suma + 1 + Math.ceil(item.description.length / 55) + Math.ceil(itemVariants(item).length / 2),
+      suma + 1.5 + Math.ceil(item.description.length / 45) + itemVariants(item).length,
     0,
   );
   return 2 + wiersze;
@@ -85,99 +102,86 @@ function rozdzielNaKolumny(bloki: Blok[]): Blok[][] {
   return kolumny;
 }
 
-function KartaPakietow({ nazwa, pakiety }: { nazwa: string; pakiety: CennikItem[] }) {
+function KartaPakietow({
+  nazwa,
+  pakiety,
+  podatek,
+}: {
+  nazwa: string;
+  pakiety: CennikItem[];
+  podatek: UstawieniaDopisku;
+}) {
   return (
-    <div className="overflow-hidden rounded-xl border-[2.5px] border-ink bg-ink text-background">
-      <div className="flex items-baseline justify-between gap-3 border-b-2 border-background/25 px-3 py-1.5">
-        <p className="text-[14px] font-bold">{nazwa}</p>
-        <p className="etykieta-sm text-[8.5px] text-akcent">taniej niż osobno</p>
+    <article className="cien-akcent-6 overflow-hidden rounded-2xl border-[3px] border-ink bg-ink text-background">
+      <div className="flex items-baseline justify-between gap-3 border-b-[3px] border-background/25 px-5 py-[15px]">
+        <h3 className="text-xl font-bold">{nazwa}</h3>
+        <p className="etykieta-sm text-akcent">taniej niż osobno</p>
       </div>
-      <ul>
+      <ul className="flex flex-col">
         {pakiety.map((item) => (
           <li
             key={item.id}
-            className="flex flex-col gap-1 border-t border-dashed border-background/25 px-3 py-2 first:border-t-0"
+            className="flex flex-col gap-1 border-t-2 border-dashed border-background/25 px-5 py-[13px] first:border-t-0"
           >
-            <div className="flex items-start justify-between gap-3">
-              <p className="text-[11.5px] leading-tight font-bold">{item.name}</p>
-              <Cena item={item} naCiemnym />
+            <div className="flex items-baseline justify-between gap-3">
+              <span className="text-[15px] font-semibold">{item.name}</span>
+              <Cena item={item} podatek={podatek} />
             </div>
             {item.description ? (
-              <p className="text-[9.5px] leading-snug text-pretty text-noc-jasny">{item.description}</p>
+              <span className="text-[13px] leading-[1.5] text-pretty text-noc-szary">{item.description}</span>
             ) : null}
             {item.popular ? (
-              <p className="etykieta-sm text-[8px] text-akcent">najczęściej wybierane</p>
+              <span className="etykieta-sm text-akcent">najczęściej wybierane</span>
             ) : null}
           </li>
         ))}
       </ul>
-    </div>
+    </article>
   );
 }
 
-function KartaKategorii({ kategoria, pozycje }: { kategoria: CennikCategory; pozycje: CennikItem[] }) {
-  return (
-    <div className="overflow-hidden rounded-xl border-[2.5px] border-ink">
-      <div className="border-b-[2.5px] border-ink bg-akcent px-3 py-1.5">
-        <p className="text-[14px] font-bold">{kategoria.name}</p>
-      </div>
-      <ul>
-        {pozycje.map((item) => (
-          <Pozycja key={item.id} item={item} />
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-function Pozycja({ item }: { item: CennikItem }) {
-  const warianty = itemVariants(item);
-  return (
-    <li className="flex flex-col gap-1 border-t border-dashed border-kreska px-3 py-1.5 first:border-t-0">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-[11.5px] leading-tight font-bold">
-            {item.name}
-            {item.popular ? (
-              <span className="etykieta-sm ml-1.5 rounded-full bg-akcent px-1.5 py-px align-middle text-[7.5px]">
-                hit
-              </span>
-            ) : null}
-          </p>
-          {item.description ? (
-            <p className="mt-0.5 text-[9.5px] leading-snug text-pretty text-tekst">{item.description}</p>
-          ) : null}
-        </div>
-        {warianty.length ? null : <Cena item={item} />}
-      </div>
-      {warianty.length ? (
-        <dl className="grid grid-cols-2 gap-x-3 gap-y-0.5 rounded-md bg-piasek px-2 py-1">
-          {warianty.map((w) => (
-            <div key={w.id} className="flex items-baseline justify-between gap-2">
-              <dt className="text-[9.5px] text-tekst">{w.label}</dt>
-              <dd className="text-[10.5px] font-bold whitespace-nowrap tabular-nums">
-                {formatVariantPrice(item, w)}
-              </dd>
-            </div>
-          ))}
-        </dl>
-      ) : null}
-    </li>
-  );
-}
-
-function Cena({ item, naCiemnym = false }: { item: CennikItem; naCiemnym?: boolean }) {
+function Cena({ item, podatek }: { item: CennikItem; podatek: UstawieniaDopisku }) {
   if (bezCeny(item)) return null;
   return (
-    <p className="shrink-0 text-right text-[12px] leading-tight font-bold whitespace-nowrap tabular-nums">
+    <span className="max-w-[155px] shrink-0 text-right text-xl font-bold text-balance text-akcent tabular-nums">
       {item.compareAtPrice > 0 ? (
-        <span
-          className={`mr-1.5 text-[10px] font-medium line-through ${naCiemnym ? "text-noc-szary" : "text-muted-foreground"}`}
-        >
-          {item.compareAtPrice} zł
-        </span>
+        <span className="mr-1.5 text-[13px] font-medium text-noc-szary line-through">{item.compareAtPrice} zł</span>
       ) : null}
-      {formatItemPrice(item)}
-    </p>
+      {formatItemKwota(item)}
+      <DopisekCeny item={item} rozmiar={podatek.rozmiar} ciemne />
+      {item.priceHidden ? null : <DopisekPodatek podatek={podatek} ciemne />}
+    </span>
+  );
+}
+
+/** Karta kategorii w układzie strony: nagłówek (filar w akcencie) i te same wiersze pozycji co na stronie. */
+function KartaKategorii({
+  kategoria,
+  pozycje,
+  wszystkie,
+  podatek,
+  filar,
+}: {
+  kategoria: CennikCategory;
+  pozycje: CennikItem[];
+  wszystkie: CennikItem[];
+  podatek: UstawieniaDopisku;
+  filar: boolean;
+}) {
+  return (
+    <article
+      className={`overflow-hidden rounded-2xl border-[3px] border-ink bg-background ${
+        filar ? "cien-akcent-6" : "cien-6"
+      }`}
+    >
+      <div className={`border-b-[3px] border-ink px-5 py-[15px] ${filar ? "bg-akcent" : ""}`}>
+        <h3 className="text-xl font-bold">{kategoria.name}</h3>
+      </div>
+      <ul className="flex flex-col">
+        {pozycje.map((item) => (
+          <PozycjaCennika key={item.id} item={item} allItems={wszystkie} podatek={podatek} />
+        ))}
+      </ul>
+    </article>
   );
 }

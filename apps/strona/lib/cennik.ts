@@ -208,12 +208,26 @@ export function itemPriceRange(item: CennikItem): { from: number; to: number } {
 }
 
 /** Kwota + prefiks + dopisek wg reguł pozycji — wspólne dla pozycji i wariantu. */
-function priceLabel(item: CennikItem, from: number, to: number): string {
+function priceLabel(item: CennikItem, from: number, to: number, zDopiskiem = true): string {
   // Ukryta cena: własny dopisek ma pierwszeństwo nad domyślną etykietą.
   if (item.priceHidden) return item.unit.trim() || HIDDEN_PRICE_LABEL;
   const range = to > from ? `${from}–${to} zł` : `${from} zł`;
   const withPrefix = item.pricePrefix ? `${item.pricePrefix}${range}` : range;
-  return item.unit ? `${withPrefix} ${item.unit}` : withPrefix;
+  return zDopiskiem && item.unit ? `${withPrefix} ${item.unit}` : withPrefix;
+}
+
+/**
+ * Sama kwota pozycji, bez dopisku z panelu — cennik (strona i wydruk) stawia
+ * dopisek („za szt.", „za 4 szt.") pod kwotą małym pismem, patrz `dopisekCeny`.
+ */
+export function formatItemKwota(item: CennikItem): string {
+  const { from, to } = itemPriceRange(item);
+  return priceLabel(item, from, to, false);
+}
+
+/** Dopisek pod kwotą. Przy cenie ukrytej dopisek JEST ceną („Wycena indywidualna"), więc tu pusto. */
+export function dopisekCeny(item: CennikItem): string {
+  return item.priceHidden ? "" : item.unit.trim();
 }
 
 /**

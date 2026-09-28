@@ -7,7 +7,7 @@ const MARKI: Record<Marka, { sygnet: string; nazwa: string; podpis: string; qrOp
     sygnet: "/brand/syg-kolor.png",
     nazwa: "Detailing Łącko",
     podpis: "wnętrze · lakier",
-    qrOpinie: "/brand/qr-opinie-google.png",
+    qrOpinie: "/brand/qr-opinie-detailing.svg",
   },
   wulkanizacja: {
     sygnet: "/brand/wulk-sygnet.svg",

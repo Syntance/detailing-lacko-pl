@@ -10,19 +10,19 @@ import { BookingLink, PhoneLink, PhotoLink } from "./phone-link";
  * w makiecie. Znak mono i CTA zależą od linii: detailing = rezerwacja online
  * + telefon, wulkanizacja (bez rezerwacji) = telefon + zdjęcie opony.
  *
- * Wulkanizacja: poziome logo klienta w wariancie na ciemne tło
- * (wulk-logo-poziome-jasne.svg — napis rozjaśniony, opona
- * w oryginalnych kolorach; filtr do bieli zlewał oponę w plamę).
+ * Obie linie: poziome logo klienta w wariancie na ciemne tło
+ * (*-logo-poziome-jasne.svg — napis rozjaśniony, znak w oryginalnych
+ * kolorach; filtr do bieli zlewał grafikę w plamę).
  */
 const ZNAK_MONO: Record<
   Linia,
   { src: string; width: number; height: number; className: string }
 > = {
   detailing: {
-    src: "/brand/lw-mono-czern.svg",
-    width: 1888,
-    height: 659,
-    className: "block w-[190px]",
+    src: "/brand/det-logo-poziome-jasne.svg",
+    width: 1582,
+    height: 566,
+    className: "block w-[230px]",
   },
   wulkanizacja: {
     src: "/brand/wulk-logo-poziome-jasne.svg",

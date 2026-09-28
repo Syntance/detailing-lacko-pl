@@ -27,6 +27,11 @@ const SYGNET: Record<Linia, { src: string; width: number; height: number }> = {
   wulkanizacja: { src: "/brand/wulk-sygnet.svg", width: 372, height: 383 },
 };
 
+/** Poziome logo linii (sygnet + nazwa w jednym pliku) — na desktopie zamiast tekstu. */
+const LOGO_POZIOME: Partial<Record<Linia, { src: string; width: number; height: number }>> = {
+  wulkanizacja: { src: "/brand/wulk-logo-poziome.svg", width: 1889, height: 544 },
+};
+
 /** Kąt spoczynku kartki: lewa odchyla się prawą krawędzią w głąb, prawa lewą. */
 const KAT: Record<Linia, string> = {
   detailing: "22deg",
@@ -50,6 +55,7 @@ function Karta({ linia, aktywna }: { linia: Linia; aktywna: boolean }) {
   const className =
     "marka-karta flex shrink-0 items-center gap-2.5 rounded-lg focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none md:gap-3";
 
+  const logo = LOGO_POZIOME[linia];
   const tresc = (
     <>
       <Image
@@ -58,9 +64,21 @@ function Karta({ linia, aktywna }: { linia: Linia; aktywna: boolean }) {
         width={sygnet.width}
         height={sygnet.height}
         priority={aktywna}
-        className="block w-11 md:w-14"
+        className={logo ? "block w-11 md:hidden" : "block w-11 md:w-14"}
       />
-      <span className="hidden flex-col gap-[3px] md:flex">
+      {logo ? (
+        // Pełny poziomy lockup klienta (opona + nazwa + podpis) od `md` —
+        // zastępuje sygnet i nazwę składaną z tekstu.
+        <Image
+          src={logo.src}
+          alt=""
+          width={logo.width}
+          height={logo.height}
+          priority={aktywna}
+          className="hidden h-14 w-auto md:block"
+        />
+      ) : null}
+      <span className={logo ? "sr-only" : "hidden flex-col gap-[3px] md:flex"}>
         <span className="text-[15px] leading-none font-bold tracking-[0.06em] whitespace-nowrap uppercase md:text-base">
           {info.nazwa}
         </span>

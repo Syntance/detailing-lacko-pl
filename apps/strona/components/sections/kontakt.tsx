@@ -10,11 +10,9 @@ import { BookingLink, PhoneLink, PhotoLink } from "./phone-link";
  * w makiecie. Znak mono i CTA zależą od linii: detailing = rezerwacja online
  * + telefon, wulkanizacja (bez rezerwacji) = telefon + zdjęcie opony.
  *
- * Wulkanizacja nie ma osobnego pliku mono — to ten sam plik co sygnet
- * nagłówka (realne logo klienta), zdjęty do białego konturu filtrem CSS
- * (`brightness-0 invert`). Oryginał ma zbyt wiele wewnętrznych odcieni
- * (opona/felga/cień), żeby ręcznie odtworzyć osobną wersję liniową bez
- * zgubienia wierności — filtr trzyma się źródłowej grafiki 1:1.
+ * Wulkanizacja: poziome logo klienta w wariancie na ciemne tło
+ * (wulk-logo-poziome-jasne.svg — napis i kreska rozjaśnione, opona
+ * w oryginalnych kolorach; filtr do bieli zlewał oponę w plamę).
  */
 const ZNAK_MONO: Record<
   Linia,
@@ -27,10 +25,10 @@ const ZNAK_MONO: Record<
     className: "block w-[190px]",
   },
   wulkanizacja: {
-    src: "/brand/wulk-sygnet.svg",
-    width: 372,
-    height: 383,
-    className: "block w-[104px] brightness-0 invert",
+    src: "/brand/wulk-logo-poziome-jasne.svg",
+    width: 1889,
+    height: 544,
+    className: "block w-[230px]",
   },
 };
 

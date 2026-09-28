@@ -2,7 +2,10 @@ import type { ReactNode } from "react";
 import type { KontaktData } from "@/lib/site";
 import type { Marka } from "@/lib/plakaty";
 
-const MARKI: Record<Marka, { sygnet: string; nazwa: string; podpis: string; qrOpinie: string }> = {
+const MARKI: Record<
+  Marka,
+  { sygnet: string; nazwa: string; podpis: string; qrOpinie: string; logoPoziome?: string }
+> = {
   detailing: {
     sygnet: "/brand/syg-kolor.png",
     nazwa: "Detailing Łącko",
@@ -14,6 +17,7 @@ const MARKI: Record<Marka, { sygnet: string; nazwa: string; podpis: string; qrOp
     nazwa: "Wulkanizacja Łącko",
     podpis: "opony · wyważanie",
     qrOpinie: "/brand/qr-opinie-wulkanizacja.svg",
+    logoPoziome: "/brand/wulk-logo-poziome.svg",
   },
 };
 
@@ -89,9 +93,15 @@ export function Arkusz({
       </div>
 
       <footer className="flex items-center justify-center gap-2.5 border-t-2 border-ink pt-2.5">
-        <img src={dane.sygnet} alt="" className="size-[9mm] shrink-0 object-contain" />
-        <p className="text-[12px] leading-none font-bold tracking-[-0.01em] uppercase">{dane.nazwa}</p>
-        <p className="etykieta-sm text-[8.5px] text-muted-foreground">· {dane.podpis}</p>
+        {dane.logoPoziome ? (
+          <img src={dane.logoPoziome} alt={dane.nazwa} className="h-[11mm] w-auto" />
+        ) : (
+          <>
+            <img src={dane.sygnet} alt="" className="size-[9mm] shrink-0 object-contain" />
+            <p className="text-[12px] leading-none font-bold tracking-[-0.01em] uppercase">{dane.nazwa}</p>
+            <p className="etykieta-sm text-[8.5px] text-muted-foreground">· {dane.podpis}</p>
+          </>
+        )}
       </footer>
     </section>
   );

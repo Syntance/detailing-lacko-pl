@@ -11,7 +11,6 @@ const MARKI: Record<
     nazwa: "Detailing Łącko",
     podpis: "wnętrze · lakier",
     qrOpinie: "/brand/qr-opinie-detailing.svg",
-    logoPoziome: "/brand/det-logo-poziome.svg",
   },
   wulkanizacja: {
     sygnet: "/brand/wulk-sygnet.svg",

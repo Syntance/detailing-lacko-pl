@@ -2,9 +2,19 @@ import type { ReactNode } from "react";
 import type { KontaktData } from "@/lib/site";
 import type { Marka } from "@/lib/plakaty";
 
-const MARKI: Record<Marka, { sygnet: string; nazwa: string; podpis: string }> = {
-  detailing: { sygnet: "/brand/syg-kolor.png", nazwa: "Detailing Łącko", podpis: "wnętrze · lakier" },
-  wulkanizacja: { sygnet: "/brand/wulk-sygnet.svg", nazwa: "Wulkanizacja Łącko", podpis: "opony · wyważanie" },
+const MARKI: Record<Marka, { sygnet: string; nazwa: string; podpis: string; qrOpinie: string }> = {
+  detailing: {
+    sygnet: "/brand/syg-kolor.png",
+    nazwa: "Detailing Łącko",
+    podpis: "wnętrze · lakier",
+    qrOpinie: "/brand/qr-opinie-google.png",
+  },
+  wulkanizacja: {
+    sygnet: "/brand/wulk-sygnet.svg",
+    nazwa: "Wulkanizacja Łącko",
+    podpis: "opony · wyważanie",
+    qrOpinie: "/brand/qr-opinie-wulkanizacja.svg",
+  },
 };
 
 /**
@@ -60,7 +70,7 @@ export function Arkusz({
               </p>
             </div>
             <div className="cien-3 rounded-xl border-[3px] border-ink bg-white p-0.5">
-              <img src="/brand/qr-opinie-google.png" alt="Kod QR do opinii w Google" className="size-[27mm] object-contain" />
+              <img src={dane.qrOpinie} alt="Kod QR do opinii w Google" className="size-[27mm] object-contain" />
             </div>
           </div>
         ) : wewnetrzny ? (

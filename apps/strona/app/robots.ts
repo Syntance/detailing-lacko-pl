@@ -1,4 +1,6 @@
 import type { MetadataRoute } from "next";
+import { headers } from "next/headers";
+import { ADRES_LINII, czyHostWulkanizacji } from "@/lib/linie";
 import { getSeo } from "@/lib/site-data";
 
 /**
@@ -13,8 +15,9 @@ const AI_BOTS = ["GPTBot", "ClaudeBot", "PerplexityBot", "Google-Extended"];
 
 export default async function robots(): Promise<MetadataRoute.Robots> {
   const seo = await getSeo();
-  const siteUrl =
-    seo.siteUrl || process.env.NEXT_PUBLIC_SITE_URL || "https://detailing-lacko.pl";
+  const siteUrl = czyHostWulkanizacji((await headers()).get("host"))
+    ? ADRES_LINII.wulkanizacja
+    : seo.siteUrl || process.env.NEXT_PUBLIC_SITE_URL || "https://detailing-lacko.pl";
 
   // Wyłączone indeksowanie w panelu = twarde disallow dla wszystkich robotów.
   if (!seo.indexable) {

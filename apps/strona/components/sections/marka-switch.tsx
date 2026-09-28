@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { CSSProperties, MouseEvent } from "react";
 import { useKartka, type KierunekKartki } from "@/components/marka/kartka";
-import { LINIA_INFO, type Linia } from "@/lib/linie";
+import { ADRES_LINII, LINIA_INFO, OSOBNE_DOMENY, type Linia } from "@/lib/linie";
 
 /**
  * Przełącznik marek w nagłówku: „Detailing Łącko / Wulkanizacja" — dwa
@@ -76,6 +76,22 @@ function Karta({ linia, aktywna }: { linia: Linia; aktywna: boolean }) {
         aria-current="page"
         aria-label={`${info.nazwa} — początek strony`}
         data-aktywna="true"
+        className={className}
+        style={style}
+      >
+        {tresc}
+      </a>
+    );
+  }
+
+  // Druga linia na innej domenie: zwykłe przejście, animacja kartki
+  // (klon strony + router.push) nie przeskoczy między domenami.
+  if (OSOBNE_DOMENY) {
+    return (
+      <a
+        href={ADRES_LINII[linia]}
+        aria-label={`Przejdź do: ${info.nazwa}`}
+        data-aktywna="false"
         className={className}
         style={style}
       >

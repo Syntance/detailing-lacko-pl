@@ -29,7 +29,7 @@ const SYGNET: Record<Linia, { src: string; width: number; height: number }> = {
 
 /** Poziome logo linii (sygnet + nazwa w jednym pliku) — na desktopie zamiast tekstu. */
 const LOGO_POZIOME: Partial<Record<Linia, { src: string; width: number; height: number }>> = {
-  wulkanizacja: { src: "/brand/wulk-logo-poziome.svg", width: 1889, height: 544 },
+  wulkanizacja: { src: "/brand/wulk-logo-poziome.svg", width: 1927, height: 544 },
 };
 
 /** Kąt spoczynku kartki: lewa odchyla się prawą krawędzią w głąb, prawa lewą. */

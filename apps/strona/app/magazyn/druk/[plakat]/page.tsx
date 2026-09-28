@@ -115,6 +115,7 @@ export default async function DrukPage({
           etykieta={cennik.settings.vatNote || "cennik"}
           tytul="Cennik wulkanizacji"
           podtytul={cennik.settings.subheading}
+          qrOpinie
         >
           <PlakatCennik cennik={cennik} uklad={UKLAD_CENNIKA_WULKANIZACJA} />
         </Arkusz>

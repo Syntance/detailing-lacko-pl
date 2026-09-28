@@ -19,10 +19,10 @@ const ZNAK_MONO: Record<
   { src: string; width: number; height: number; className: string }
 > = {
   detailing: {
-    src: "/brand/lw-mono-czern.svg",
-    width: 1888,
-    height: 659,
-    className: "block w-[190px]",
+    src: "/brand/lw-naklejka-ciemne.svg",
+    width: 1944,
+    height: 715,
+    className: "block w-[260px]",
   },
   wulkanizacja: {
     src: "/brand/wulk-logo-poziome-jasne.svg",

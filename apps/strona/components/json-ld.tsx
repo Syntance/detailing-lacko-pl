@@ -1,6 +1,6 @@
 import type { FaqItem } from "@moduly/types";
 import { itemPriceRange, type CennikData } from "@/lib/cennik";
-import type { Linia } from "@/lib/linie";
+import { ADRES_LINII, OSOBNE_DOMENY, type Linia } from "@/lib/linie";
 import type { DostepnoscData } from "@/lib/rezerwacje";
 import type { KontaktData } from "@/lib/site";
 
@@ -63,7 +63,7 @@ const SCHEMA_LINII: Record<
     additionalType: "https://schema.org/TireShop",
     nazwa: "Wulkanizacja Łącko — Detailing Łącko",
     idFragment: "#wulkanizacja",
-    sciezka: "/wulkanizacja",
+    sciezka: OSOBNE_DOMENY ? "" : "/wulkanizacja",
     obraz: "/og-wulkanizacja.jpg",
   },
 };
@@ -88,6 +88,9 @@ export function JsonLd({
   marka?: Linia;
 }) {
   const schema = SCHEMA_LINII[marka];
+  // Wulkanizacja na własnej domenie: encja pod jej adresem, rodzic pod detailingiem.
+  const adres =
+    marka === "wulkanizacja" && OSOBNE_DOMENY ? ADRES_LINII.wulkanizacja : siteUrl;
 
   // Widełki przez `itemPriceRange`, bo pozycja z wariantami ma własne
   // `priceFrom`/`priceTo` tylko poglądowo — realne kwoty siedzą w wariantach.
@@ -112,10 +115,10 @@ export function JsonLd({
     "@context": "https://schema.org",
     "@type": schema.typ,
     additionalType: schema.additionalType,
-    "@id": `${siteUrl}${schema.idFragment}`,
+    "@id": `${adres}${schema.idFragment}`,
     name: schema.nazwa,
-    url: `${siteUrl}${schema.sciezka}`,
-    image: `${siteUrl}${schema.obraz}`,
+    url: `${adres}${schema.sciezka}`,
+    image: `${adres}${schema.obraz}`,
     telephone: kontakt.phoneE164,
     email: kontakt.email,
     priceRange: `${minPrice}–${maxPrice} PLN`,

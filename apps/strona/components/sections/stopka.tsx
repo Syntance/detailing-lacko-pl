@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { FooterCookieSettings } from "@moduly/legal-consent";
 import type { KontaktData } from "@/lib/site";
-import { LINIA_INFO, LINIE, type Linia } from "@/lib/linie";
+import { LINIA_INFO, LINIE, hrefLinii, type Linia } from "@/lib/linie";
 import { ReviewLink } from "./review-link";
 
 /**
@@ -71,7 +71,7 @@ export function Stopka({
               return (
                 <Link
                   key={linia}
-                  href={info.path}
+                  href={hrefLinii(linia, marka)}
                   aria-current={aktywna ? "page" : undefined}
                   className={
                     aktywna

@@ -1,4 +1,5 @@
 import type { CennikData } from "@/lib/cennik";
+import { ADRES_LINII, OSOBNE_DOMENY } from "@/lib/linie";
 import {
   getCennik,
   getCennikWulkanizacja,
@@ -71,7 +72,7 @@ ${kontakt.serviceAreas.join(", ")}.
 
 ## Strony
 - [Detailing — cennik, efekty przed/po, FAQ, rezerwacja online](${siteUrl})
-- [Wulkanizacja — cennik wymiany opon, zasady pracy, FAQ, termin telefonicznie](${siteUrl}/wulkanizacja)
+- [Wulkanizacja — cennik wymiany opon, zasady pracy, FAQ, termin telefonicznie](${OSOBNE_DOMENY ? ADRES_LINII.wulkanizacja : `${siteUrl}/wulkanizacja`})
 `;
 
   return new Response(body, {

@@ -62,8 +62,42 @@ export const LINIA_INFO: Record<Linia, LiniaInfo> = {
   },
 };
 
+/**
+ * Każda linia ma własną domenę: wulkanizacja-lacko.pl serwuje trasę
+ * /wulkanizacja pod „/" (rewrite w middleware.ts). Adresy są kanoniczne dla
+ * Google (canonical, JSON-LD, sitemap) niezależnie od środowiska.
+ */
+export const ADRES_LINII: Record<Linia, string> = {
+  detailing: process.env.NEXT_PUBLIC_SITE_URL ?? "https://detailing-lacko.pl",
+  wulkanizacja: "https://wulkanizacja-lacko.pl",
+};
+
+/** Hosty, pod którymi strona główna to wulkanizacja. */
+export const HOSTY_WULKANIZACJI = ["wulkanizacja-lacko.pl", "www.wulkanizacja-lacko.pl"];
+
+export function czyHostWulkanizacji(host: string | null | undefined): boolean {
+  return HOSTY_WULKANIZACJI.includes((host ?? "").split(":")[0]?.toLowerCase() ?? "");
+}
+
+/**
+ * Osobne domeny włączone? Flaga z env Vercela (`NEXT_PUBLIC_OSOBNE_DOMENY=1`),
+ * bo przekierowanie detailing-lacko.pl/wulkanizacja → nowa domena wolno
+ * włączyć dopiero, gdy jej DNS wskazuje na Vercel. Bez flagi (lokalnie,
+ * w preview) linki między liniami zostają ścieżkami i działa animacja kartki.
+ */
+export const OSOBNE_DOMENY = process.env.NEXT_PUBLIC_OSOBNE_DOMENY === "1";
+
+/** Link do strony głównej linii `cel`, oglądany ze strony linii `z`. */
+export function hrefLinii(cel: Linia, z: Linia): string {
+  if (!OSOBNE_DOMENY) return LINIA_INFO[cel].path;
+  return cel === z ? "/" : ADRES_LINII[cel];
+}
+
 /** Linia z ścieżki URL — wszystko poza /wulkanizacja(...) to detailing. */
 export function liniaZeSciezki(pathname: string): Linia {
+  if (typeof window !== "undefined" && czyHostWulkanizacji(window.location.hostname)) {
+    return "wulkanizacja";
+  }
   return pathname === "/wulkanizacja" || pathname.startsWith("/wulkanizacja/")
     ? "wulkanizacja"
     : "detailing";
@@ -78,7 +112,7 @@ export function liniaZeSciezki(pathname: string): Linia {
  */
 export function kontekstAnalitykiDlaSciezki(pathname: string): TrackExtraContext {
   const linia = liniaZeSciezki(pathname);
-  const storefront = pathname === "/" || linia === "wulkanizacja";
+  const storefront = pathname === "/" || pathname === "/wulkanizacja";
   return {
     service_line: linia,
     ...(storefront ? { page_type: "storefront" as const } : {}),

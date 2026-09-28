@@ -11,7 +11,7 @@ import { BookingLink, PhoneLink, PhotoLink } from "./phone-link";
  * + telefon, wulkanizacja (bez rezerwacji) = telefon + zdjęcie opony.
  *
  * Wulkanizacja: poziome logo klienta w wariancie na ciemne tło
- * (wulk-logo-poziome-jasne.svg — napis i kreska rozjaśnione, opona
+ * (wulk-logo-poziome-jasne.svg — napis rozjaśniony, opona
  * w oryginalnych kolorach; filtr do bieli zlewał oponę w plamę).
  */
 const ZNAK_MONO: Record<
@@ -26,7 +26,7 @@ const ZNAK_MONO: Record<
   },
   wulkanizacja: {
     src: "/brand/wulk-logo-poziome-jasne.svg",
-    width: 1889,
+    width: 1927,
     height: 544,
     className: "block w-[230px]",
   },

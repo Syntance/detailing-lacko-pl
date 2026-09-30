@@ -1,20 +1,12 @@
-import { FaqClient } from "@/components/magazyn/faq-client";
-import { liniaZParametru, PrzelacznikLinii } from "@/components/magazyn/przelacznik-linii";
-import { getFaq, getFaqWulkanizacja } from "@/lib/site-data";
+import { redirect } from "next/navigation";
+import { liniaZParametru } from "@/components/magazyn/przelacznik-linii";
 
-export const dynamic = "force-dynamic";
-
+/** FAQ edytujemy w CMS (pod zdjęciami strony) — stary adres przekierowuje. */
 export default async function FaqPanelPage({
   searchParams,
 }: {
   searchParams: Promise<{ linia?: string }>;
 }) {
   const linia = liniaZParametru((await searchParams).linia);
-  const faq = linia === "wulkanizacja" ? await getFaqWulkanizacja() : await getFaq();
-  return (
-    <>
-      <PrzelacznikLinii sciezka="/magazyn/panel/faq" aktywna={linia} />
-      <FaqClient key={linia} initial={faq} linia={linia} />
-    </>
-  );
+  redirect(`/magazyn/panel/cms${linia === "wulkanizacja" ? "?linia=wulkanizacja" : ""}#faq`);
 }

@@ -37,7 +37,7 @@ export function FaqClient({
 }) {
   const router = useRouter();
   const history = useMagazynHistory<FaqData>(initial);
-  const { items } = history.state;
+  const { items, enabled } = history.state;
 
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState(false);
@@ -66,8 +66,8 @@ export function FaqClient({
   return (
     <div className="space-y-6">
       <PageHeader
-        title={`FAQ — ${LINIA_INFO[linia].etykieta}`}
-        description={`${items.length} pytań — sekcja „Częste pytania" na stronie ${LINIA_INFO[linia].path}`}
+        title={`Sekcja FAQ — ${LINIA_INFO[linia].etykieta}`}
+        description={`${items.length} pytań — sekcja „Częste pytania" na stronie ${LINIA_INFO[linia].path}${enabled ? "" : " (wyłączona)"}`}
       />
       <UndoRedoToolbar
         canUndo={history.canUndo}
@@ -81,6 +81,22 @@ export function FaqClient({
         status={status}
         error={error}
       />
+
+      <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-border bg-card p-4">
+        <input
+          type="checkbox"
+          className="mt-0.5 size-4 accent-primary"
+          checked={enabled}
+          onChange={(e) => history.setState((draft) => ({ ...draft, enabled: e.target.checked }))}
+        />
+        <span className="flex flex-col gap-0.5">
+          <span className="text-sm font-medium">Pokazuj sekcję FAQ na stronie</span>
+          <span className="text-sm text-muted-foreground">
+            Po wyłączeniu sekcja znika ze strony, z menu i z danych FAQ dla Google. Pytania
+            zostają zapisane — włączysz je ponownie jednym kliknięciem.
+          </span>
+        </span>
+      </label>
 
       {sorted.map((item, index) => (
         <Fieldset

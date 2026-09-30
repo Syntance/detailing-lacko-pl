@@ -10,6 +10,7 @@ import type { FaqData } from "./faq";
  * w panelu nie zostawiała w FAQ starych liczb.
  */
 export const DEFAULT_FAQ_WULKANIZACJA: FaqData = {
+  enabled: true,
   items: [
     {
       id: "kiedy-zimowe",

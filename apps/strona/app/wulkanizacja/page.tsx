@@ -73,7 +73,9 @@ export default async function WulkanizacjaPage() {
     getFaqWulkanizacja(),
   ]);
 
-  const faq = faqData.items;
+  // Wyłączona w panelu sekcja FAQ: bez sekcji, pigułki w menu i FAQPage w JSON-LD.
+  const faqWlaczone = faqData.enabled;
+  const faq = faqWlaczone ? faqData.items : [];
 
   return (
     // `data-marka` przepina tokeny akcentu na czerwień (globals.css) — cała
@@ -88,7 +90,7 @@ export default async function WulkanizacjaPage() {
         Przejdź do treści
       </a>
 
-      <Navbar kontakt={kontakt} marka="wulkanizacja" />
+      <Navbar kontakt={kontakt} marka="wulkanizacja" faq={faqWlaczone} />
 
       {/* Kolejność jak na stronie detailingu: hero → cennik (01) → jak
           pracuję (02) → co nie kwalifikuje się do naprawy (03) → FAQ → kontakt.
@@ -105,7 +107,7 @@ export default async function WulkanizacjaPage() {
         />
         <Zasady />
         <Granice />
-        <Faq items={faq} />
+        {faqWlaczone ? <Faq items={faq} /> : null}
         <Kontakt kontakt={kontakt} marka="wulkanizacja" />
       </main>
 
@@ -118,7 +120,7 @@ export default async function WulkanizacjaPage() {
           { id: "cennik", name: "Usługi i cennik" },
           { id: "zasady", name: "Jak pracuję" },
           { id: "granice", name: "Co nie kwalifikuje się do naprawy" },
-          { id: "faq", name: "FAQ" },
+          ...(faqWlaczone ? [{ id: "faq", name: "FAQ" }] : []),
           { id: "kontakt", name: "Kontakt" },
         ]}
       />

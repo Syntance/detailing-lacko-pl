@@ -18,11 +18,14 @@ import { PhoneLink } from "./phone-link";
 export function Navbar({
   kontakt,
   marka = "detailing",
+  faq = true,
 }: {
   kontakt: KontaktData;
   marka?: Linia;
+  /** Sekcja FAQ wyłączona w panelu — bez pigułki prowadzącej do nieistniejącej kotwicy. */
+  faq?: boolean;
 }) {
-  const pozycje = LINIA_INFO[marka].nawigacja;
+  const pozycje = LINIA_INFO[marka].nawigacja.filter((p) => faq || p.href !== "#faq");
 
   return (
     <header className="sticky top-0 z-40 border-b-[3px] border-ink bg-background">

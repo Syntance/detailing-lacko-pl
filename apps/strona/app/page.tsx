@@ -56,7 +56,9 @@ export default async function HomePage() {
       getMetamorfozy(),
     ]);
 
-  const faq = faqData.items;
+  // Wyłączona w panelu sekcja FAQ: bez sekcji, pigułki w menu i FAQPage w JSON-LD.
+  const faqWlaczone = faqData.enabled;
+  const faq = faqWlaczone ? faqData.items : [];
 
   return (
     // `data-kartka-strona` = root treści do sklonowania przy przekładaniu
@@ -69,7 +71,7 @@ export default async function HomePage() {
         Przejdź do treści
       </a>
 
-      <Navbar kontakt={kontakt} />
+      <Navbar kontakt={kontakt} faq={faqWlaczone} />
 
       {/* Kolejność sekcji z makiety „kreskówka": hero → cennik (01) →
           efekty (02) → czego nie naprawimy (03) → rezerwacja (04) → FAQ → kontakt.
@@ -88,7 +90,7 @@ export default async function HomePage() {
           cennik={cennik}
           kontakt={kontakt}
         />
-        <Faq items={faq} />
+        {faqWlaczone ? <Faq items={faq} /> : null}
         <Kontakt kontakt={kontakt} />
       </main>
 
@@ -102,7 +104,7 @@ export default async function HomePage() {
           { id: "efekty", name: "Efekty przed/po" },
           { id: "jak", name: "Co wyjdzie, a co zostanie" },
           { id: "rezerwacja", name: "Rezerwacja" },
-          { id: "faq", name: "FAQ" },
+          ...(faqWlaczone ? [{ id: "faq", name: "FAQ" }] : []),
           { id: "kontakt", name: "Kontakt" },
         ]}
       />

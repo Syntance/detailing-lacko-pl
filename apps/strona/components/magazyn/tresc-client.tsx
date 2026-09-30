@@ -59,7 +59,7 @@ export function TrescClient({
     <div className="space-y-6">
       <PageHeader
         title={`Zdjęcia strony — ${LINIA_INFO[linia].etykieta}`}
-        description={`Zdjęcia hero strony ${LINIA_INFO[linia].path} — osobno komputer i telefon. Teksty strony są utrzymywane w kodzie.`}
+        description={`Zdjęcia hero strony ${LINIA_INFO[linia].path} — osobno komputer i telefon. Teksty strony są w kodzie, sekcję FAQ edytujesz niżej.`}
       />
 
       <UndoRedoToolbar

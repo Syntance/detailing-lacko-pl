@@ -13,6 +13,8 @@ export const faqItemSchema = z.object({
 });
 
 export const faqDataSchema = z.object({
+  /** Wyłączona sekcja znika ze strony, z menu i z danych FAQ dla Google. */
+  enabled: z.boolean().default(true),
   items: z.array(faqItemSchema),
 });
 
@@ -26,6 +28,7 @@ export type FaqData = z.infer<typeof faqDataSchema>;
  * logistyka. Odpowiedzi edukują (jak działa problem), zamiast przekonywać.
  */
 export const DEFAULT_FAQ: FaqData = {
+  enabled: true,
   items: [
     {
       id: "myjnia",

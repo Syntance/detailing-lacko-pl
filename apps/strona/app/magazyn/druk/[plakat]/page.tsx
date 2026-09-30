@@ -61,10 +61,10 @@ export default async function DrukPage({
   searchParams,
 }: {
   params: Promise<{ plakat: string }>;
-  searchParams: Promise<{ podglad?: string; drukuj?: string }>;
+  searchParams: Promise<{ podglad?: string; drukuj?: string; pobierz?: string }>;
 }) {
   const { plakat: id } = await params;
-  const { podglad, drukuj } = await searchParams;
+  const { podglad, drukuj, pobierz } = await searchParams;
 
   try {
     await requireAdminSessionForPanel();
@@ -207,8 +207,10 @@ export default async function DrukPage({
     <div className={podglad ? "bg-background" : "min-h-screen bg-piasek pb-10 print:min-h-0 print:bg-transparent print:pb-0"}>
       <NarzedziaDruku
         tytul={plakat.tytul}
+        plik={plakat.id}
         podglad={Boolean(podglad)}
         drukujOdRazu={drukuj === "1"}
+        pobierzOdRazu={pobierz === "pdf" || pobierz === "png" ? pobierz : undefined}
         edycja={edycja}
       >
         {kartki}

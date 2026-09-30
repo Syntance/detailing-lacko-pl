@@ -2,9 +2,10 @@
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { ArrowLeft, Maximize, Pencil, Printer, TriangleAlert, ZoomIn, ZoomOut } from "lucide-react";
+import { ArrowLeft, FileDown, ImageDown, Loader2, Maximize, Pencil, Printer, TriangleAlert, ZoomIn, ZoomOut } from "lucide-react";
 import type { EdycjaDruku } from "@/lib/druk-edycja";
 import { elementyEdytowalne, PanelEdycji, zastosujStyl, zastosujTeksty } from "./edytor-druku";
+import { eksportujKartki, type FormatEksportu } from "./eksport";
 
 /** Poniżej tej skali tekst na A4 robi się za drobny, żeby czytać go ze ściany. */
 const MIN_SKALA = 0.62;
@@ -61,14 +62,20 @@ const doSzerokosci = () => przytnij(Math.min(1, (window.innerWidth - 32) / SZERO
 
 export function NarzedziaDruku({
   tytul,
+  plik,
   podglad,
   drukujOdRazu,
+  pobierzOdRazu,
   edycja,
   children,
 }: {
   tytul: string;
+  /** Nazwa pobieranego pliku bez rozszerzenia. */
+  plik: string;
   podglad: boolean;
   drukujOdRazu: boolean;
+  /** Link z listy materiałów „PDF"/„PNG" — zapis od razu po dopasowaniu kartek. */
+  pobierzOdRazu?: FormatEksportu;
   /** Plakaty z edytowalną treścią: id i zapisane zmiany. Cenniki go nie dostają. */
   edycja?: { plakatId: string; dane: EdycjaDruku };
   children: ReactNode;
@@ -76,12 +83,28 @@ export function NarzedziaDruku({
   const [zaDuzo, setZaDuzo] = useState(0);
   const [zoom, setZoom] = useState(1);
   const [edytuje, setEdytuje] = useState(false);
+  const [zapisuje, setZapisuje] = useState<FormatEksportu | null>(null);
   const [styl, setStyl] = useState(edycja?.dane.styl ?? {});
   const skalaRef = useRef<HTMLDivElement>(null);
   const elementy = useRef<Map<string, HTMLElement>>(new Map());
   const oryginaly = useRef<Map<string, string>>(new Map());
 
   /** Ponowne dopasowanie po edycji — przy zoomie podglądu 1, bo inaczej pomiary kartek się rozjeżdżają. */
+  const zapisz = useCallback(
+    async (format: FormatEksportu) => {
+      setZapisuje(format);
+      try {
+        await eksportujKartki(format, plik, skalaRef.current);
+      } catch (error) {
+        console.error("[druk] Zapis pliku nie powiódł się:", error);
+        window.alert("Nie udało się zapisać pliku. Spróbuj ponownie albo użyj „Drukuj” → „Zapisz jako PDF”.");
+      } finally {
+        setZapisuje(null);
+      }
+    },
+    [plik],
+  );
+
   const dopasujPonownie = useCallback(() => {
     const wrap = skalaRef.current;
     const poprzedni = wrap?.style.zoom ?? "";
@@ -107,12 +130,13 @@ export function NarzedziaDruku({
       setZaDuzo(dopasujKartki());
       if (!podglad) setZoom(doSzerokosci());
       if (drukujOdRazu) window.print();
+      else if (pobierzOdRazu) void zapisz(pobierzOdRazu);
     });
     return () => {
       anulowane = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- tylko przy pierwszym renderze
-  }, [drukujOdRazu, podglad]);
+  }, [drukujOdRazu, pobierzOdRazu, podglad]);
 
   // Kolory i czcionki na żywo; czcionka zmienia wysokość tekstu, więc kartki dopasowujemy od nowa.
   const pierwszyStyl = useRef(true);
@@ -238,19 +262,50 @@ export function NarzedziaDruku({
                 Dopasuj
               </button>
             </div>
-            <button
-              type="button"
-              onClick={() => window.print()}
-              className="cien-3 inline-flex items-center gap-2 rounded-xl border-[3px] border-ink bg-akcent px-4 py-2 font-bold"
-            >
-              <Printer className="size-4" aria-hidden />
-              Drukuj / zapisz PDF
-            </button>
+            <div role="group" aria-label="Druk i zapis" className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => void zapisz("pdf")}
+                disabled={zapisuje !== null}
+                className="inline-flex items-center gap-1.5 rounded-xl border-[3px] border-ink bg-background px-3 py-2 text-sm font-bold hover:bg-piasek disabled:opacity-50"
+                title="Pobierz plik PDF (A4, 300 dpi)"
+              >
+                {zapisuje === "pdf" ? (
+                  <Loader2 className="size-4 animate-spin" aria-hidden />
+                ) : (
+                  <FileDown className="size-4" aria-hidden />
+                )}
+                PDF
+              </button>
+              <button
+                type="button"
+                onClick={() => void zapisz("png")}
+                disabled={zapisuje !== null}
+                className="inline-flex items-center gap-1.5 rounded-xl border-[3px] border-ink bg-background px-3 py-2 text-sm font-bold hover:bg-piasek disabled:opacity-50"
+                title="Pobierz obraz PNG (każda kartka osobno, 300 dpi)"
+              >
+                {zapisuje === "png" ? (
+                  <Loader2 className="size-4 animate-spin" aria-hidden />
+                ) : (
+                  <ImageDown className="size-4" aria-hidden />
+                )}
+                PNG
+              </button>
+              <button
+                type="button"
+                onClick={() => window.print()}
+                disabled={zapisuje !== null}
+                className="cien-3 inline-flex items-center gap-2 rounded-xl border-[3px] border-ink bg-akcent px-4 py-2 font-bold disabled:opacity-50"
+              >
+                <Printer className="size-4" aria-hidden />
+                Drukuj
+              </button>
+            </div>
           </div>
         </div>
         <p className="mx-auto max-w-[1000px] px-4 pb-3 text-xs text-muted-foreground">
-          W oknie drukowania wybierz „Zapisz jako PDF", żeby pobrać plik. Marginesy:
-          brak, skala: 100%, zaznacz „Grafika tła". Powiększenie podglądu nie wpływa na wydruk.
+          PDF i PNG pobierają się od razu (A4, 300 dpi). Przy druku ustaw: marginesy
+          brak, skala 100%, zaznacz „Grafika tła". Powiększenie podglądu nie wpływa na plik ani wydruk.
         </p>
         {edycja && edytuje ? (
           <PanelEdycji

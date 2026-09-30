@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Eye, Printer } from "lucide-react";
+import { Eye, FileDown, ImageDown, Printer } from "lucide-react";
 import { PageHeader } from "@moduly/ui";
 import { PLAKATY } from "@/lib/plakaty";
 
@@ -19,7 +19,7 @@ export default function MaterialyPage() {
     <div>
       <PageHeader
         title="Materiały do druku"
-        description="Plakaty A4 do warsztatu. Cenniki biorą ceny prosto z panelu — po każdej zmianie wystarczy wydrukować je ponownie. Plik PDF pobierzesz przez „Zapisz jako PDF” w oknie drukowania."
+        description="Plakaty A4 do warsztatu. Cenniki biorą ceny prosto z panelu — po każdej zmianie wystarczy wydrukować je ponownie. PDF i PNG (300 dpi) pobierzesz jednym kliknięciem."
       />
 
       <ul className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
@@ -59,7 +59,21 @@ export default function MaterialyPage() {
                   className="inline-flex items-center gap-2 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
                 >
                   <Printer className="size-4" aria-hidden />
-                  Drukuj / pobierz PDF
+                  Drukuj
+                </Link>
+                <Link
+                  href={`/magazyn/druk/${p.id}?pobierz=pdf`}
+                  className="inline-flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium hover:bg-muted"
+                >
+                  <FileDown className="size-4" aria-hidden />
+                  PDF
+                </Link>
+                <Link
+                  href={`/magazyn/druk/${p.id}?pobierz=png`}
+                  className="inline-flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium hover:bg-muted"
+                >
+                  <ImageDown className="size-4" aria-hidden />
+                  PNG
                 </Link>
                 <Link
                   href={`/magazyn/druk/${p.id}`}

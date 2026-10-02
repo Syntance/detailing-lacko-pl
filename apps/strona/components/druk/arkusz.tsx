@@ -65,7 +65,7 @@ export function Arkusz({
           <div className="flex shrink-0 items-center gap-3 text-right">
             <div className="flex flex-col items-end gap-1.5">
               <p className="text-[13px] leading-tight font-bold">
-                Podobało się?
+                Zadowolony z efektu?
                 <br />
                 Zostaw opinię w Google
               </p>

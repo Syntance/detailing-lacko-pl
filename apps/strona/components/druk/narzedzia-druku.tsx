@@ -15,9 +15,13 @@ const KROK = 0.005;
 const MAX_SKALA = 1.5;
 
 /**
- * Dopasowuje treść każdej kartki A4 do jej wysokości (CSS `zoom`), w górę i w dół, bo cennik
+ * Dopasowuje treść każdej kartki A4 do jej wysokości (transform: scale), w górę i w dół, bo cennik
  * zmienia się w panelu i nie da się z góry założyć, ile ma pozycji. Zwraca
  * liczbę kartek, na których nawet minimalna skala nie wystarczyła.
+ *
+ * Transform, nie CSS `zoom`: pod `zoom` przeglądarka zaokrągla ramki do pełnych pikseli
+ * ekranu, a zapis do PDF/PNG odtwarza układ w 300 dpi bez zaokrągleń — szerokości
+ * przestawały do siebie pasować i przy krawędziach kart zostawały szpary.
  */
 function dopasujKartki(): number {
   let zaDuzo = 0;
@@ -25,9 +29,10 @@ function dopasujKartki(): number {
     const tresc = ramka.firstElementChild as HTMLElement | null;
     if (!tresc) return;
     let skala = 1;
+    tresc.style.transformOrigin = "top left";
     const ustaw = () => {
-      tresc.style.zoom = String(skala);
-      // Szerokość w px, nie w %: pod `zoom` procent liczy się od rodzica przed skalą i treść wyjeżdża za kartkę.
+      tresc.style.transform = `scale(${skala})`;
+      // Układ liczy się przed skalą, więc szerokość odwrotnie proporcjonalna — po skali równa kartce.
       tresc.style.width = `${ramka.clientWidth / skala}px`;
     };
     // Tabele mają min-width i własny poziomy scroll — to też „nie mieści się".

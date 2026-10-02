@@ -54,6 +54,29 @@ async function kartkaDoPng(kartka: HTMLElement): Promise<string> {
   return toPng(kartka, opcje);
 }
 
+/**
+ * html-to-image zamraża szerokości z podglądu co do ułamka piksela, a w 300 dpi
+ * tekst wychodzi minimalnie szerszy — jednolinijkowy napis potrafił zawinąć się
+ * i wejść na wiersz poniżej. Na czas zapisu blokujemy zawijanie tam, gdzie na
+ * podglądzie tekst mieści się w jednej linii. Zwraca funkcję przywracającą.
+ */
+function zablokujZawijanie(kartki: HTMLElement[]): () => void {
+  const zmienione: { el: HTMLElement; poprzednio: string }[] = [];
+  const zakres = document.createRange();
+  for (const kartka of kartki) {
+    for (const el of kartka.querySelectorAll<HTMLElement>("*")) {
+      const maTekst = [...el.childNodes].some((n) => n.nodeType === Node.TEXT_NODE && n.textContent?.trim());
+      if (!maTekst) continue;
+      zakres.selectNodeContents(el);
+      const linie = new Set([...zakres.getClientRects()].filter((r) => r.width > 0).map((r) => Math.round(r.bottom)));
+      if (linie.size !== 1) continue;
+      zmienione.push({ el, poprzednio: el.style.whiteSpace });
+      el.style.whiteSpace = "nowrap";
+    }
+  }
+  return () => zmienione.forEach(({ el, poprzednio }) => (el.style.whiteSpace = poprzednio));
+}
+
 export async function eksportujKartki(format: FormatEksportu, nazwaPliku: string, skala: HTMLElement | null) {
   const kartki = [...document.querySelectorAll<HTMLElement>(".arkusz-a4")];
   if (!kartki.length) return;
@@ -61,6 +84,7 @@ export async function eksportujKartki(format: FormatEksportu, nazwaPliku: string
   // Powiększenie podglądu nie może trafić do pliku — na czas zapisu 1:1.
   const poprzedniZoom = skala?.style.zoom ?? "";
   if (skala) skala.style.zoom = "1";
+  const przywrocZawijanie = zablokujZawijanie(kartki);
 
   try {
     if (format === "png") {
@@ -82,6 +106,7 @@ export async function eksportujKartki(format: FormatEksportu, nazwaPliku: string
     }
     pdf.save(`${nazwaPliku}.pdf`);
   } finally {
+    przywrocZawijanie();
     if (skala) skala.style.zoom = poprzedniZoom;
   }
 }

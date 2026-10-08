@@ -10,7 +10,7 @@ import { z } from "zod";
  * pomijane — lepiej zgubić jedną poprawkę, niż wstawić ją w złe miejsce.
  */
 
-export const PLAKATY_EDYTOWALNE = ["tabele-napraw", "momenty-kol"] as const;
+export const PLAKATY_EDYTOWALNE = ["tabele-napraw", "momenty-kol", "momenty-srub"] as const;
 export type PlakatEdytowalny = (typeof PLAKATY_EDYTOWALNE)[number];
 
 export const jestEdytowalny = (id: string): id is PlakatEdytowalny =>

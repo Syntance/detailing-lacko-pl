@@ -9,6 +9,7 @@ import {
   PlakatMomentyMarki,
   PlakatMomentyWstep,
 } from "@/components/druk/plakat-momenty";
+import { PlakatMomentySrubElementy, PlakatMomentySrubKlasy } from "@/components/druk/plakat-momenty-srub";
 import {
   PlakatCoNaprawie,
   PlakatLegenda,
@@ -196,6 +197,30 @@ export default async function DrukPage({
               <PlakatMomentyMarki kartka={i} />
             </Arkusz>
           ))}
+        </>
+      );
+      break;
+    case "momenty-srub":
+      kartki = (
+        <>
+          <Arkusz
+            {...wspolne}
+            wewnetrzny
+            etykieta="momenty śrub · 1/2"
+            tytul="Momenty dokręcania śrub (Nm)"
+            podtytul="Śruby stalowe według klasy wytrzymałości. Gdy producent auta lub części podaje moment — obowiązuje on."
+          >
+            <PlakatMomentySrubKlasy />
+          </Arkusz>
+          <Arkusz
+            {...wspolne}
+            wewnetrzny
+            etykieta="momenty śrub · 2/2"
+            tytul="Elementy samochodu"
+            podtytul="Świece i sonda lambda z tabel producentów części. Reszta połączeń — tylko według danych producenta auta."
+          >
+            <PlakatMomentySrubElementy />
+          </Arkusz>
         </>
       );
       break;

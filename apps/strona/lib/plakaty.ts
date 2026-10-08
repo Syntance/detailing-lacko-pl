@@ -43,6 +43,13 @@ export const PLAKATY: Plakat[] = [
     marka: "wulkanizacja",
     kartki: 5,
   },
+  {
+    id: "momenty-srub",
+    tytul: "Momenty dokręcania śrub (Nm)",
+    opis: "Ściąga: momenty dla śrub stalowych wg klasy 8.8 / 10.9 / 12.9 (gwint zwykły i drobny), świece zapłonowe i żarowe, sonda lambda oraz lista śrub dokręcanych tylko wg producenta (głowica, hamulce, zawieszenie). Materiał wewnętrzny.",
+    marka: "wulkanizacja",
+    kartki: 2,
+  },
 ];
 
 export const plakatPoId = (id: string) => PLAKATY.find((p) => p.id === id) ?? null;

@@ -206,18 +206,27 @@ export default async function DrukPage({
           <Arkusz
             {...wspolne}
             wewnetrzny
-            etykieta="momenty śrub · 1/2"
-            tytul="Momenty dokręcania śrub (Nm)"
-            podtytul="Ile nastawić na kluczu: śruby stalowe według klasy i stanu gwintu. Gdy producent auta lub części podaje moment — obowiązuje on."
+            etykieta="momenty śrub · 1/3"
+            tytul="Śruba sucha (Nm)"
+            podtytul="Ile nastawić na kluczu według klasy śruby — gwint bez smaru i oleju."
           >
-            <PlakatMomentySrubKlasy />
+            <PlakatMomentySrubKlasy stan="sucho" />
           </Arkusz>
           <Arkusz
             {...wspolne}
             wewnetrzny
-            etykieta="momenty śrub · 2/2"
+            etykieta="momenty śrub · 2/3"
+            tytul="Śruba smarowana (Nm)"
+            podtytul="Gwint z olejem, smarem lub pastą — tarcie mniejsze, więc moment niższy."
+          >
+            <PlakatMomentySrubKlasy stan="smar" />
+          </Arkusz>
+          <Arkusz
+            {...wspolne}
+            wewnetrzny
+            etykieta="momenty śrub · 3/3"
             tytul="Elementy samochodu"
-            podtytul="Świece i sonda lambda z tabel producentów części. Reszta połączeń — tylko według danych producenta auta."
+            podtytul="Świece i sonda lambda. Reszta połączeń — według danych producenta auta."
           >
             <PlakatMomentySrubElementy />
           </Arkusz>

@@ -46,9 +46,9 @@ export const PLAKATY: Plakat[] = [
   {
     id: "momenty-srub",
     tytul: "Momenty dokręcania śrub (Nm)",
-    opis: "Momenty dla śrub stalowych wg klasy 8.8 / 10.9 / 12.9, gwint zwykły M4–M24 i drobny M8×1–M22×1,5 — min, zalecany i maks osobno dla śruby suchej i smarowanej; świece, sonda lambda i śruby tylko wg producenta. Materiał wewnętrzny.",
+    opis: "Momenty dla śrub stalowych wg klasy 8.8 / 10.9 / 12.9, gwint zwykły M4–M24 i drobny M8×1–M24×2 (skoki 1 / 1,25 / 1,5 / 2) — min, zalecany i maks osobno dla śruby suchej i smarowanej; świece, sonda lambda i śruby tylko wg producenta. Materiał wewnętrzny.",
     marka: "wulkanizacja",
-    kartki: 3,
+    kartki: 5,
   },
 ];
 

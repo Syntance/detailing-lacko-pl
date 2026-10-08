@@ -1,11 +1,13 @@
 /**
  * Momenty dokręcania śrub ogólnie (poza kołami — te są w `momenty-kol.ts`).
  *
- * Tabela klas wytrzymałości: maksymalne momenty dla śrub stalowych z gwintem
- * metrycznym (ISO 898-1) przy współczynniku tarcia µ 0,12–0,14 (gwint suchy
- * lub lekko naoliwiony, śruba ocynkowana). Przedział [min, max] = µ 0,12 → 0,14
- * wg TR Fastenings i Roloff/Matek (tabela Zimmer Group, µ 0,12 — te same liczby
- * co kolumna µ 0,125 u TR). Gwint drobny tylko z TR Fastenings.
+ * Tabela klas wytrzymałości: moment montażowy śrub stalowych z gwintem
+ * metrycznym (ISO 898-1) przy wykorzystaniu 90% granicy plastyczności (VDI 2230;
+ * Würth: to wartość nastawiana na kluczu). Ten moment zależy od tarcia w gwincie,
+ * więc każda klasa ma trzy wartości: gwint smarowany (µ 0,10), typowo (µ ≈ 0,12,
+ * śruba ocynkowana, lekko naoliwiona — zalecany) i gwint suchy (µ 0,14). Liczby:
+ * TR Fastenings; kolumna typowa zgodna z Roloff/Matek (tabela Zimmer Group).
+ * Gwint drobny tylko z TR Fastenings.
  *
  * Elementy samochodu: wpisujemy tylko to, co znaleźliśmy w otwartych źródłach.
  * Hamulce, zawieszenie, układ kierowniczy, korek oleju itp. różnią się między
@@ -16,31 +18,32 @@
 export type Klasa = "8.8" | "10.9" | "12.9";
 export const KLASY: Klasa[] = ["8.8", "10.9", "12.9"];
 
-export type WierszGwintu = { gwint: string; nm: Record<Klasa, [number, number]> };
+/** [gwint smarowany µ 0,10, typowo µ ≈ 0,12, gwint suchy µ 0,14] w Nm. */
+export type TrzyMomenty = [number, number, number];
+export type WierszGwintu = { gwint: string; nm: Record<Klasa, TrzyMomenty> };
 
-const r = (
-  gwint: string,
-  k88: [number, number],
-  k109: [number, number],
-  k129: [number, number],
-): WierszGwintu => ({ gwint, nm: { "8.8": k88, "10.9": k109, "12.9": k129 } });
+const r = (gwint: string, k88: TrzyMomenty, k109: TrzyMomenty, k129: TrzyMomenty): WierszGwintu => ({
+  gwint,
+  nm: { "8.8": k88, "10.9": k109, "12.9": k129 },
+});
 
+/** TR Fastenings, kolumny µ 0,10 / 0,125 / 0,14 (µ 0,125 = tabela Roloff/Matek dla µ 0,12). */
 export const GWINT_ZWYKLY: WierszGwintu[] = [
-  r("M5", [5.8, 6.2], [8.1, 8.7], [9.7, 10.4]),
-  r("M6", [9.9, 10.5], [14, 15], [16.5, 18]),
-  r("M8", [24, 26], [34, 36], [40, 43]),
-  r("M10", [48, 51], [67, 72], [81, 87]),
-  r("M12", [83, 89], [117, 125], [140, 150]),
-  r("M14", [132, 141], [185, 198], [220, 240]),
-  r("M16", [200, 215], [285, 305], [340, 365]),
-  r("M20", [390, 420], [550, 590], [660, 710]),
+  r("M5", [5, 5.8, 6.2], [7.1, 8.1, 8.7], [8.5, 9.7, 10.4]),
+  r("M6", [8.6, 9.9, 10.5], [12, 14, 15], [14.5, 16.5, 18]),
+  r("M8", [21, 24, 26], [29, 34, 36], [35, 40, 43]),
+  r("M10", [42, 48, 51], [58, 67, 72], [70, 81, 87]),
+  r("M12", [72, 83, 89], [101, 117, 125], [121, 140, 150]),
+  r("M14", [114, 132, 141], [160, 185, 198], [193, 220, 240]),
+  r("M16", [174, 200, 215], [245, 285, 305], [295, 340, 365]),
+  r("M20", [340, 390, 420], [475, 550, 590], [570, 660, 710]),
 ];
 
 /** Jedno źródło (TR Fastenings), wartości zaokrąglone do 5 Nm. */
 export const GWINT_DROBNY: WierszGwintu[] = [
-  r("M10×1,25", [49, 52], [68, 73], [82, 88]),
-  r("M12×1,25", [88, 95], [125, 135], [150, 160]),
-  r("M14×1,5", [140, 150], [195, 210], [235, 250]),
+  r("M10×1,25", [42, 49, 52], [59, 68, 73], [71, 82, 88]),
+  r("M12×1,25", [76, 88, 95], [105, 125, 135], [130, 150, 160]),
+  r("M14×1,5", [120, 140, 150], [165, 195, 210], [200, 235, 250]),
 ];
 
 export type WpisElementu = {
@@ -127,8 +130,9 @@ export const TYLKO_PRODUCENT: { co: string; dlaczego: string }[] = [
 
 export const ZASADY = [
   "Klasa jest wybita na łbie śruby: 8.8, 10.9 lub 12.9. Bez oznaczenia — nie zakładaj wyższej niż 8.8.",
-  "Tabela klas podaje momenty maksymalne — to górna granica, nie wartość „na zapas”.",
-  "Gwint czysty, suchy lub lekko naoliwiony. Przy smarze lub paście (µ ok. 0,10) moment ok. 10–15% niższy.",
+  "Nastawiaj wartość z kolumny pasującej do gwintu. Śruba posmarowana albo z pastą — tylko lewa kolumna, inaczej śruba się rozciągnie.",
+  "Nie kręć ponad prawą kolumnę: to już 90% granicy plastyczności śruby przy suchym gwincie.",
+  "Nawet dobry klucz dynamometryczny daje rozrzut siły docisku ok. ±17–23% (Würth) — dlatego nie dodawaj „na zapas”.",
   "Gdy producent auta lub części podaje moment, obowiązuje on, nie ta tabela.",
   "Kluczem dynamometrycznym pracuj w środku jego zakresu (ok. 20–80%), po pracy odkręć nastawę do zera.",
 ];
@@ -141,13 +145,16 @@ export const GDZIE_SZUKAC = [
 
 export const ZRODLA_SRUB = [
   "TR Fastenings — Pre-load and tightening torques, coarse / fine metric threads (trfastenings.com)",
+  "Würth Industrie — DINO, rozdz. 6: momenty wg VDI 2230 i współczynnik dokręcania",
   "Zimmer Group za Roloff/Matek, Maschinenelemente Tabellenbuch, wyd. 19 (zimmer-group.com)",
   "NGK — Spark plug installation (ngksparkplugs.com) i tabela NGK w Nm",
   "Bosch — momenty świec żarowych (za buycarparts.co.uk); Lambda Power — fitting guide (lambdapower.co.uk)",
   "AA1Car — Torque-to-yield head bolts (aa1car.com)",
 ];
 
+export const liczba = (n: number) => String(n).replace(".", ",");
+
 export const nm = ([min, max]: [number, number]) => {
-  const f = (n: number) => String(n).replace(".", ",");
+  const f = liczba;
   return min === max ? f(min) : `${f(min)}–${f(max)}`;
 };

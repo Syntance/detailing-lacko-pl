@@ -208,7 +208,7 @@ export default async function DrukPage({
             wewnetrzny
             etykieta="momenty śrub · 1/2"
             tytul="Momenty dokręcania śrub (Nm)"
-            podtytul="Śruby stalowe według klasy wytrzymałości. Gdy producent auta lub części podaje moment — obowiązuje on."
+            podtytul="Ile nastawić na kluczu: śruby stalowe według klasy i stanu gwintu. Gdy producent auta lub części podaje moment — obowiązuje on."
           >
             <PlakatMomentySrubKlasy />
           </Arkusz>

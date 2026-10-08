@@ -8,11 +8,14 @@ import {
   TYLKO_PRODUCENT,
   ZASADY,
   ZRODLA_SRUB,
+  liczba,
   nm,
   type WierszGwintu,
 } from "@/lib/momenty-srub";
 
 const WYROZNIENIE = "bg-[color-mix(in_srgb,var(--akcent)_18%,var(--background))]";
+
+const KOLUMNY = ["smar", "zalecany", "sucho"] as const;
 
 function TabelaKlas({ tytul, opis, wiersze }: { tytul: string; opis: string; wiersze: WierszGwintu[] }) {
   return (
@@ -21,27 +24,49 @@ function TabelaKlas({ tytul, opis, wiersze }: { tytul: string; opis: string; wie
         <p className="text-[16px] font-bold">{tytul}</p>
         <p className="text-[11px] leading-snug text-pretty">{opis}</p>
       </div>
-      <div className="grid grid-cols-[1fr_repeat(3,1.2fr)]">
-        <p className="etykieta-sm px-4 py-2 text-muted-foreground">gwint</p>
+      <div className="grid grid-cols-[auto_repeat(9,1fr)]">
+        <p className="etykieta-sm row-span-2 self-end px-3 pb-1.5 text-muted-foreground">gwint</p>
         {KLASY.map((k) => (
-          <p key={k} className="px-3 py-2 text-center text-[14px] font-bold tabular-nums">
+          <p
+            key={k}
+            className="col-span-3 border-l-2 border-ink pt-2 text-center text-[14px] font-bold tabular-nums"
+          >
             klasa {k}
           </p>
         ))}
+        {KLASY.map((k) =>
+          KOLUMNY.map((kol, i) => (
+            <p
+              key={`${k}-${kol}`}
+              className={`etykieta-sm pt-0.5 pb-1.5 text-center text-[8.5px] ${
+                i === 0 ? "border-l-2 border-ink" : ""
+              } ${i === 1 ? "text-ink" : "text-muted-foreground"}`}
+            >
+              {kol}
+            </p>
+          )),
+        )}
         {wiersze.map((w) => (
           <div key={w.gwint} className="contents">
-            <p className="border-t border-dashed border-kreska px-4 py-[7px] text-[15px] font-bold tabular-nums">
+            <p className="border-t border-dashed border-kreska px-3 py-[7px] text-[15px] font-bold tabular-nums">
               {w.gwint}
             </p>
-            {KLASY.map((k) => (
-              <p
-                key={k}
-                className="border-t border-dashed border-kreska px-3 py-[7px] text-center text-[15px] font-semibold whitespace-nowrap tabular-nums"
-              >
-                {nm(w.nm[k])}
-                <span className="ml-0.5 text-[9px] font-medium text-muted-foreground">Nm</span>
-              </p>
-            ))}
+            {KLASY.map((k) =>
+              w.nm[k].map((wartosc, i) => (
+                <p
+                  key={`${k}-${i}`}
+                  className={`border-t border-dashed border-kreska py-[7px] text-center whitespace-nowrap tabular-nums ${
+                    i === 0 ? "border-l-2 border-l-ink" : ""
+                  } ${
+                    i === 1
+                      ? `${WYROZNIENIE} text-[15px] font-bold`
+                      : "text-[12px] font-medium text-tekst"
+                  }`}
+                >
+                  {liczba(wartosc)}
+                </p>
+              )),
+            )}
           </div>
         ))}
       </div>
@@ -55,12 +80,12 @@ export function PlakatMomentySrubKlasy() {
     <>
       <TabelaKlas
         tytul="Gwint metryczny zwykły"
-        opis="Momenty maksymalne dla śrub stalowych (ISO 898-1), µ 0,12–0,14 — przedział od gwintu suchego do lekko naoliwionego."
+        opis="Śruby stalowe (ISO 898-1), Nm. Zalecany = śruba ocynkowana, gwint czysty, lekko naoliwiony (µ ≈ 0,12). Smar = gwint posmarowany lub z pastą (µ 0,10). Sucho = gwint suchy (µ 0,14) — więcej nie kręć."
         wiersze={GWINT_ZWYKLY}
       />
       <TabelaKlas
         tytul="Gwint metryczny drobny"
-        opis="Jedno źródło (TR Fastenings), wartości zaokrąglone do 5 Nm. Skok gwintu sprawdź przed dokręceniem."
+        opis="Kolumny jak wyżej. Jedno źródło (TR Fastenings), wartości zaokrąglone do 5 Nm — skok gwintu sprawdź przed dokręceniem."
         wiersze={GWINT_DROBNY}
       />
       <div className="rounded-xl border-[2.5px] border-ink p-3.5">

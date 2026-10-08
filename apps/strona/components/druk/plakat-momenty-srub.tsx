@@ -22,12 +22,14 @@ const OPISY: Record<StanGwintu, { zwykly: string; drobny: string }> = {
   sucho: {
     zwykly:
       "Śruby stalowe, Nm. Gwint czysty i suchy, bez smaru. Zalecany — typowa śruba ocynkowana; min — gwint gładszy; maks — gwint szorstki, matowy.",
-    drobny: "Kolumny jak wyżej. Skok gwintu sprawdź przed dokręceniem.",
+    drobny:
+      "Śruby stalowe, Nm. Gwint czysty i suchy, bez smaru. Zalecany — typowa śruba ocynkowana; min — gwint gładszy; maks — gwint szorstki, matowy. Skok gwintu sprawdź przed dokręceniem.",
   },
   smar: {
     zwykly:
       "Śruby stalowe, Nm. Gwint naoliwiony, nasmarowany albo z pastą. Zalecany — typowo; min — smar bardzo śliski (np. MoS₂, pasta montażowa); maks — lekko naoliwiony.",
-    drobny: "Kolumny jak wyżej. Skok gwintu sprawdź przed dokręceniem.",
+    drobny:
+      "Śruby stalowe, Nm. Gwint naoliwiony, nasmarowany albo z pastą. Zalecany — typowo; min — smar bardzo śliski (np. MoS₂, pasta montażowa); maks — lekko naoliwiony. Skok gwintu sprawdź przed dokręceniem.",
   },
 };
 
@@ -81,12 +83,17 @@ function TabelaKlas({ tytul, opis, wiersze, stan }: { tytul: string; opis: strin
   );
 }
 
-/** Kartki 1–2: śruby stalowe według klasy — osobno sucha i smarowana. */
-export function PlakatMomentySrubKlasy({ stan }: { stan: StanGwintu }) {
+export type RodzajGwintu = "zwykly" | "drobny";
+
+/** Kartki 1–4: śruby stalowe według klasy — osobno stan gwintu (sucha / smarowana) i gwint zwykły / drobny. */
+export function PlakatMomentySrubKlasy({ stan, gwint }: { stan: StanGwintu; gwint: RodzajGwintu }) {
   return (
     <>
-      <TabelaKlas tytul="Gwint metryczny zwykły" opis={OPISY[stan].zwykly} wiersze={GWINT_ZWYKLY} stan={stan} />
-      <TabelaKlas tytul="Gwint metryczny drobny" opis={OPISY[stan].drobny} wiersze={GWINT_DROBNY} stan={stan} />
+      {gwint === "zwykly" ? (
+        <TabelaKlas tytul="Gwint metryczny zwykły" opis={OPISY[stan].zwykly} wiersze={GWINT_ZWYKLY} stan={stan} />
+      ) : (
+        <TabelaKlas tytul="Gwint metryczny drobny" opis={OPISY[stan].drobny} wiersze={GWINT_DROBNY} stan={stan} />
+      )}
       <ul className="grid grid-cols-2 gap-x-6 gap-y-1 rounded-xl border-[2.5px] border-ink px-3.5 py-2.5 text-[11.5px] leading-snug text-pretty">
         {ZASADY.map((z) => (
           <li key={z} className="flex gap-2">

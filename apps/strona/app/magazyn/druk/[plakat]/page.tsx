@@ -200,31 +200,32 @@ export default async function DrukPage({
         </>
       );
       break;
-    case "momenty-srub":
+    case "momenty-srub": {
+      const RAZEM = 5;
+      const kartkiKlas = [
+        { stan: "sucho", gwint: "zwykly", tytul: "Śruba sucha · gwint zwykły (Nm)", podtytul: "Ile nastawić na kluczu według klasy śruby — gwint bez smaru i oleju." },
+        { stan: "sucho", gwint: "drobny", tytul: "Śruba sucha · gwint drobny (Nm)", podtytul: "Gwint drobny według skoku (np. M14×1,25 / ×1,5) — bez smaru i oleju." },
+        { stan: "smar", gwint: "zwykly", tytul: "Śruba smarowana · gwint zwykły (Nm)", podtytul: "Gwint z olejem, smarem lub pastą — tarcie mniejsze, więc moment niższy." },
+        { stan: "smar", gwint: "drobny", tytul: "Śruba smarowana · gwint drobny (Nm)", podtytul: "Gwint drobny według skoku — z olejem, smarem lub pastą." },
+      ] as const;
       kartki = (
         <>
+          {kartkiKlas.map((k, i) => (
+            <Arkusz
+              key={`${k.stan}-${k.gwint}`}
+              {...wspolne}
+              wewnetrzny
+              etykieta={`momenty śrub · ${i + 1}/${RAZEM}`}
+              tytul={k.tytul}
+              podtytul={k.podtytul}
+            >
+              <PlakatMomentySrubKlasy stan={k.stan} gwint={k.gwint} />
+            </Arkusz>
+          ))}
           <Arkusz
             {...wspolne}
             wewnetrzny
-            etykieta="momenty śrub · 1/3"
-            tytul="Śruba sucha (Nm)"
-            podtytul="Ile nastawić na kluczu według klasy śruby — gwint bez smaru i oleju."
-          >
-            <PlakatMomentySrubKlasy stan="sucho" />
-          </Arkusz>
-          <Arkusz
-            {...wspolne}
-            wewnetrzny
-            etykieta="momenty śrub · 2/3"
-            tytul="Śruba smarowana (Nm)"
-            podtytul="Gwint z olejem, smarem lub pastą — tarcie mniejsze, więc moment niższy."
-          >
-            <PlakatMomentySrubKlasy stan="smar" />
-          </Arkusz>
-          <Arkusz
-            {...wspolne}
-            wewnetrzny
-            etykieta="momenty śrub · 3/3"
+            etykieta={`momenty śrub · ${RAZEM}/${RAZEM}`}
             tytul="Elementy samochodu"
             podtytul="Świece i sonda lambda. Reszta połączeń — według danych producenta auta."
           >
@@ -233,6 +234,7 @@ export default async function DrukPage({
         </>
       );
       break;
+    }
     default:
       notFound();
   }

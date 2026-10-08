@@ -16,7 +16,7 @@ import {
 const WYROZNIENIE = "bg-[color-mix(in_srgb,var(--akcent)_18%,var(--background))]";
 
 /** Zalecany moment — zielony, żeby od razu odróżniał się od min/max. */
-const ZIELONY = "bg-[oklch(0.9_0.09_150)]";
+const ZIELONY = "bg-[oklch(0.93_0.05_150)]";
 
 const KOLUMNY = ["smar", "zalecany", "sucho"] as const;
 

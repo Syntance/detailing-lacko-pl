@@ -15,6 +15,9 @@ import {
 
 const WYROZNIENIE = "bg-[color-mix(in_srgb,var(--akcent)_18%,var(--background))]";
 
+/** Zalecany moment — zielony, żeby od razu odróżniał się od min/max. */
+const ZIELONY = "bg-[oklch(0.9_0.09_150)]";
+
 const KOLUMNY = ["smar", "zalecany", "sucho"] as const;
 
 function TabelaKlas({ tytul, opis, wiersze }: { tytul: string; opis: string; wiersze: WierszGwintu[] }) {
@@ -59,7 +62,7 @@ function TabelaKlas({ tytul, opis, wiersze }: { tytul: string; opis: string; wie
                     i === 0 ? "border-l-2 border-l-ink" : ""
                   } ${
                     i === 1
-                      ? `${WYROZNIENIE} text-[15px] font-bold`
+                      ? `${ZIELONY} text-[15px] font-bold`
                       : "text-[12px] font-medium text-tekst"
                   }`}
                 >

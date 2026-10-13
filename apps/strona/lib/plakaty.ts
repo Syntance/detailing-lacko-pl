@@ -46,9 +46,9 @@ export const PLAKATY: Plakat[] = [
   {
     id: "dobor-felg",
     tytul: "Dobór felgi do opony (cale)",
-    opis: "Szerokość felgi min / optymalna / maks dla 604 rozmiarów opon 125–355 — zgrupowane po szerokości i profilu, średnice zwinięte w zakresy, wyjątki wyróżnione. Wg katalogu Goodyear. Materiał wewnętrzny.",
+    opis: "Praktyczna szerokość felgi (felga pomiarowa ETRTO do +0,5″) dla 679 rozmiarów opon osobowych 115–375, zgrupowanych po szerokości i profilu. Wg normy ETRTO 2016. Materiał wewnętrzny.",
     marka: "wulkanizacja",
-    kartki: 3,
+    kartki: 2,
   },
   {
     id: "momenty-srub",

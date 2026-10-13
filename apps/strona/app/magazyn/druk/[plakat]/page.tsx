@@ -212,7 +212,7 @@ export default async function DrukPage({
               wewnetrzny
               etykieta={`dobór felg · ${i + 1}/${UKLAD_FELG.length}`}
               tytul={`Dobór felgi do opony · ${zakresKartki(kartka)}`}
-              podtytul="Szerokość felgi w calach: minimalna, optymalna (OK) i maksymalna. Szukasz po szerokości i profilu opony, średnice R zebrane w zakresy."
+              podtytul="Szerokość felgi w calach, na którą oponę da się dobrze założyć — wg normy ETRTO. Szukasz po szerokości i profilu opony; średnica nie zmienia felgi."
             >
               <PlakatFelgi kartka={i} />
             </Arkusz>

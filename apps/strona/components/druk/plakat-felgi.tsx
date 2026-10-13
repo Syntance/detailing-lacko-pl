@@ -4,7 +4,7 @@ import { UKLAD_FELG, cal, zakresFelgi, zakresySrednic, type BlokFelg } from "@/l
 /** Optimum (felga pomiarowa) — zielone tło, jak zalecany moment na plakacie śrub. */
 const ZIELONY = "bg-[oklch(0.93_0.05_150)]";
 
-const KOLUMNY = "grid-cols-[13mm_11mm_minmax(0,1fr)_25mm]";
+const KOLUMNY = "grid-cols-[12mm_10mm_minmax(0,1fr)_31mm]";
 
 function Kolumna({ bloki }: { bloki: BlokFelg[] }) {
   return (

@@ -48,8 +48,8 @@ export const LICZBA_ROZMIAROW = FELGI.reduce((s, w) => s + w.srednice.length + w
 /** Blok jednej szerokości w kolumnie; `ciagDalszy` = przeniesiony z poprzedniej kolumny. */
 export type BlokFelg = { szerokosc: number; wiersze: WpisFelg[]; ciagDalszy: boolean };
 
-export const KARTKI_FELG = 2;
-export const KOLUMNY_FELG = 3;
+export const KARTKI_FELG = 3;
+export const KOLUMNY_FELG = 2;
 
 /**
  * Kartki → kolumny → bloki. Wiersze dzielone po równo (najpierw na kartki,

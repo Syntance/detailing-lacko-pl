@@ -4,16 +4,16 @@ import { UKLAD_FELG, cal, zakresFelgi, zakresySrednic, type BlokFelg } from "@/l
 /** Optimum (felga pomiarowa) — zielone tło, jak zalecany moment na plakacie śrub. */
 const ZIELONY = "bg-[oklch(0.93_0.05_150)]";
 
-const KOLUMNY = "grid-cols-[11mm_9mm_minmax(0,1fr)_19mm]";
+const KOLUMNY = "grid-cols-[13mm_11mm_minmax(0,1fr)_25mm]";
 
 function Kolumna({ bloki }: { bloki: BlokFelg[] }) {
   return (
     <div className="overflow-hidden rounded-xl border-[3px] border-ink">
       <div className={`grid ${KOLUMNY} items-end border-b-[3px] border-ink bg-akcent`}>
-        <p className="etykieta-sm px-1.5 py-1.5 text-[8px]">opona</p>
-        <p className="etykieta-sm py-1.5 text-[8px]">prof.</p>
-        <p className="etykieta-sm py-1.5 text-[8px]">średnice R</p>
-        <p className="etykieta-sm border-l-2 border-ink py-1.5 text-center text-[8px]">felga ″</p>
+        <p className="etykieta-sm px-1.5 py-2 text-[9px]">opona</p>
+        <p className="etykieta-sm py-2 text-[9px]">prof.</p>
+        <p className="etykieta-sm py-2 text-[9px]">średnice R</p>
+        <p className="etykieta-sm border-l-2 border-ink py-2 text-center text-[9px]">felga ″</p>
       </div>
       {bloki.map((blok, b) => (
         <div key={`${blok.szerokosc}-${blok.ciagDalszy}`} className={`grid ${KOLUMNY} ${b > 0 ? "border-t-2 border-ink" : ""}`}>
@@ -29,8 +29,8 @@ function Kolumna({ bloki }: { bloki: BlokFelg[] }) {
             const zakres = zakresFelgi(w);
             return (
               <Fragment key={w.profil}>
-                <p className={`${ramka} py-[3px] text-[11.5px] leading-tight font-bold tabular-nums`}>/{w.profil}</p>
-                <p className={`${ramka} py-[3px] pr-1 text-[9.5px] leading-tight text-pretty text-tekst tabular-nums`}>
+                <p className={`${ramka} py-[5px] text-[13px] leading-tight font-bold tabular-nums`}>/{w.profil}</p>
+                <p className={`${ramka} py-[5px] pr-1.5 text-[11px] leading-tight text-pretty text-tekst tabular-nums`}>
                   {zakresySrednic(w.srednice)}
                   {w.spozaNormy.length ? (
                     <span className="text-muted-foreground">
@@ -39,9 +39,9 @@ function Kolumna({ bloki }: { bloki: BlokFelg[] }) {
                   ) : null}
                   {w.zrodlo === "goodyear" ? <sup className="ml-0.5 text-[8px] font-bold text-ink">*</sup> : null}
                 </p>
-                <p className={`${ramka} border-l-2 border-l-ink py-[3px] text-center text-[10px] leading-tight whitespace-nowrap tabular-nums`}>
+                <p className={`${ramka} border-l-2 border-l-ink py-[5px] text-center text-[12px] leading-tight whitespace-nowrap tabular-nums`}>
                   {cal(zakres.min)}–
-                  <strong className={`${ZIELONY} rounded-sm px-0.5 text-[11.5px]`}>{cal(zakres.opt)}</strong>
+                  <strong className={`${ZIELONY} rounded-sm px-1 text-[14px]`}>{cal(zakres.opt)}</strong>
                   –{cal(zakres.max)}
                 </p>
               </Fragment>
@@ -57,7 +57,7 @@ function Kolumna({ bloki }: { bloki: BlokFelg[] }) {
 export function PlakatFelgi({ kartka }: { kartka: number }) {
   const kolumny = UKLAD_FELG[kartka] ?? [];
   return (
-    <div className="grid grid-cols-3 items-start gap-2.5">
+    <div className="grid grid-cols-2 items-start gap-4">
       {kolumny.map((bloki, i) => (
         <Kolumna key={i} bloki={bloki} />
       ))}

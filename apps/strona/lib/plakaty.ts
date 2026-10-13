@@ -44,6 +44,13 @@ export const PLAKATY: Plakat[] = [
     kartki: 5,
   },
   {
+    id: "dobor-felg",
+    tytul: "Dobór felgi do opony (cale)",
+    opis: "Szerokość felgi min / optymalna / maks dla 604 rozmiarów opon 125–355 — zgrupowane po szerokości i profilu, średnice zwinięte w zakresy, wyjątki wyróżnione. Wg katalogu Goodyear. Materiał wewnętrzny.",
+    marka: "wulkanizacja",
+    kartki: 3,
+  },
+  {
     id: "momenty-srub",
     tytul: "Momenty dokręcania śrub (Nm)",
     opis: "Momenty dla śrub stalowych wg klasy 8.8 / 10.9 / 12.9, gwint zwykły M4–M24 i drobny M8×1–M24×2 (skoki 1 / 1,25 / 1,5 / 2) — min, zalecany i maks osobno dla śruby suchej i smarowanej; świece, sonda lambda i śruby tylko wg producenta. Materiał wewnętrzny.",

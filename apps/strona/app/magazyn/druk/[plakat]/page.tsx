@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { Arkusz } from "@/components/druk/arkusz";
 import { NarzedziaDruku } from "@/components/druk/narzedzia-druku";
 import { PlakatCennik } from "@/components/druk/plakat-cennik";
+import { PlakatFelgi } from "@/components/druk/plakat-felgi";
 import {
   KARTKI_MOMENTOW,
   PlakatMomentyMarki,
@@ -21,6 +22,7 @@ import {
   UKLAD_CENNIKA_WULKANIZACJA,
 } from "@/components/sections/uslugi-cennik";
 import { requireAdminSessionForPanel } from "@/lib/auth";
+import { UKLAD_FELG, zakresKartki } from "@/lib/felgi";
 import { plakatPoId } from "@/lib/plakaty";
 import { jestEdytowalny } from "@/lib/druk-edycja";
 import { getCennik, getCennikWulkanizacja, getEdycjaDruku, getKontakt } from "@/lib/site-data";
@@ -195,6 +197,24 @@ export default async function DrukPage({
               podtytul="Wartości orientacyjne wg zestawień warsztatowych. Kolorem zaznaczono wpisy, w których źródła się różnią."
             >
               <PlakatMomentyMarki kartka={i} />
+            </Arkusz>
+          ))}
+        </>
+      );
+      break;
+    case "dobor-felg":
+      kartki = (
+        <>
+          {UKLAD_FELG.map((kartka, i) => (
+            <Arkusz
+              key={i}
+              {...wspolne}
+              wewnetrzny
+              etykieta={`dobór felg · ${i + 1}/${UKLAD_FELG.length}`}
+              tytul={`Dobór felgi do opony · ${zakresKartki(kartka)}`}
+              podtytul="Szerokość felgi w calach: minimalna, optymalna (OK) i maksymalna. Szukasz po szerokości i profilu opony, średnice R zebrane w zakresy."
+            >
+              <PlakatFelgi kartka={i} />
             </Arkusz>
           ))}
         </>

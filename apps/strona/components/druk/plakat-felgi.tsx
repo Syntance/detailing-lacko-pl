@@ -28,8 +28,14 @@ function Kolumna({ bloki }: { bloki: BlokFelg[] }) {
           <div className="flex min-w-0 flex-1 flex-col">
             {blok.wiersze.map((w, i) => {
               const zakres = zakresFelgi(w);
+              // Pasy liczone po całej kolumnie (nie od nowa przy każdej szerokości), żeby były równe.
+              const nrWKolumnie = bloki.slice(0, b).reduce((s, x) => s + x.wiersze.length, 0) + i;
+              const pasek = nrWKolumnie % 2 === 1 ? "bg-muted" : "";
               return (
-                <div key={w.profil} className={`${WIERSZ} ${i > 0 ? "border-t border-dashed border-kreska" : ""}`}>
+                <div
+                  key={w.profil}
+                  className={`${WIERSZ} ${pasek} ${i > 0 ? "border-t border-dashed border-kreska" : ""}`}
+                >
                   <p className="py-[5px] text-[13px] leading-tight font-bold tabular-nums">/{w.profil}</p>
                   <p className="py-[5px] pr-1.5 text-[11px] leading-tight text-pretty text-tekst tabular-nums">
                     {zakresySrednic(w.srednice)}

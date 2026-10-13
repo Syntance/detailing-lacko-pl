@@ -69,7 +69,8 @@ function zbuduj(): BlokFelg[] {
         const felga = lista[0]?.felga ?? { min: 0, ok: 0, max: 0 };
         const srednice = lista.map((w) => w.srednica).sort((a, b) => a - b);
         const uwagi: string[] = [];
-        if (felga.min > felga.ok) uwagi.push("min większe od OK — tak podaje źródło");
+        if (felga.min > felga.max) uwagi.push("min większe od OK i od maks — błąd w źródle, sprawdź przed montażem");
+        else if (felga.min > felga.ok) uwagi.push("min większe od OK — tak podaje źródło");
         const podwojne = srednice.filter((d) => posortowane.some((inna, j) => j !== i && inna.some((w) => w.srednica === d)));
         if (podwojne.length) uwagi.push(`dla R${podwojne.join(", R")} źródło podaje dwa różne wpisy`);
         return { profil, srednice, felga, wyjatek: i > 0, uwagi };

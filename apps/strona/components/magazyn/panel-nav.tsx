@@ -17,6 +17,7 @@ import {
   CircleDollarSign,
   Images,
   Printer,
+  QrCode,
   Search,
 } from "lucide-react";
 
@@ -82,6 +83,12 @@ export function PanelNav({
       href: `${panel}/materialy`,
       label: "Materiały do druku",
       icon: Printer,
+      exact: false,
+    },
+    {
+      href: `${panel}/kody-qr`,
+      label: "Kody QR",
+      icon: QrCode,
       exact: false,
     },
   ];

@@ -24,7 +24,7 @@ function Kolumna({ bloki }: { bloki: BlokFelg[] }) {
           {/* Jedna przerywana kreska na całą wysokość bloku — równe kreski, bez faz z każdego wiersza osobno. */}
           <div aria-hidden className="pointer-events-none absolute inset-y-0 right-[31mm] border-l-2 border-dashed border-ink" />
           <div className="flex w-[12mm] shrink-0 flex-col items-start justify-center px-1.5 py-1">
-            <p className="text-[14px] leading-none font-bold tabular-nums">{blok.szerokosc}</p>
+            <p className="text-[17px] leading-none font-bold tabular-nums">{blok.szerokosc}</p>
             {blok.ciagDalszy ? <p className="etykieta-sm mt-0.5 text-[7px] text-muted-foreground">cd.</p> : null}
           </div>
           <div className="flex min-w-0 flex-1 flex-col">
@@ -38,8 +38,8 @@ function Kolumna({ bloki }: { bloki: BlokFelg[] }) {
                   key={w.profil}
                   className={`${WIERSZ} ${pasek} ${i > 0 ? "border-t border-dashed border-kreska" : ""}`}
                 >
-                  <p className="py-[5px] text-[13px] leading-tight font-bold tabular-nums">/{w.profil}</p>
-                  <p className="py-[5px] pr-1.5 text-[11px] leading-tight text-pretty text-tekst tabular-nums">
+                  <p className="py-[7px] text-[16px] leading-tight font-bold tabular-nums">/{w.profil}</p>
+                  <p className="py-[7px] pr-1.5 text-[13px] leading-tight text-pretty text-tekst tabular-nums">
                     {zakresySrednic(w.srednice)}
                     {w.spozaNormy.length ? (
                       <span className="text-muted-foreground">
@@ -48,9 +48,9 @@ function Kolumna({ bloki }: { bloki: BlokFelg[] }) {
                     ) : null}
                     {w.zrodlo === "goodyear" ? <sup className="ml-0.5 text-[8px] font-bold text-ink">*</sup> : null}
                   </p>
-                  <div className="grid grid-cols-[1fr_11mm_1fr] items-center py-[5px] text-[12px] leading-tight whitespace-nowrap tabular-nums">
+                  <div className="grid grid-cols-[1fr_12mm_1fr] items-center py-[7px] text-[14px] leading-tight whitespace-nowrap tabular-nums">
                     <span className="text-right">{cal(zakres.min)}–</span>
-                    <strong className={`${ZIELONY} rounded-sm py-px text-center text-[14px]`}>{cal(zakres.opt)}</strong>
+                    <strong className={`${ZIELONY} rounded-sm py-px text-center text-[16px]`}>{cal(zakres.opt)}</strong>
                     <span className="text-left">–{cal(zakres.max)}</span>
                   </div>
                 </div>

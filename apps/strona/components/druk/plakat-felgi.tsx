@@ -39,11 +39,11 @@ function Kolumna({ bloki }: { bloki: BlokFelg[] }) {
                   ) : null}
                   {w.zrodlo === "goodyear" ? <sup className="ml-0.5 text-[8px] font-bold text-ink">*</sup> : null}
                 </p>
-                <p className={`${ramka} border-l-2 border-l-ink py-[5px] text-center text-[12px] leading-tight whitespace-nowrap tabular-nums`}>
-                  {cal(zakres.min)}–
-                  <strong className={`${ZIELONY} rounded-sm px-1 text-[14px]`}>{cal(zakres.opt)}</strong>
-                  –{cal(zakres.max)}
-                </p>
+                <div className={`${ramka} grid grid-cols-[1fr_11mm_1fr] items-center border-l-2 border-l-ink py-[5px] text-[12px] leading-tight whitespace-nowrap tabular-nums`}>
+                  <span className="text-right">{cal(zakres.min)}–</span>
+                  <strong className={`${ZIELONY} rounded-sm py-px text-center text-[14px]`}>{cal(zakres.opt)}</strong>
+                  <span className="text-left">–{cal(zakres.max)}</span>
+                </div>
               </Fragment>
             );
           })}

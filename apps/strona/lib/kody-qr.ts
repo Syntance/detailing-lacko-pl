@@ -7,8 +7,53 @@ import { z } from "zod";
  * tworzeniu, i potem się nie zmienia (inaczej wydruki przestałyby działać).
  */
 
-export const KSZTALTY_MODULOW = ["kwadrat", "plynne", "kropki", "drobne"] as const;
-export const KSZTALTY_OCZEK = ["kwadrat", "zaokraglone", "kolo"] as const;
+// Kolejność = kolejność kafelków w edytorze. Pierwsze identyfikatory
+// (kwadrat, plynne, kropki, drobne / kwadrat, zaokraglone, kolo) są w już
+// zapisanych kodach — nie zmieniać ich nazw.
+export const KSZTALTY_MODULOW = [
+  "kwadrat",
+  "odstepy",
+  "zaokraglone",
+  "drobne",
+  "kropki",
+  "male-kropki",
+  "plynne",
+  "metro",
+  "pionowe",
+  "poziome",
+  "lisc",
+  "romby",
+  "osmiokaty",
+  "plusy",
+  "krzyzyki",
+  "gwiazdki",
+  "iskry",
+  "serca",
+] as const;
+export const KSZTALTY_OCZEK = [
+  "kwadrat",
+  "zaokraglone",
+  "kolo",
+  "miekkie",
+  "lisc",
+  "kropla",
+  "osmiokat",
+  "kropki",
+] as const;
+export const KSZTALTY_SRODKOW = [
+  "kwadrat",
+  "zaokraglony",
+  "kolo",
+  "osmiokat",
+  "lisc",
+  "kropla",
+  "plus",
+  "romb",
+  "kropki",
+  "poziome",
+  "pionowe",
+] as const;
+export const RODZAJE_GRADIENTU = ["brak", "liniowy", "radialny"] as const;
 export const POZIOMY_KOREKCJI = ["L", "M", "Q", "H"] as const;
 
 const kolor = z.string().regex(/^#[0-9a-f]{6}$/i, "Kolor w formacie #RRGGBB");
@@ -26,7 +71,13 @@ export const wygladSchema = z.object({
   tlo: kolor.default("#ffffff"),
   przezroczysteTlo: z.boolean().default(false),
   ksztaltModulow: z.enum(KSZTALTY_MODULOW).default("kwadrat"),
+  /** Gradient modułów: drugi kolor + rodzaj (liniowy po przekątnej / od środka). */
+  gradient: z.enum(RODZAJE_GRADIENTU).default("brak"),
+  kolor2: kolor.default("#3f7a5c"),
+  /** Ramka oczka (7×7). */
   ksztaltOczek: z.enum(KSZTALTY_OCZEK).default("kwadrat"),
+  /** Środek oczka (3×3). Brak w starszych zapisach → dobierany do ramki. */
+  ksztaltSrodka: z.enum(KSZTALTY_SRODKOW).optional(),
   korekcja: z.enum(POZIOMY_KOREKCJI).default("M"),
   /** Margines (quiet zone) w modułach. Standard to 4, czytniki radzą sobie od 2. */
   margines: z.number().int().min(0).max(8).default(4),

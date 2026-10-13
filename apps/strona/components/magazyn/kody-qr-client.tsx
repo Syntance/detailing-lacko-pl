@@ -16,9 +16,8 @@ import {
 } from "lucide-react";
 import {
   DOMYSLNY_WYGLAD,
-  KSZTALTY_MODULOW,
-  KSZTALTY_OCZEK,
   POZIOMY_KOREKCJI,
+  RODZAJE_GRADIENTU,
   celSchema,
   kodyQrDataSchema,
   sciezkaKodu,
@@ -26,22 +25,32 @@ import {
   type KodyQrData,
   type WygladQr,
 } from "@/lib/kody-qr";
+import { korekcjaEfektywna, srodekEfektywny } from "@/lib/qr-geometria";
 import { useMagazynHistory } from "@/hooks/use-magazyn-history";
 import { Checkbox, Field, Fieldset, UndoRedoToolbar, putEditorData } from "./editor-ui";
-import { QrSvg, korekcjaEfektywna } from "./qr-svg";
+import {
+  KafelkiModulow,
+  KafelkiRamek,
+  KafelkiSrodkow,
+  NAZWY_MODULOW,
+  NAZWY_SRODKOW,
+  OZDOBNE_MODULY,
+  OZDOBNE_SRODKI,
+} from "./qr-kafelki";
+import { QrSvg } from "./qr-svg";
 
-const ETYKIETY_MODULOW: Record<WygladQr["ksztaltModulow"], string> = {
-  kwadrat: "Kwadraty",
-  plynne: "Płynne",
-  kropki: "Kropki",
-  drobne: "Drobne",
+const ETYKIETY_GRADIENTU: Record<WygladQr["gradient"], string> = {
+  brak: "Jednolity",
+  liniowy: "Gradient liniowy",
+  radialny: "Gradient od środka",
 };
 
-const ETYKIETY_OCZEK: Record<WygladQr["ksztaltOczek"], string> = {
-  kwadrat: "Kwadratowe",
-  zaokraglone: "Zaokrąglone",
-  kolo: "Okrągłe",
-};
+const FORMATY = [
+  { id: "png", etykieta: "PNG", mime: "image/png" },
+  { id: "jpg", etykieta: "JPG", mime: "image/jpeg" },
+  { id: "webp", etykieta: "WebP", mime: "image/webp" },
+] as const;
+type Format = (typeof FORMATY)[number];
 
 const OPIS_KOREKCJI: Record<WygladQr["korekcja"], string> = {
   L: "L · 7%",
@@ -93,10 +102,12 @@ function kontrast(a: string, b: string): number {
 function ostrzezenia(w: WygladQr): string[] {
   const lista: string[] = [];
   const tlo = w.przezroczysteTlo ? "#ffffff" : w.tlo;
-  for (const [kolor, czego] of [
-    [w.kolor, "modułów"],
+  const kolory: [string, string][] = [
+    [w.kolor, w.gradient === "brak" ? "modułów" : "modułów (kolor 1)"],
     [w.kolorOczek, "oczek"],
-  ] as const) {
+  ];
+  if (w.gradient !== "brak") kolory.push([w.kolor2, "modułów (kolor 2)"]);
+  for (const [kolor, czego] of kolory) {
     if (kontrast(kolor, tlo) < 4) {
       lista.push(`Za mały kontrast ${czego} z tłem — część telefonów nie odczyta kodu.`);
     } else if (luminancja(kolor) > luminancja(tlo)) {
@@ -108,6 +119,15 @@ function ostrzezenia(w: WygladQr): string[] {
   }
   if (w.margines < 2) {
     lista.push("Margines poniżej 2 modułów utrudnia skanowanie — zostaw wolne miejsce wokół kodu.");
+  }
+  const srodek = srodekEfektywny(w);
+  if (OZDOBNE_MODULY.has(w.ksztaltModulow) || OZDOBNE_SRODKI.has(srodek)) {
+    const nazwa = OZDOBNE_MODULY.has(w.ksztaltModulow)
+      ? `Moduły „${NAZWY_MODULOW[w.ksztaltModulow]}”`
+      : `Środek oczek „${NAZWY_SRODKOW[srodek]}”`;
+    lista.push(
+      `${nazwa} to kształt ozdobny — część aparatów czyta go gorzej. Przed drukiem zeskanuj kod kilkoma telefonami.`,
+    );
   }
   return lista;
 }
@@ -145,7 +165,12 @@ function svgJakoTekst(svg: SVGSVGElement): string {
   return `<?xml version="1.0" encoding="UTF-8"?>\n${new XMLSerializer().serializeToString(svg)}`;
 }
 
-async function pobierzPng(svg: SVGSVGElement, rozmiar: number, nazwa: string): Promise<void> {
+async function pobierzObraz(
+  svg: SVGSVGElement,
+  rozmiar: number,
+  nazwa: string,
+  format: Format,
+): Promise<void> {
   const url = URL.createObjectURL(new Blob([svgJakoTekst(svg)], { type: "image/svg+xml" }));
   try {
     const img = new Image();
@@ -160,13 +185,19 @@ async function pobierzPng(svg: SVGSVGElement, rozmiar: number, nazwa: string): P
     canvas.height = rozmiar;
     const ctx = canvas.getContext("2d");
     if (!ctx) throw new Error("Przeglądarka nie obsługuje canvas.");
-    ctx.imageSmoothingEnabled = false;
+    if (format.id === "jpg") {
+      // JPG nie ma przezroczystości — bez tego przezroczyste tło wyszłoby czarne.
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, rozmiar, rozmiar);
+    }
     ctx.drawImage(img, 0, 0, rozmiar, rozmiar);
-    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
-    if (!blob) throw new Error("Nie udało się zapisać PNG.");
-    const pngUrl = URL.createObjectURL(blob);
-    pobierz(pngUrl, `${nazwa}.png`);
-    setTimeout(() => URL.revokeObjectURL(pngUrl), 1000);
+    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, format.mime, 0.95));
+    if (!blob || blob.type !== format.mime) {
+      throw new Error(`Ta przeglądarka nie zapisuje formatu ${format.etykieta} — wybierz PNG.`);
+    }
+    const plikUrl = URL.createObjectURL(blob);
+    pobierz(plikUrl, `${nazwa}.${format.id}`);
+    setTimeout(() => URL.revokeObjectURL(plikUrl), 1000);
   } finally {
     URL.revokeObjectURL(url);
   }
@@ -205,6 +236,15 @@ function Segmenty<T extends string>({
         </button>
       ))}
     </div>
+  );
+}
+
+function LegendaOzdobnych() {
+  return (
+    <p className="flex items-center gap-2 text-xs text-muted-foreground">
+      <span aria-hidden className="size-1.5 shrink-0 rounded-full bg-amber-500" />
+      Kształt ozdobny — wygląda efektownie, ale słabsze aparaty mogą go czytać gorzej.
+    </p>
   );
 }
 
@@ -524,8 +564,19 @@ export function KodyQrClient({
               </Fieldset>
 
               <Fieldset legend="Kolory">
-                <div className="grid gap-4 sm:grid-cols-3">
-                  <PoleKoloru label="Moduły" value={w.kolor} onChange={(kolor) => zmienWyglad({ kolor })}>
+                <Segmenty
+                  nazwa="Wypełnienie modułów"
+                  opcje={RODZAJE_GRADIENTU}
+                  wartosc={w.gradient}
+                  etykiety={ETYKIETY_GRADIENTU}
+                  onChange={(gradient) => zmienWyglad({ gradient })}
+                />
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                  <PoleKoloru
+                    label={w.gradient === "brak" ? "Moduły" : "Moduły — kolor 1"}
+                    value={w.kolor}
+                    onChange={(kolor) => zmienWyglad({ kolor })}
+                  >
                     <button
                       type="button"
                       className="self-start text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
@@ -534,6 +585,13 @@ export function KodyQrClient({
                       Ustaw też dla oczek
                     </button>
                   </PoleKoloru>
+                  {w.gradient !== "brak" ? (
+                    <PoleKoloru
+                      label="Moduły — kolor 2"
+                      value={w.kolor2}
+                      onChange={(kolor2) => zmienWyglad({ kolor2 })}
+                    />
+                  ) : null}
                   <PoleKoloru
                     label="Oczka (rogi)"
                     value={w.kolorOczek}
@@ -556,25 +614,32 @@ export function KodyQrClient({
                 </label>
               </Fieldset>
 
-              <Fieldset legend="Kształt">
-                <Field label="Moduły">
-                  <Segmenty
-                    nazwa="Kształt modułów"
-                    opcje={KSZTALTY_MODULOW}
-                    wartosc={w.ksztaltModulow}
-                    etykiety={ETYKIETY_MODULOW}
-                    onChange={(ksztaltModulow) => zmienWyglad({ ksztaltModulow })}
-                  />
-                </Field>
-                <Field label="Oczka (rogi)">
-                  <Segmenty
-                    nazwa="Kształt oczek"
-                    opcje={KSZTALTY_OCZEK}
+              <Fieldset legend="Kształt modułów">
+                <KafelkiModulow
+                  wartosc={w.ksztaltModulow}
+                  onChange={(ksztaltModulow) => zmienWyglad({ ksztaltModulow })}
+                />
+                <LegendaOzdobnych />
+              </Fieldset>
+
+              <Fieldset legend="Oczka (rogi kodu)">
+                <div className="space-y-2">
+                  <p className="text-sm font-medium">Ramka</p>
+                  <KafelkiRamek
                     wartosc={w.ksztaltOczek}
-                    etykiety={ETYKIETY_OCZEK}
                     onChange={(ksztaltOczek) => zmienWyglad({ ksztaltOczek })}
                   />
-                </Field>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-sm font-medium">Środek</p>
+                  <KafelkiSrodkow
+                    wartosc={srodekEfektywny(w)}
+                    onChange={(ksztaltSrodka) => zmienWyglad({ ksztaltSrodka })}
+                  />
+                </div>
+              </Fieldset>
+
+              <Fieldset legend="Rozmiar i odporność">
                 <Field
                   label={`Margines: ${w.margines} ${w.margines === 1 ? "moduł" : w.margines >= 2 && w.margines <= 4 ? "moduły" : "modułów"}`}
                 >
@@ -587,14 +652,8 @@ export function KodyQrClient({
                     className="accent-primary"
                   />
                 </Field>
-                <Field
-                  label="Odporność na uszkodzenia"
-                  hint={
-                    w.logo
-                      ? "Z logo kod zawsze używa najwyższego poziomu (H) — logo zasłania część modułów."
-                      : "Wyższy poziom = kod gęstszy, ale czytelny nawet po zabrudzeniu lub zarysowaniu."
-                  }
-                >
+                <div className="flex flex-col gap-1.5 text-sm">
+                  <span className="font-medium">Odporność na uszkodzenia</span>
                   <Segmenty
                     nazwa="Poziom korekcji błędów"
                     opcje={POZIOMY_KOREKCJI}
@@ -602,7 +661,12 @@ export function KodyQrClient({
                     etykiety={OPIS_KOREKCJI}
                     onChange={(korekcja) => zmienWyglad({ korekcja })}
                   />
-                </Field>
+                  <span className="text-xs text-muted-foreground">
+                    {w.logo
+                      ? "Z logo kod zawsze używa najwyższego poziomu (H) — logo zasłania część modułów."
+                      : "Wyższy poziom = kod gęstszy, ale czytelny nawet po zabrudzeniu lub zarysowaniu."}
+                  </span>
+                </div>
               </Fieldset>
 
               <Fieldset legend="Logo w środku">
@@ -704,20 +768,8 @@ export function KodyQrClient({
                   </ul>
                 ) : null}
                 <div className="space-y-2">
-                  <Button
-                    type="button"
-                    className="w-full gap-1.5"
-                    onClick={() => {
-                      if (!svgRef.current) return;
-                      void pobierzPng(svgRef.current, rozmiarPng, nazwaPliku(wybrany.nazwa)).catch((e: unknown) => {
-                        setError(true);
-                        setStatus(e instanceof Error ? e.message : "Nie udało się pobrać PNG.");
-                      });
-                    }}
-                  >
-                    <ImageDown className="size-4" aria-hidden /> Pobierz PNG
-                  </Button>
-                  <div role="radiogroup" aria-label="Rozdzielczość PNG" className="grid grid-cols-3 gap-1.5">
+                  <p className="text-sm font-medium">Pobierz obraz</p>
+                  <div role="radiogroup" aria-label="Rozdzielczość obrazu" className="grid grid-cols-3 gap-1.5">
                     {ROZMIARY_PNG.map((r) => (
                       <button
                         key={r}
@@ -736,6 +788,32 @@ export function KodyQrClient({
                       </button>
                     ))}
                   </div>
+                  <div className="grid grid-cols-3 gap-1.5">
+                    {FORMATY.map((format, i) => (
+                      <Button
+                        key={format.id}
+                        type="button"
+                        variant={i === 0 ? "default" : "outline"}
+                        className="gap-1.5"
+                        aria-label={`Pobierz ${format.etykieta} ${rozmiarPng} px`}
+                        onClick={() => {
+                          if (!svgRef.current) return;
+                          void pobierzObraz(svgRef.current, rozmiarPng, nazwaPliku(wybrany.nazwa), format).catch(
+                            (e: unknown) => {
+                              setError(true);
+                              setStatus(e instanceof Error ? e.message : "Nie udało się pobrać obrazu.");
+                            },
+                          );
+                        }}
+                      >
+                        {i === 0 ? <ImageDown className="size-4" aria-hidden /> : null}
+                        {format.etykieta}
+                      </Button>
+                    ))}
+                  </div>
+                  {w.przezroczysteTlo ? (
+                    <p className="text-xs text-muted-foreground">JPG nie ma przezroczystości — dostanie białe tło.</p>
+                  ) : null}
                   <Button
                     type="button"
                     variant="outline"

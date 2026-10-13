@@ -11,6 +11,7 @@ import {
   ImagePlus,
   Plus,
   QrCode,
+  RotateCcw,
   Trash2,
   TriangleAlert,
 } from "lucide-react";
@@ -248,15 +249,22 @@ function LegendaOzdobnych() {
   );
 }
 
+/**
+ * Wiersz koloru: etykieta · próbnik · kod HEX · reset do domyślnego.
+ * Wiersze zamiast siatki — w wąskiej kolumnie edytora siatka ściskała pole
+ * HEX do pustego okienka.
+ */
 function PoleKoloru({
   label,
   value,
+  domyslny,
   onChange,
   disabled,
   children,
 }: {
   label: string;
   value: string;
+  domyslny: string;
   onChange: (v: string) => void;
   disabled?: boolean;
   children?: ReactNode;
@@ -267,24 +275,28 @@ function PoleKoloru({
     setPoprzedni(value);
     setTekst(value);
   }
+  const jestDomyslny = value.toLowerCase() === domyslny.toLowerCase();
   return (
-    <div className={cn("flex flex-col gap-1.5 text-sm", disabled && "opacity-50")}>
-      <span className="font-medium text-foreground">{label}</span>
-      <div className="flex items-center gap-2">
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-sm">
+      <span className={cn("w-36 shrink-0 font-medium text-foreground", disabled && "opacity-50")}>
+        {label}
+      </span>
+      <div className={cn("flex items-center gap-2", disabled && "opacity-50")}>
         <input
           type="color"
           value={value}
           disabled={disabled}
           onChange={(e) => onChange(e.target.value)}
           aria-label={`${label} — próbnik`}
-          className="h-9 w-11 shrink-0 cursor-pointer rounded-lg border border-input bg-transparent p-1"
+          className="h-9 w-11 shrink-0 cursor-pointer rounded-lg border border-input bg-transparent p-1 disabled:cursor-not-allowed"
         />
         <Input
           value={tekst}
           disabled={disabled}
           aria-label={`${label} — kod HEX`}
           maxLength={7}
-          className="font-mono uppercase"
+          spellCheck={false}
+          className="w-28 font-mono uppercase"
           onChange={(e) => {
             const v = e.target.value.trim();
             setTekst(v);
@@ -292,6 +304,17 @@ function PoleKoloru({
           }}
           onBlur={() => setTekst(value)}
         />
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          disabled={disabled || jestDomyslny}
+          onClick={() => onChange(domyslny)}
+          aria-label={`Przywróć domyślny kolor: ${label}`}
+          title={`Przywróć domyślny (${domyslny.toUpperCase()})`}
+        >
+          <RotateCcw className="size-4" aria-hidden />
+        </Button>
       </div>
       {children}
     </div>
@@ -563,7 +586,37 @@ export function KodyQrClient({
                 </label>
               </Fieldset>
 
-              <Fieldset legend="Kolory">
+              <Fieldset
+                legend="Kolory"
+                actions={
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="gap-1.5"
+                    disabled={
+                      w.kolor === DOMYSLNY_WYGLAD.kolor &&
+                      w.kolor2 === DOMYSLNY_WYGLAD.kolor2 &&
+                      w.kolorOczek === DOMYSLNY_WYGLAD.kolorOczek &&
+                      w.tlo === DOMYSLNY_WYGLAD.tlo &&
+                      w.gradient === DOMYSLNY_WYGLAD.gradient &&
+                      w.przezroczysteTlo === DOMYSLNY_WYGLAD.przezroczysteTlo
+                    }
+                    onClick={() =>
+                      zmienWyglad({
+                        kolor: DOMYSLNY_WYGLAD.kolor,
+                        kolor2: DOMYSLNY_WYGLAD.kolor2,
+                        kolorOczek: DOMYSLNY_WYGLAD.kolorOczek,
+                        tlo: DOMYSLNY_WYGLAD.tlo,
+                        gradient: DOMYSLNY_WYGLAD.gradient,
+                        przezroczysteTlo: DOMYSLNY_WYGLAD.przezroczysteTlo,
+                      })
+                    }
+                  >
+                    <RotateCcw className="size-4" aria-hidden /> Przywróć wszystkie
+                  </Button>
+                }
+              >
                 <Segmenty
                   nazwa="Wypełnienie modułów"
                   opcje={RODZAJE_GRADIENTU}
@@ -571,35 +624,41 @@ export function KodyQrClient({
                   etykiety={ETYKIETY_GRADIENTU}
                   onChange={(gradient) => zmienWyglad({ gradient })}
                 />
-                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                <div className="space-y-3">
                   <PoleKoloru
                     label={w.gradient === "brak" ? "Moduły" : "Moduły — kolor 1"}
                     value={w.kolor}
+                    domyslny={DOMYSLNY_WYGLAD.kolor}
                     onChange={(kolor) => zmienWyglad({ kolor })}
                   >
-                    <button
-                      type="button"
-                      className="self-start text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
-                      onClick={() => zmienWyglad({ kolorOczek: w.kolor })}
-                    >
-                      Ustaw też dla oczek
-                    </button>
+                    {w.kolorOczek !== w.kolor ? (
+                      <button
+                        type="button"
+                        className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
+                        onClick={() => zmienWyglad({ kolorOczek: w.kolor })}
+                      >
+                        Ustaw też dla oczek
+                      </button>
+                    ) : null}
                   </PoleKoloru>
                   {w.gradient !== "brak" ? (
                     <PoleKoloru
                       label="Moduły — kolor 2"
                       value={w.kolor2}
+                      domyslny={DOMYSLNY_WYGLAD.kolor2}
                       onChange={(kolor2) => zmienWyglad({ kolor2 })}
                     />
                   ) : null}
                   <PoleKoloru
                     label="Oczka (rogi)"
                     value={w.kolorOczek}
+                    domyslny={DOMYSLNY_WYGLAD.kolorOczek}
                     onChange={(kolorOczek) => zmienWyglad({ kolorOczek })}
                   />
                   <PoleKoloru
                     label="Tło"
                     value={w.tlo}
+                    domyslny={DOMYSLNY_WYGLAD.tlo}
                     disabled={w.przezroczysteTlo}
                     onChange={(tlo) => zmienWyglad({ tlo })}
                   />

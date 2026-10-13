@@ -17,10 +17,12 @@ function Kolumna({ bloki }: { bloki: BlokFelg[] }) {
         <p className="etykieta-sm px-1.5 py-2 text-[9px]">opona</p>
         <p className="etykieta-sm py-2 text-[9px]">prof.</p>
         <p className="etykieta-sm py-2 text-[9px]">średnice R</p>
-        <p className="etykieta-sm border-l-2 border-solid border-ink py-2 text-center text-[9px]">felga ″</p>
+        <p className="etykieta-sm py-2 text-center text-[9px]">felga ″</p>
       </div>
       {bloki.map((blok, b) => (
-        <div key={`${blok.szerokosc}-${blok.ciagDalszy}`} className={`flex ${b > 0 ? "border-t-2 border-ink" : ""}`}>
+        <div key={`${blok.szerokosc}-${blok.ciagDalszy}`} className={`relative flex ${b > 0 ? "border-t-2 border-ink" : ""}`}>
+          {/* Jedna przerywana kreska na całą wysokość bloku — równe kreski, bez faz z każdego wiersza osobno. */}
+          <div aria-hidden className="pointer-events-none absolute inset-y-0 right-[31mm] border-l-2 border-dashed border-ink" />
           <div className="flex w-[12mm] shrink-0 flex-col items-start justify-center px-1.5 py-1">
             <p className="text-[14px] leading-none font-bold tabular-nums">{blok.szerokosc}</p>
             {blok.ciagDalszy ? <p className="etykieta-sm mt-0.5 text-[7px] text-muted-foreground">cd.</p> : null}
@@ -46,7 +48,7 @@ function Kolumna({ bloki }: { bloki: BlokFelg[] }) {
                     ) : null}
                     {w.zrodlo === "goodyear" ? <sup className="ml-0.5 text-[8px] font-bold text-ink">*</sup> : null}
                   </p>
-                  <div className="grid grid-cols-[1fr_11mm_1fr] items-center border-l-2 border-solid border-ink py-[5px] text-[12px] leading-tight whitespace-nowrap tabular-nums">
+                  <div className="grid grid-cols-[1fr_11mm_1fr] items-center py-[5px] text-[12px] leading-tight whitespace-nowrap tabular-nums">
                     <span className="text-right">{cal(zakres.min)}–</span>
                     <strong className={`${ZIELONY} rounded-sm py-px text-center text-[14px]`}>{cal(zakres.opt)}</strong>
                     <span className="text-left">–{cal(zakres.max)}</span>

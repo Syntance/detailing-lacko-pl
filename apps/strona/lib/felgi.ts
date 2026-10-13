@@ -5,19 +5,20 @@ import { FELGI, type WpisFelg } from "./felgi-dane";
  * W normie szerokość felgi zależy tylko od szerokości i profilu opony, więc
  * jeden wiersz = para szerokość/profil, a średnice zwijamy w zakresy.
  *
- * Plakat pokazuje ZAKRES PRAKTYCZNY: od felgi pomiarowej ETRTO do +0,5″
- * (o ile norma ją dopuszcza). Norma dopuszcza też węższe i szersze felgi,
- * ale na skrajach montaż bywa niemożliwy w praktyce — np. 245/45 R18
- * nie dał się założyć na dopuszczone 7,5J, dopiero na 8–8,5J.
+ * Plakat pokazuje cały zakres dopuszczonych felg (od najwęższej do
+ * najszerszej wg normy) i zaznacza optimum — felgę pomiarową ETRTO.
  */
 
 export type { WpisFelg };
 
-export type ZakresPraktyczny = { od: number; do: number | null };
+export type ZakresFelgi = { min: number; opt: number; max: number };
 
-export function zakresPraktyczny(w: WpisFelg): ZakresPraktyczny {
-  const wyzej = w.pomiarowa + 0.5;
-  return { od: w.pomiarowa, do: w.felgi.includes(wyzej) ? wyzej : null };
+export function zakresFelgi(w: WpisFelg): ZakresFelgi {
+  return {
+    min: w.felgi[0] ?? w.pomiarowa,
+    opt: w.pomiarowa,
+    max: w.felgi[w.felgi.length - 1] ?? w.pomiarowa,
+  };
 }
 
 /** Cale z przecinkiem: 6.5 → „6,5". */

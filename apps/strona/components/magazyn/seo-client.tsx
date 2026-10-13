@@ -4,9 +4,11 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Input, PageHeader } from "@moduly/ui";
+import { wstawDynamiczne, type DaneDynamiczne } from "@/lib/dynamiczne";
 import { SEO_LIMITS, type SeoData } from "@/lib/seo";
 import { useMagazynHistory } from "@/hooks/use-magazyn-history";
 import { ImageField } from "./image-dropzone";
+import { PoleDynamiczne } from "./pole-dynamiczne";
 import {
   Checkbox,
   Field,
@@ -15,8 +17,6 @@ import {
   putEditorData,
 } from "./editor-ui";
 
-const textareaClass =
-  "w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none";
 
 /** Licznik znaków — zielony w limicie, czerwony po przekroczeniu. */
 function CharCount({ value, max }: { value: string; max: number }) {
@@ -32,10 +32,13 @@ function CharCount({ value, max }: { value: string; max: number }) {
 /** Podgląd tego, co zobaczy użytkownik w wynikach wyszukiwania. */
 function GooglePreview({
   seo,
+  tytul,
   sciezka,
   opis,
 }: {
   seo: SeoData;
+  /** Tytuł po podmianie dynamicznych elementów. */
+  tytul: string;
   /** Podstrona w adresie, np. „wulkanizacja" (pusta = strona główna). */
   sciezka: string;
   /** Opis, który faktycznie trafi do Google (własny albo z cennika). */
@@ -55,7 +58,7 @@ function GooglePreview({
         {sciezka ? ` › ${sciezka}` : ""}
       </p>
       <p className="mt-0.5 text-lg leading-snug text-[#1a0dab] dark:text-[#8ab4f8]">
-        {clamp(seo.title || "(brak tytułu)", SEO_LIMITS.titleMax)}
+        {clamp(tytul || "(brak tytułu)", SEO_LIMITS.titleMax)}
       </p>
       <p className="mt-1 text-sm text-pretty text-muted-foreground">
         {clamp(opis || "(brak opisu)", SEO_LIMITS.descriptionMax)}
@@ -76,8 +79,11 @@ export function SeoClient({
   initial,
   strona = "glowna",
   opisAuto = "",
+  dane,
 }: {
   initial: SeoData;
+  /** Cenniki i dane firmy do dynamicznych elementów ({cena:…}, {telefon}…). */
+  dane: DaneDynamiczne;
   strona?: "glowna" | "wulkanizacja";
   opisAuto?: string;
 }) {
@@ -85,7 +91,10 @@ export function SeoClient({
   const history = useMagazynHistory<SeoData>(initial);
   const seo = history.state;
   const wulkanizacja = strona === "wulkanizacja";
-  const opisEfektywny = seo.description.trim() || opisAuto;
+  const r = (tekst: string) => wstawDynamiczne(tekst, dane);
+  const tytul = r(seo.title);
+  const opisEfektywny = r(seo.description).trim() || opisAuto;
+  const liniaCen = wulkanizacja ? "wulkanizacja" : "detailing";
 
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState(false);
@@ -139,6 +148,7 @@ export function SeoClient({
 
       <GooglePreview
         seo={seo}
+        tytul={tytul}
         sciezka={wulkanizacja ? "wulkanizacja" : ""}
         opis={opisEfektywny}
       />
@@ -152,13 +162,15 @@ export function SeoClient({
               : "Najważniejsza fraza na początku, np. „Detailing Łącko — …”."
           }
         >
-          <Input
+          <PoleDynamiczne
             value={seo.title}
-            onChange={(e) => set({ title: e.target.value })}
+            onChange={(title) => set({ title })}
+            dane={dane}
+            linia={liniaCen}
           />
         </Field>
         <p className="-mt-2 text-xs">
-          <CharCount value={seo.title} max={SEO_LIMITS.titleMax} />
+          <CharCount value={tytul} max={SEO_LIMITS.titleMax} />
         </p>
 
         <Field
@@ -169,12 +181,14 @@ export function SeoClient({
               : "Konkret zamiast ogólników — cena, lokalizacja, brak ryzyka."
           }
         >
-          <textarea
+          <PoleDynamiczne
+            multiline
             rows={3}
-            className={textareaClass}
             value={seo.description}
-            onChange={(e) => set({ description: e.target.value })}
+            onChange={(description) => set({ description })}
             placeholder={wulkanizacja ? opisAuto : undefined}
+            dane={dane}
+            linia={liniaCen}
           />
         </Field>
         <p className="-mt-2 text-xs">
@@ -222,19 +236,23 @@ export function SeoClient({
           onChange={(url) => set({ ogImageUrl: url })}
         />
         <Field label="Tytuł przy udostępnianiu" hint="Puste = użyje tytułu strony.">
-          <Input
+          <PoleDynamiczne
             value={seo.ogTitle}
-            onChange={(e) => set({ ogTitle: e.target.value })}
-            placeholder={seo.title}
+            onChange={(ogTitle) => set({ ogTitle })}
+            placeholder={tytul}
+            dane={dane}
+            linia={liniaCen}
           />
         </Field>
         <Field label="Opis przy udostępnianiu" hint="Puste = użyje opisu strony.">
-          <textarea
+          <PoleDynamiczne
+            multiline
             rows={2}
-            className={textareaClass}
             value={seo.ogDescription}
-            onChange={(e) => set({ ogDescription: e.target.value })}
+            onChange={(ogDescription) => set({ ogDescription })}
             placeholder={opisEfektywny}
+            dane={dane}
+            linia={liniaCen}
           />
         </Field>
       </Fieldset>

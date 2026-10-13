@@ -11,6 +11,7 @@ import { RezerwacjaSekcja } from "@/components/sections/rezerwacja-sekcja";
 import { Stopka } from "@/components/sections/stopka";
 import { UslugiCennik } from "@/components/sections/uslugi-cennik";
 import { getHeroImages } from "@/lib/cms-content";
+import { rozwijacz, rozwinFaq } from "@/lib/dynamiczne-dane";
 import {
   getCennik,
   getFaq,
@@ -28,16 +29,18 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://detailing-lacko.pl"
 /** Metadane z panelu Magazyn → SEO (blob `seo`), z fallbackiem z kodu. */
 export async function generateMetadata(): Promise<Metadata> {
   const seo = await getSeo();
+  // Znaczniki z panelu ({cena:…}, {telefon}…) → aktualne wartości.
+  const r = await rozwijacz(seo.title, seo.description, seo.ogTitle, seo.ogDescription);
   return {
-    title: seo.title,
-    description: seo.description,
+    title: r(seo.title),
+    description: r(seo.description),
     alternates: { canonical: "/" },
     robots: seo.indexable
       ? { index: true, follow: true }
       : { index: false, follow: false },
     openGraph: {
-      title: seo.ogTitle || seo.title,
-      description: seo.ogDescription || seo.description,
+      title: r(seo.ogTitle || seo.title),
+      description: r(seo.ogDescription || seo.description),
       ...(seo.ogImageUrl
         ? { images: [{ url: seo.ogImageUrl, width: 1200, height: 630 }] }
         : {}),
@@ -58,7 +61,7 @@ export default async function HomePage() {
 
   // Wyłączona w panelu sekcja FAQ: bez sekcji, pigułki w menu i FAQPage w JSON-LD.
   const faqWlaczone = faqData.enabled;
-  const faq = faqWlaczone ? faqData.items : [];
+  const faq = faqWlaczone ? await rozwinFaq(faqData.items) : [];
 
   return (
     // `data-kartka-strona` = root treści do sklonowania przy przekładaniu

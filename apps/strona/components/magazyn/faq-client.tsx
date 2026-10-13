@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button, Input, PageHeader } from "@moduly/ui";
+import { Button, PageHeader } from "@moduly/ui";
 import { Plus } from "lucide-react";
+import type { DaneDynamiczne } from "@/lib/dynamiczne";
 import type { FaqData, FaqItemInput } from "@/lib/faq";
 import { LINIA_INFO, type Linia } from "@/lib/linie";
 import { useMagazynHistory } from "@/hooks/use-magazyn-history";
@@ -14,9 +15,8 @@ import {
   UndoRedoToolbar,
   putEditorData,
 } from "./editor-ui";
+import { PoleDynamiczne } from "./pole-dynamiczne";
 
-const textareaClass =
-  "w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none";
 
 /** Endpoint zapisu per linia — osobne bloby, ten sam edytor. */
 const ENDPOINT: Record<Linia, string> = {
@@ -31,9 +31,12 @@ function reorder(list: FaqItemInput[]): FaqItemInput[] {
 export function FaqClient({
   initial,
   linia = "detailing",
+  dane,
 }: {
   initial: FaqData;
   linia?: Linia;
+  /** Cenniki i dane firmy do dynamicznych elementów ({cena:…}, {telefon}…). */
+  dane: DaneDynamiczne;
 }) {
   const router = useRouter();
   const history = useMagazynHistory<FaqData>(initial);
@@ -126,28 +129,24 @@ export function FaqClient({
           }
         >
           <Field label="Pytanie">
-            <Input
+            <PoleDynamiczne
               value={item.question}
-              onChange={(e) =>
-                setItems(
-                  sorted.map((i) =>
-                    i.id === item.id ? { ...i, question: e.target.value } : i,
-                  ),
-                )
+              dane={dane}
+              linia={linia}
+              onChange={(question) =>
+                setItems(sorted.map((i) => (i.id === item.id ? { ...i, question } : i)))
               }
             />
           </Field>
           <Field label="Odpowiedź">
-            <textarea
+            <PoleDynamiczne
+              multiline
               rows={3}
-              className={textareaClass}
               value={item.answer}
-              onChange={(e) =>
-                setItems(
-                  sorted.map((i) =>
-                    i.id === item.id ? { ...i, answer: e.target.value } : i,
-                  ),
-                )
+              dane={dane}
+              linia={linia}
+              onChange={(answer) =>
+                setItems(sorted.map((i) => (i.id === item.id ? { ...i, answer } : i)))
               }
             />
           </Field>

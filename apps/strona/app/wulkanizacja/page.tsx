@@ -12,6 +12,7 @@ import {
 import { Granice } from "@/components/sections/wulkanizacja/granice";
 import { HeroWulkanizacja } from "@/components/sections/wulkanizacja/hero-wulkanizacja";
 import { Zasady } from "@/components/sections/wulkanizacja/zasady";
+import { rozwijacz, rozwinFaq } from "@/lib/dynamiczne-dane";
 import { ADRES_LINII, OSOBNE_DOMENY } from "@/lib/linie";
 import { opisSeoZCennika } from "@/lib/seo-wulkanizacja";
 import {
@@ -40,20 +41,21 @@ export async function generateMetadata(): Promise<Metadata> {
     getSeoWulkanizacja(),
     getCennikWulkanizacja(),
   ]);
-  const description = strona.description.trim() || opisSeoZCennika(cennik);
+  const r = await rozwijacz(strona.title, strona.description, strona.ogTitle, strona.ogDescription);
+  const description = r(strona.description).trim() || opisSeoZCennika(cennik);
   // Po włączeniu osobnych domen adres kanoniczny to wulkanizacja-lacko.pl/.
   const adres = OSOBNE_DOMENY ? `${ADRES_LINII.wulkanizacja}/` : "/wulkanizacja";
   return {
     ...(OSOBNE_DOMENY ? { metadataBase: new URL(ADRES_LINII.wulkanizacja) } : {}),
-    title: { absolute: strona.title },
+    title: { absolute: r(strona.title) },
     description,
     alternates: { canonical: adres },
     robots: seo.indexable
       ? { index: true, follow: true }
       : { index: false, follow: false },
     openGraph: {
-      title: strona.ogTitle || strona.title,
-      description: strona.ogDescription || description,
+      title: r(strona.ogTitle || strona.title),
+      description: r(strona.ogDescription) || description,
       url: adres,
       siteName: "Wulkanizacja Łącko",
       ...(strona.ogImageUrl
@@ -75,7 +77,7 @@ export default async function WulkanizacjaPage() {
 
   // Wyłączona w panelu sekcja FAQ: bez sekcji, pigułki w menu i FAQPage w JSON-LD.
   const faqWlaczone = faqData.enabled;
-  const faq = faqWlaczone ? faqData.items : [];
+  const faq = faqWlaczone ? await rozwinFaq(faqData.items) : [];
 
   return (
     // `data-marka` przepina tokeny akcentu na czerwień (globals.css) — cała

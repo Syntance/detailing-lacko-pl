@@ -1,7 +1,8 @@
 import { liniaZParametru, PrzelacznikLinii } from "@/components/magazyn/przelacznik-linii";
 import { SeoClient } from "@/components/magazyn/seo-client";
 import { opisSeoZCennika } from "@/lib/seo-wulkanizacja";
-import { getCennikWulkanizacja, getSeo, getSeoWulkanizacja } from "@/lib/site-data";
+import { getDaneDynamiczne } from "@/lib/dynamiczne-dane";
+import { getSeo, getSeoWulkanizacja } from "@/lib/site-data";
 
 export const dynamic = "force-dynamic";
 
@@ -16,10 +17,11 @@ export default async function SeoPanelPage({
   searchParams: Promise<{ linia?: string }>;
 }) {
   const linia = liniaZParametru((await searchParams).linia);
-  const seo = await getSeo();
+  const [seo, dane] = await Promise.all([getSeo(), getDaneDynamiczne()]);
 
   if (linia === "wulkanizacja") {
-    const [strona, cennik] = await Promise.all([getSeoWulkanizacja(), getCennikWulkanizacja()]);
+    const strona = await getSeoWulkanizacja();
+    const cennik = dane.cenniki.wulkanizacja;
     return (
       <>
         <PrzelacznikLinii sciezka="/magazyn/panel/seo" aktywna={linia} />
@@ -28,6 +30,7 @@ export default async function SeoPanelPage({
           initial={{ ...seo, ...strona }}
           strona="wulkanizacja"
           opisAuto={opisSeoZCennika(cennik)}
+          dane={dane}
         />
       </>
     );
@@ -36,7 +39,7 @@ export default async function SeoPanelPage({
   return (
     <>
       <PrzelacznikLinii sciezka="/magazyn/panel/seo" aktywna={linia} />
-      <SeoClient key={linia} initial={seo} />
+      <SeoClient key={linia} initial={seo} dane={dane} />
     </>
   );
 }

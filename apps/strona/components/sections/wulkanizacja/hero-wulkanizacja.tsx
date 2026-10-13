@@ -1,7 +1,7 @@
 import { itemPriceRange, type CennikData } from "@/lib/cennik";
 import type { KontaktData } from "@/lib/site";
 import { PhoneLink } from "../phone-link";
-import { HeroMapa } from "./hero-mapa";
+import { HeroMapa, WIZYTOWKA_WULKANIZACJA } from "./hero-mapa";
 
 /**
  * Hero linii Wulkanizacja — ten sam układ co hero detailingu (naklejka
@@ -88,11 +88,16 @@ export function HeroWulkanizacja({
 
         <div className="relative flex justify-center">
           <div className="cien-7 w-[88%] rotate-2 rounded-2xl border-[3px] border-ink bg-background p-3.5">
-            <HeroMapa adres={`${kontakt.addressLine}, ${kontakt.postalCode} ${kontakt.city}`} />
+            <HeroMapa nazwa={`Wulkanizacja Łącko, ${kontakt.addressLine}, ${kontakt.city}`} />
             <div className="mt-3 flex justify-center">
-              <p className="etykieta text-muted-foreground">
-                {kontakt.addressLine} · {kontakt.city}
-              </p>
+              <a
+                href={WIZYTOWKA_WULKANIZACJA.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="etykieta rounded-sm text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+              >
+                {kontakt.addressLine} · {kontakt.city} · opinie w Google ↗
+              </a>
             </div>
           </div>
 

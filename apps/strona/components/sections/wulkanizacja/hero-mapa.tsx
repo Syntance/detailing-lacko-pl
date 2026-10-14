@@ -1,3 +1,5 @@
+import { WIZYTOWKI_GOOGLE } from "@/lib/wizytowki";
+
 /**
  * Wizytówka Google „Wulkanizacja Łącko" (nie sam adres): w osadzonej mapie
  * Google pokazuje wtedy kartę firmy, a jej „Otwórz w Mapach" prowadzi do
@@ -6,7 +8,7 @@
  */
 export const WIZYTOWKA_WULKANIZACJA = {
   cid: "798372503707840137",
-  url: "https://maps.app.goo.gl/yJEDZG3DXoY2r9Wd8",
+  url: WIZYTOWKI_GOOGLE.wulkanizacja,
 } as const;
 
 /**

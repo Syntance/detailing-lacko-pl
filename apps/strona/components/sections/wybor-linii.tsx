@@ -41,7 +41,7 @@ export function WyborLinii({
           <h1 className="text-[clamp(2rem,7vw,3.25rem)] leading-[1.02] font-bold tracking-[-0.02em] text-balance">
             {tytul}
           </h1>
-          <p className="max-w-md text-pretty text-tekst">{opis}</p>
+          {opis ? <p className="max-w-md text-pretty text-tekst">{opis}</p> : null}
         </header>
 
         <ul className="grid w-full gap-6 sm:grid-cols-2 sm:gap-7">

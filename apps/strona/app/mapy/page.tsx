@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import { WyborLinii } from "@/components/sections/wybor-linii";
+import { rozwijacz } from "@/lib/dynamiczne-dane";
 import { getKontakt } from "@/lib/site-data";
+import { getWyborLinii } from "@/lib/wybor-linii-dane";
 import { WIZYTOWKI_GOOGLE } from "@/lib/wizytowki";
 
-/** Treść stała, telefon i adres z panelu — odświeżane co godzinę. */
+/** Teksty z CMS (rewalidacja przy zapisie), telefon i adres z panelu — w razie czego co godzinę. */
 export const revalidate = 3600;
 
 /** Strona przejściowa pod kod QR — nie konkuruje w Google z właściwymi stronami. */
@@ -14,24 +16,25 @@ export const metadata: Metadata = {
 };
 
 export default async function MapyPage() {
-  const kontakt = await getKontakt();
+  const [kontakt, { mapy }] = await Promise.all([getKontakt(), getWyborLinii()]);
+  const r = await rozwijacz(mapy.tytul, mapy.opis, mapy.karty.detailing.opis, mapy.karty.wulkanizacja.opis);
   return (
     <WyborLinii
       etykieta="Google Maps"
-      tytul="Która wizytówka?"
-      opis="Opinie, zdjęcia i dojazd — wybierz, której usługi szukasz."
+      tytul={r(mapy.tytul)}
+      opis={r(mapy.opis)}
       kontakt={kontakt}
       opcje={[
         {
           linia: "detailing",
           href: WIZYTOWKI_GOOGLE.detailing,
-          opis: "Pranie tapicerki, czyszczenie wnętrza, polerowanie lakieru.",
+          opis: r(mapy.karty.detailing.opis),
           cta: "Otwórz wizytówkę detailingu",
         },
         {
           linia: "wulkanizacja",
           href: WIZYTOWKI_GOOGLE.wulkanizacja,
-          opis: "Wymiana i naprawa opon, wyważanie kół, przechowywanie.",
+          opis: r(mapy.karty.wulkanizacja.opis),
           cta: "Otwórz wizytówkę wulkanizacji",
         },
       ]}

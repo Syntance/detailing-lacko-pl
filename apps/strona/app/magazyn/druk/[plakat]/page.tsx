@@ -210,7 +210,7 @@ export default async function DrukPage({
               key={i}
               {...wspolne}
               wewnetrzny
-              etykieta={`dobór felg · ${i + 1}/${UKLAD_FELG.length}`}
+              etykieta={UKLAD_FELG.length > 1 ? `dobór felg · ${i + 1}/${UKLAD_FELG.length}` : "dobór felg"}
               tytul={`Dobór felgi do opony · ${zakresKartki(kartka)}`}
               podtytul="Szerokość felgi w calach, na którą oponę da się dobrze założyć — wg normy ETRTO. Szukasz po szerokości i profilu opony; średnica nie zmienia felgi."
             >

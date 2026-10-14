@@ -2,8 +2,9 @@ import { FELGI, type WpisFelg } from "./felgi-dane";
 
 /**
  * Tabela doboru felg do druku — dane z normy ETRTO (lib/felgi-dane.ts).
- * W normie szerokość felgi zależy tylko od szerokości i profilu opony, więc
- * jeden wiersz = para szerokość/profil, a średnice zwijamy w zakresy.
+ * W normie szerokość felgi zależy tylko od szerokości i profilu opony (dla
+ * żadnej pary nie zmienia się ze średnicą), więc jeden wiersz = para
+ * szerokość/profil, a średnic na plakacie nie ma wcale.
  *
  * Plakat pokazuje cały zakres dopuszczonych felg (od najwęższej do
  * najszerszej wg normy) i zaznacza optimum — felgę pomiarową ETRTO.
@@ -24,32 +25,11 @@ export function zakresFelgi(w: WpisFelg): ZakresFelgi {
 /** Cale z przecinkiem: 6.5 → „6,5". */
 export const cal = (n: number) => String(n).replace(".", ",");
 
-/** Średnice zwinięte do zakresów: [13,14,15,17] → „13–15, 17". */
-export function zakresySrednic(srednice: number[]): string {
-  const czesci: string[] = [];
-  let start = srednice[0];
-  let poprzednia = start;
-  for (const d of [...srednice.slice(1), Number.NaN]) {
-    if (start === undefined || poprzednia === undefined) break;
-    if (d === poprzednia + 1) {
-      poprzednia = d;
-      continue;
-    }
-    czesci.push(start === poprzednia ? `${start}` : `${start}–${poprzednia}`);
-    start = d;
-    poprzednia = d;
-  }
-  return czesci.join(", ");
-}
-
-/** Liczba rozmiarów opon na plakacie (norma + średnice spoza normy). */
-export const LICZBA_ROZMIAROW = FELGI.reduce((s, w) => s + w.srednice.length + w.spozaNormy.length, 0);
-
 /** Blok jednej szerokości w kolumnie; `ciagDalszy` = przeniesiony z poprzedniej kolumny. */
 export type BlokFelg = { szerokosc: number; wiersze: WpisFelg[]; ciagDalszy: boolean };
 
-export const KARTKI_FELG = 2;
-export const KOLUMNY_FELG = 3;
+export const KARTKI_FELG = 1;
+export const KOLUMNY_FELG = 4;
 
 /**
  * Kartki → kolumny → bloki. Wiersze dzielone po równo (najpierw na kartki,

@@ -46,9 +46,9 @@ export const PLAKATY: Plakat[] = [
   {
     id: "dobor-felg",
     tytul: "Dobór felgi do opony (cale)",
-    opis: "Zakres dopuszczonych szerokości felg (od najwęższej do najszerszej) z optimum zaznaczonym — dla 679 rozmiarów opon osobowych 115–375. Wg normy ETRTO 2016. Materiał wewnętrzny.",
+    opis: "Optimum i zakres szerokości felgi dla opon osobowych 115–375, po szerokości i profilu (średnica nie zmienia felgi). Wg normy ETRTO 2016. Materiał wewnętrzny.",
     marka: "wulkanizacja",
-    kartki: 2,
+    kartki: 1,
   },
   {
     id: "momenty-srub",

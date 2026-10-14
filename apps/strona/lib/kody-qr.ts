@@ -106,11 +106,22 @@ export const celSchema = z
     }
   }, "Adres musi zaczynać się od https:// (albo http://)");
 
+/**
+ * dynamiczny — kod zawiera stały adres /qr/<slug>, który przekierowuje pod
+ *   `cel`; link zmienisz po wydrukowaniu, kosztem jednego przekierowania.
+ * statyczny — kod zawiera bezpośrednio `cel`; telefon otwiera go od razu,
+ *   ale po wydrukowaniu linku już się nie zmieni.
+ */
+export const TRYBY_KODU = ["dynamiczny", "statyczny"] as const;
+export type TrybKodu = (typeof TRYBY_KODU)[number];
+
 export const kodQrSchema = z.object({
   id: z.string().min(1).max(60),
   nazwa: z.string().trim().min(1, "Nadaj kodowi nazwę").max(120),
   slug: z.string().regex(SLUG_REGEX),
   cel: celSchema,
+  // Kody zapisane przed dodaniem trybu były dynamiczne — domyślka zachowuje je bez zmian.
+  tryb: z.enum(TRYBY_KODU).default("dynamiczny"),
   aktywny: z.boolean().default(true),
   wyglad: wygladSchema,
   utworzono: z.string().max(40),
@@ -143,4 +154,17 @@ export const DOMYSLNY_WYGLAD: WygladQr = wygladSchema.parse({});
 /** Ścieżka zakodowana w QR — krótka, żeby kod był rzadszy i łatwiej się skanował. */
 export function sciezkaKodu(slug: string): string {
   return `/qr/${slug}`;
+}
+
+/**
+ * Tekst zapisany w kodzie QR. Statyczny = sam link docelowy (null, gdy link
+ * jest niepoprawny — wtedy nie ma czego zakodować), dynamiczny = adres
+ * przekierowania na domenie detailingu.
+ */
+export function tekstKodu(kod: Pick<KodQr, "tryb" | "slug" | "cel">, adresBazowy: string): string | null {
+  if (kod.tryb === "statyczny") {
+    const cel = celSchema.safeParse(kod.cel);
+    return cel.success ? cel.data : null;
+  }
+  return `${adresBazowy}${sciezkaKodu(kod.slug)}`;
 }

@@ -19,10 +19,13 @@ import {
   DOMYSLNY_WYGLAD,
   POZIOMY_KOREKCJI,
   RODZAJE_GRADIENTU,
+  TRYBY_KODU,
+  tekstKodu,
   celSchema,
   kodyQrDataSchema,
   sciezkaKodu,
   type KodQr,
+  type TrybKodu,
   type KodyQrData,
   type WygladQr,
 } from "@/lib/kody-qr";
@@ -39,6 +42,18 @@ import {
   OZDOBNE_SRODKI,
 } from "./qr-kafelki";
 import { QrSvg } from "./qr-svg";
+
+const ETYKIETY_TRYBU: Record<TrybKodu, string> = {
+  dynamiczny: "Dynamiczny",
+  statyczny: "Statyczny",
+};
+
+const OPIS_TRYBU: Record<TrybKodu, string> = {
+  dynamiczny:
+    "Kod prowadzi przez krótki adres na stronie, który od razu przekierowuje pod link. Link zmienisz w każdej chwili, także po wydrukowaniu.",
+  statyczny:
+    "W kodzie jest sam link — telefon otwiera go od razu, bez strony pośredniej. Po wydrukowaniu linku już nie zmienisz ani nie wyłączysz kodu.",
+};
 
 const ETYKIETY_GRADIENTU: Record<WygladQr["gradient"], string> = {
   brak: "Jednolity",
@@ -334,6 +349,10 @@ export function KodyQrClient({
 
   const [wybranyId, setWybranyId] = useState<string | null>(initial.kody[0]?.id ?? null);
   const [zapisaneSlugi, setZapisaneSlugi] = useState(() => new Set(initial.kody.map((k) => k.slug)));
+  // Ostatnio zapisany tryb i treść kodu — po zmianie wydrukowany kod statyczny przestaje pasować do podglądu.
+  const [zapisane, setZapisane] = useState(
+    () => new Map(initial.kody.map((k) => [k.id, { tryb: k.tryb, tresc: tekstKodu(k, adresBazowy) }])),
+  );
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState(false);
   const [pending, setPending] = useState(false);
@@ -360,6 +379,7 @@ export function KodyQrClient({
       nazwa: `Kod QR ${kody.length + 1}`,
       slug,
       cel: adresBazowy,
+      tryb: "dynamiczny",
       aktywny: true,
       wyglad: wybrany ? { ...wybrany.wyglad } : DOMYSLNY_WYGLAD,
       utworzono: new Date().toISOString(),
@@ -369,9 +389,11 @@ export function KodyQrClient({
   }
 
   function usun(kod: KodQr) {
-    const opis = zapisaneSlugi.has(kod.slug)
-      ? `Usunąć „${kod.nazwa}”? Wydrukowane kody przestaną prowadzić pod ${kod.cel} i otworzą stronę główną.`
-      : `Usunąć „${kod.nazwa}”?`;
+    // Usunięcie psuje tylko kody, które przechodzą przez przekierowanie (dynamiczne i zapisane).
+    const opis =
+      zapisaneSlugi.has(kod.slug) && zapisane.get(kod.id)?.tryb !== "statyczny"
+        ? `Usunąć „${kod.nazwa}”? Wydrukowane kody dynamiczne przestaną prowadzić pod ${kod.cel} i otworzą stronę główną.`
+        : `Usunąć „${kod.nazwa}”?`;
     if (!window.confirm(opis)) return;
     history.setState((d) => ({ ...d, kody: d.kody.filter((k) => k.id !== kod.id) }));
     setWybranyId(null);
@@ -396,6 +418,9 @@ export function KodyQrClient({
       setStatus("Kody QR zapisane.");
       history.commitSaved();
       setZapisaneSlugi(new Set(parsed.data.kody.map((k) => k.slug)));
+      setZapisane(
+        new Map(parsed.data.kody.map((k) => [k.id, { tryb: k.tryb, tresc: tekstKodu(k, adresBazowy) }])),
+      );
       router.refresh();
     } else {
       setError(true);
@@ -428,14 +453,25 @@ export function KodyQrClient({
 
   const bladCelu = wybrany ? celSchema.safeParse(wybrany.cel).error?.issues[0]?.message : undefined;
   const w = wybrany?.wyglad;
+  const statyczny = wybrany?.tryb === "statyczny";
+  const tekstWybranego = wybrany ? tekstKodu(wybrany, adresBazowy) : null;
   const uwagi = w ? ostrzezenia(w) : [];
-  const niezapisany = wybrany ? !zapisaneSlugi.has(wybrany.slug) : false;
+  if (statyczny && tekstWybranego && tekstWybranego.length > 80) {
+    uwagi.push("Długi link = gęsty kod. Drukuj go większy (min. ok. 3 × 3 cm) albo użyj kodu dynamicznego.");
+  }
+  // Nowy kod dynamiczny działa dopiero po zapisie (przekierowanie czyta bazę); statyczny działa od razu.
+  const niezapisany = wybrany ? !statyczny && !zapisaneSlugi.has(wybrany.slug) : false;
+  // Tylko kod, który już był zapisany jako statyczny, ma „stary” wydruk z innym linkiem;
+  // wydruki dynamiczne dalej działają przez przekierowanie.
+  const zapisanyWybrany = wybrany ? zapisane.get(wybrany.id) : undefined;
+  const wzorZmieniony =
+    zapisanyWybrany?.tryb === "statyczny" && tekstWybranego !== null && zapisanyWybrany.tresc !== tekstWybranego;
 
   return (
     <div className="space-y-6">
       <PageHeader
         title="Kody QR"
-        description="Kod prowadzi przez stały adres na stronie, więc link docelowy zmienisz w każdej chwili — także dla kodów, które już wiszą wydrukowane."
+        description="Kod dynamiczny prowadzi przez stały adres na stronie, więc link zmienisz także po wydrukowaniu. Statyczny otwiera link od razu, ale po wydrukowaniu jest już na zawsze."
       />
       <UndoRedoToolbar
         canUndo={history.canUndo}
@@ -463,6 +499,7 @@ export function KodyQrClient({
             <ul className="flex flex-col gap-2" aria-label="Twoje kody QR">
               {kody.map((k) => {
                 const aktywnyWybor = wybrany?.id === k.id;
+                const miniatura = tekstKodu(k, adresBazowy);
                 let host = k.cel;
                 try {
                   host = new URL(k.cel).host + new URL(k.cel).pathname.replace(/\/$/, "");
@@ -481,11 +518,14 @@ export function KodyQrClient({
                       )}
                     >
                       <span className="size-12 shrink-0 overflow-hidden rounded-md border border-border bg-white">
-                        <QrSvg tekst={adresKodu(k.slug)} wyglad={k.wyglad} className="size-full" />
+                        {miniatura ? <QrSvg tekst={miniatura} wyglad={k.wyglad} className="size-full" /> : null}
                       </span>
                       <span className="flex min-w-0 flex-col">
                         <span className="truncate text-sm font-medium">{k.nazwa || "Bez nazwy"}</span>
                         <span className="truncate text-xs text-muted-foreground">{host}</span>
+                        <span className="text-[0.7rem] text-muted-foreground">
+                          {k.tryb === "statyczny" ? "statyczny" : "dynamiczny"}
+                        </span>
                         {!k.aktywny ? (
                           <span className="text-xs font-medium text-destructive">Wyłączony</span>
                         ) : null}
@@ -522,9 +562,24 @@ export function KodyQrClient({
                     onChange={(e) => zmienKod(wybrany.id, (k) => ({ ...k, nazwa: e.target.value }))}
                   />
                 </Field>
+                <div className="flex flex-col gap-1.5 text-sm">
+                  <span className="font-medium">Rodzaj kodu</span>
+                  <Segmenty
+                    nazwa="Rodzaj kodu"
+                    opcje={TRYBY_KODU}
+                    wartosc={wybrany.tryb}
+                    etykiety={ETYKIETY_TRYBU}
+                    onChange={(tryb) => zmienKod(wybrany.id, (k) => ({ ...k, tryb }))}
+                  />
+                  <span className="text-xs text-muted-foreground">{OPIS_TRYBU[wybrany.tryb]}</span>
+                </div>
                 <Field
                   label="Link docelowy"
-                  hint="Dokąd kod ma prowadzić. Możesz go zmieniać — wydrukowane kody przejdą pod nowy adres."
+                  hint={
+                    statyczny
+                      ? "Dokąd kod ma prowadzić. Link jest zapisany w samym kodzie — zmiana po wydrukowaniu wymaga nowego wydruku."
+                      : "Dokąd kod ma prowadzić. Możesz go zmieniać — wydrukowane kody przejdą pod nowy adres."
+                  }
                 >
                   <div className="flex gap-2">
                     <Input
@@ -551,27 +606,30 @@ export function KodyQrClient({
                     {bladCelu}
                   </p>
                 ) : null}
-                <div className="flex flex-col gap-1.5 text-sm">
-                  <span className="font-medium">Adres zapisany w kodzie</span>
-                  <div className="flex items-center gap-2">
-                    <code className="min-w-0 flex-1 truncate rounded-lg bg-muted px-3 py-2 text-xs">
-                      {adresKodu(wybrany.slug)}
-                    </code>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="gap-1.5"
-                      onClick={() => kopiuj(adresKodu(wybrany.slug))}
-                    >
-                      <Copy className="size-4" aria-hidden /> {skopiowano ? "Skopiowano" : "Kopiuj"}
-                    </Button>
+                {statyczny ? null : (
+                  <div className="flex flex-col gap-1.5 text-sm">
+                    <span className="font-medium">Adres zapisany w kodzie</span>
+                    <div className="flex items-center gap-2">
+                      <code className="min-w-0 flex-1 truncate rounded-lg bg-muted px-3 py-2 text-xs">
+                        {adresKodu(wybrany.slug)}
+                      </code>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="gap-1.5"
+                        onClick={() => kopiuj(adresKodu(wybrany.slug))}
+                      >
+                        <Copy className="size-4" aria-hidden /> {skopiowano ? "Skopiowano" : "Kopiuj"}
+                      </Button>
+                    </div>
+                    <span className="text-xs text-muted-foreground">
+                      Ten adres się nie zmienia — dlatego kod można drukować bez obaw.
+                    </span>
                   </div>
-                  <span className="text-xs text-muted-foreground">
-                    Ten adres się nie zmienia — dlatego kod można drukować bez obaw.
-                  </span>
-                </div>
-                <label className="flex items-center gap-2.5 text-sm">
+                )}
+                {/* Statycznego kodu nie da się wyłączyć — telefon nie pyta strony, tylko od razu otwiera link. */}
+                <label className={cn("flex items-center gap-2.5 text-sm", statyczny && "hidden")}>
                   <Checkbox
                     checked={wybrany.aktywny}
                     onCheckedChange={(v) => zmienKod(wybrany.id, (k) => ({ ...k, aktywny: v }))}
@@ -802,14 +860,26 @@ export function KodyQrClient({
                       : undefined,
                   }}
                 >
-                  <QrSvg
-                    ref={svgRef}
-                    tekst={adresKodu(wybrany.slug)}
-                    wyglad={w}
-                    etykieta={`Kod QR: ${wybrany.nazwa}`}
-                    className="mx-auto block aspect-square w-full max-w-72"
-                  />
+                  {tekstWybranego ? (
+                    <QrSvg
+                      ref={svgRef}
+                      tekst={tekstWybranego}
+                      wyglad={w}
+                      etykieta={`Kod QR: ${wybrany.nazwa}`}
+                      className="mx-auto block aspect-square w-full max-w-72"
+                    />
+                  ) : (
+                    <p className="mx-auto flex aspect-square w-full max-w-72 items-center justify-center rounded-md border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+                      Wpisz poprawny link docelowy — kod statyczny zawiera sam link.
+                    </p>
+                  )}
                 </div>
+                {wzorZmieniony ? (
+                  <p className="flex gap-2 rounded-lg bg-muted p-3 text-xs">
+                    <TriangleAlert className="size-4 shrink-0" aria-hidden />
+                    Wzór kodu się zmienił. Wydrukowane wcześniej kody tego wpisu nadal prowadzą pod stary adres — wydrukuj nowy.
+                  </p>
+                ) : null}
                 {niezapisany ? (
                   <p className="flex gap-2 rounded-lg bg-muted p-3 text-xs">
                     <QrCode className="size-4 shrink-0" aria-hidden />
@@ -855,6 +925,7 @@ export function KodyQrClient({
                         variant={i === 0 ? "default" : "outline"}
                         className="gap-1.5"
                         aria-label={`Pobierz ${format.etykieta} ${rozmiarPng} px`}
+                        disabled={!tekstWybranego}
                         onClick={() => {
                           if (!svgRef.current) return;
                           void pobierzObraz(svgRef.current, rozmiarPng, nazwaPliku(wybrany.nazwa), format).catch(
@@ -877,6 +948,7 @@ export function KodyQrClient({
                     type="button"
                     variant="outline"
                     className="w-full gap-1.5"
+                    disabled={!tekstWybranego}
                     onClick={() => {
                       if (!svgRef.current) return;
                       const url = URL.createObjectURL(

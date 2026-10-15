@@ -136,6 +136,9 @@ function ostrzezenia(w: WygladQr): string[] {
   if (w.margines < 2) {
     lista.push("Margines poniżej 2 modułów utrudnia skanowanie — zostaw wolne miejsce wokół kodu.");
   }
+  if (w.logo && !w.tloLogo) {
+    lista.push("Bez podkładu moduły prześwitują przez logo — kod może gorzej się skanować. Włącz podkład pod logo.");
+  }
   const srodek = srodekEfektywny(w);
   if (OZDOBNE_MODULY.has(w.ksztaltModulow) || OZDOBNE_SRODKI.has(srodek)) {
     const nazwa = OZDOBNE_MODULY.has(w.ksztaltModulow)
@@ -148,12 +151,16 @@ function ostrzezenia(w: WygladQr): string[] {
   return lista;
 }
 
-/** Plik z dysku → PNG/WebP w data-URL, zmniejszony do max 512 px (limit rozmiaru bloba). */
-async function wczytajLogo(plik: File): Promise<string> {
+/**
+ * Plik z dysku → PNG/WebP w data-URL, zmniejszony do max 512 px (limit rozmiaru bloba),
+ * plus szerokość/wysokość pliku — od niej startuje suwak proporcji.
+ */
+async function wczytajLogo(plik: File): Promise<{ dane: string; stosunek: number }> {
   if (!["image/png", "image/jpeg", "image/webp"].includes(plik.type)) {
     throw new Error("Logo musi być plikiem PNG, JPG albo WebP.");
   }
   const bitmapa = await createImageBitmap(plik);
+  const stosunek = Math.min(10, Math.max(0.1, bitmapa.width / bitmapa.height));
   for (const maks of [512, 384, 256]) {
     const skala = Math.min(1, maks / Math.max(bitmapa.width, bitmapa.height));
     const canvas = document.createElement("canvas");
@@ -163,9 +170,9 @@ async function wczytajLogo(plik: File): Promise<string> {
     if (!ctx) throw new Error("Przeglądarka nie obsługuje canvas.");
     ctx.drawImage(bitmapa, 0, 0, canvas.width, canvas.height);
     const png = canvas.toDataURL("image/png");
-    if (png.length < 350_000) return png;
+    if (png.length < 350_000) return { dane: png, stosunek };
     const webp = canvas.toDataURL("image/webp", 0.9);
-    if (webp.startsWith("data:image/webp") && webp.length < 350_000) return webp;
+    if (webp.startsWith("data:image/webp") && webp.length < 350_000) return { dane: webp, stosunek };
   }
   throw new Error("Logo jest zbyt szczegółowe — użyj prostszego pliku.");
 }
@@ -433,7 +440,15 @@ export function KodyQrClient({
     setBladLogo(null);
     if (!plik) return;
     try {
-      zmienWyglad({ logo: await wczytajLogo(plik) });
+      const wgrane = await wczytajLogo(plik);
+      // Nowy plik = nowe proporcje i bez obrotu/zaokrąglenia po poprzednim logo.
+      zmienWyglad({
+        logo: wgrane.dane,
+        logoOryginalne: wgrane.stosunek,
+        logoProporcje: undefined,
+        logoObrot: 0,
+        logoZaokraglenie: 0,
+      });
     } catch (e) {
       setBladLogo(e instanceof Error ? e.message : "Nie udało się wczytać logo.");
     } finally {
@@ -455,6 +470,8 @@ export function KodyQrClient({
   const w = wybrany?.wyglad;
   const statyczny = wybrany?.tryb === "statyczny";
   const tekstWybranego = wybrany ? tekstKodu(wybrany, adresBazowy) : null;
+  // Suwak proporcji startuje od proporcji wgranego pliku, żeby pierwszy ruch nie zniekształcał logo skokowo.
+  const proporcjeLogo = w ? (w.logoProporcje ?? w.logoOryginalne ?? 1) : 1;
   const uwagi = w ? ostrzezenia(w) : [];
   if (statyczny && tekstWybranego && tekstWybranego.length > 80) {
     uwagi.push("Długi link = gęsty kod. Drukuj go większy (min. ok. 3 × 3 cm) albo użyj kodu dynamicznego.");
@@ -811,7 +828,16 @@ export function KodyQrClient({
                       type="button"
                       variant="ghost"
                       className="gap-1.5 text-destructive hover:text-destructive"
-                      onClick={() => zmienWyglad({ logo: undefined })}
+                      onClick={() =>
+                        zmienWyglad({
+                          logo: undefined,
+                          logoOryginalne: undefined,
+                          logoProporcje: undefined,
+                          logoObrot: 0,
+                          logoZaokraglenie: 0,
+                          kolorTlaLogo: undefined,
+                        })
+                      }
                     >
                       <Trash2 className="size-4" aria-hidden /> Usuń logo
                     </Button>
@@ -837,14 +863,101 @@ export function KodyQrClient({
                         className="accent-primary"
                       />
                     </Field>
+                    <Field
+                      label={`Proporcje: ${proporcjeLogo.toFixed(2).replace(".", ",")} : 1`}
+                      hint="Szerokość do wysokości. Dłuższy bok logo nigdy nie przekracza ustawionej wielkości."
+                    >
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="range"
+                          min={40}
+                          max={250}
+                          value={Math.round(proporcjeLogo * 100)}
+                          onChange={(e) => zmienWyglad({ logoProporcje: Number(e.target.value) / 100 })}
+                          className="min-w-0 flex-1 accent-primary"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          disabled={w.logoProporcje === undefined}
+                          onClick={() => zmienWyglad({ logoProporcje: undefined })}
+                          aria-label="Przywróć oryginalne proporcje logo"
+                          title="Oryginalne proporcje"
+                        >
+                          <RotateCcw className="size-4" aria-hidden />
+                        </Button>
+                      </div>
+                    </Field>
+                    <Field
+                      label={`Obrót: ${w.logoObrot}°`}
+                      hint="Logo obraca się razem z podkładem. Przy mocnym obrocie jest automatycznie nieco mniejsze, żeby dziura w kodzie nie urosła."
+                    >
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="range"
+                          min={-180}
+                          max={180}
+                          step={5}
+                          value={w.logoObrot}
+                          onChange={(e) => zmienWyglad({ logoObrot: Number(e.target.value) })}
+                          className="min-w-0 flex-1 accent-primary"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          disabled={w.logoObrot === 0}
+                          onClick={() => zmienWyglad({ logoObrot: 0 })}
+                          aria-label="Wyzeruj obrót logo"
+                          title="Bez obrotu"
+                        >
+                          <RotateCcw className="size-4" aria-hidden />
+                        </Button>
+                      </div>
+                    </Field>
+                    <Field label={`Zaokrąglenie rogów: ${Math.round(w.logoZaokraglenie * 100)}%`}>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="range"
+                          min={0}
+                          max={100}
+                          value={Math.round(w.logoZaokraglenie * 100)}
+                          onChange={(e) => zmienWyglad({ logoZaokraglenie: Number(e.target.value) / 100 })}
+                          className="min-w-0 flex-1 accent-primary"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          disabled={w.logoZaokraglenie === 0}
+                          onClick={() => zmienWyglad({ logoZaokraglenie: 0 })}
+                          aria-label="Wyzeruj zaokrąglenie rogów logo"
+                          title="Ostre rogi"
+                        >
+                          <RotateCcw className="size-4" aria-hidden />
+                        </Button>
+                      </div>
+                    </Field>
                     <label className="flex items-center gap-2.5 text-sm">
                       <Checkbox
                         checked={w.tloLogo}
                         onCheckedChange={(v) => zmienWyglad({ tloLogo: v })}
-                        ariaLabel="Puste pole pod logo"
+                        ariaLabel="Podkład pod logo"
                       />
-                      Puste pole pod logo (zalecane — logo nie zlewa się z kodem)
+                      Podkład pod logo (zalecane — wycina moduły, logo nie zlewa się z kodem)
                     </label>
+                    <PoleKoloru
+                      label="Kolor podkładu"
+                      value={w.kolorTlaLogo ?? w.tlo}
+                      domyslny={w.tlo}
+                      disabled={!w.tloLogo}
+                      onChange={(kolor) => zmienWyglad({ kolorTlaLogo: kolor === w.tlo ? undefined : kolor })}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Kształt logo nie wpływa na skanowanie: wycięty obszar nigdy nie jest większy niż wynika z
+                      suwaka wielkości.
+                    </p>
                   </>
                 ) : null}
               </Fieldset>

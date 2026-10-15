@@ -84,8 +84,23 @@ export const wygladSchema = z.object({
   logo: logo.optional(),
   /** Bok logo jako ułamek boku kodu — powyżej ~0,3 kod przestaje się skanować. */
   rozmiarLogo: z.number().min(0.1).max(0.3).default(0.22),
-  /** Białe pole pod logo (wycina moduły), żeby logo nie zlewało się z kodem. */
+  /** Podkład pod logo (wycina moduły), żeby logo nie zlewało się z kodem. */
   tloLogo: z.boolean().default(true),
+  /**
+   * Kształt logo. Nic z poniższych nie zwiększa powierzchni wyciętej z kodu:
+   * podkład razem z obrotem i proporcjami mieści się w kwadracie wyznaczonym
+   * przez `rozmiarLogo` (większe logo jest skalowane w dół — patrz zbudujGeometrie).
+   */
+  /** Zaokrąglenie rogów logo i podkładu: 0 = ostre, 1 = pełne zaokrąglenie (koło przy kwadracie). */
+  logoZaokraglenie: z.number().min(0).max(1).default(0),
+  /** Szerokość / wysokość logo. Brak = kwadrat z oryginalnymi proporcjami obrazu. */
+  logoProporcje: z.number().min(0.4).max(2.5).optional(),
+  /** Szerokość / wysokość wgranego pliku — punkt startowy suwaka proporcji. */
+  logoOryginalne: z.number().min(0.1).max(10).optional(),
+  /** Obrót logo w stopniach (podkład obraca się razem z nim). */
+  logoObrot: z.number().int().min(-180).max(180).default(0),
+  /** Kolor podkładu pod logo. Brak = kolor tła kodu. */
+  kolorTlaLogo: kolor.optional(),
 });
 
 export type WygladQr = z.infer<typeof wygladSchema>;

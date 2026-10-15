@@ -257,14 +257,60 @@ export function korekcjaEfektywna(w: WygladQr): WygladQr["korekcja"] {
   return w.logo ? "H" : w.korekcja;
 }
 
+/** Logo w układzie SVG (jednostka = moduł kodu, już z marginesem). */
+export type LogoGeometria = {
+  cx: number;
+  cy: number;
+  /** Wymiary obrazu przed obrotem. */
+  w: number;
+  h: number;
+  /** Promień zaokrąglenia obrazu. */
+  rx: number;
+  /** Obrót w stopniach wokół środka. */
+  obrot: number;
+  /** Proporcje ustawione ręcznie → obraz wypełnia cały prostokąt; inaczej mieści się w kwadracie. */
+  rozciagnij: boolean;
+  /** Podkład (null = bez podkładu, moduły nie są wycinane). */
+  podklad: { w: number; h: number; rx: number } | null;
+};
+
 export type GeometriaQr = {
   bok: number;
   moduly: string;
   ramki: string;
   srodki: string;
-  logo: { start: number; bok: number } | null;
-  pole: { start: number; bok: number } | null;
+  logo: LogoGeometria | null;
 };
+
+/**
+ * Wymiary logo i podkładu z ustawień. Gwarancja czytelności: obwiednia
+ * podkładu (po obrocie i zmianie proporcji) NIGDY nie przekracza kwadratu
+ * o boku `bok + 1` modułów — tyle, ile zajmował podkład przed dodaniem tych
+ * opcji i ile sprawdziliśmy testem odczytu. Gdy kształt się nie mieści,
+ * całość jest skalowana w dół, a nie powiększa dziury w kodzie.
+ */
+function wymiaryLogo(n: number, w: WygladQr) {
+  const bok = Math.round(n * w.rozmiarLogo);
+  const p = w.logoProporcje ?? 1;
+  let lw = p >= 1 ? bok : bok * p;
+  let lh = p >= 1 ? bok / p : bok;
+  const kat = (w.logoObrot * Math.PI) / 180;
+  const c = Math.abs(Math.cos(kat));
+  const s = Math.abs(Math.sin(kat));
+  const luz = 1; // pół modułu podkładu z każdej strony
+  let pw = lw + luz;
+  let ph = lh + luz;
+  let bw = pw * c + ph * s;
+  let bh = pw * s + ph * c;
+  const skala = Math.min(1, (bok + luz) / Math.max(bw, bh));
+  lw *= skala;
+  lh *= skala;
+  pw *= skala;
+  ph *= skala;
+  bw *= skala;
+  bh *= skala;
+  return { lw, lh, pw, ph, bw, bh };
+}
 
 export function zbudujGeometrie(tekst: string, w: WygladQr): GeometriaQr {
   const qr = create(tekst, { errorCorrectionLevel: korekcjaEfektywna(w) });
@@ -281,12 +327,14 @@ export function zbudujGeometrie(tekst: string, w: WygladQr): GeometriaQr {
   const wOczku = (x: number, y: number) =>
     oczka.some(([ex, ey]) => x >= ex && x < ex + 7 && y >= ey && y < ey + 7);
 
-  // Pole logo w modułach (z marginesem pół modułu).
-  const bokLogo = w.logo ? Math.round(n * w.rozmiarLogo) : 0;
-  const pole = w.logo && w.tloLogo ? bokLogo + 1 : 0;
-  const startPola = (n - pole) / 2;
+  // Logo: wymiary po obrocie/proporcjach; moduły pod podkładem są wycinane
+  // (każdy moduł dotykający obwiedni podkładu znika w całości).
+  const wym = w.logo ? wymiaryLogo(n, w) : null;
+  const wycinaj = Boolean(wym && w.tloLogo);
+  const lewo = wym ? (n - wym.bw) / 2 : 0;
+  const gora = wym ? (n - wym.bh) / 2 : 0;
   const wPolu = (x: number, y: number) =>
-    pole > 0 && x + 1 > startPola && x < startPola + pole && y + 1 > startPola && y < startPola + pole;
+    wycinaj && wym !== null && x + 1 > lewo && x < lewo + wym.bw && y + 1 > gora && y < gora + wym.bh;
 
   const widoczny = (x: number, y: number) => ciemny(x, y) && !wOczku(x, y) && !wPolu(x, y);
   const srodek = srodekEfektywny(w);
@@ -303,8 +351,24 @@ export function zbudujGeometrie(tekst: string, w: WygladQr): GeometriaQr {
     moduly: sciezkaModulow(widoczny, n, m, w.ksztaltModulow),
     ramki,
     srodki,
-    logo: bokLogo > 0 ? { start: (n - bokLogo) / 2 + m, bok: bokLogo } : null,
-    pole: pole > 0 ? { start: startPola + m, bok: pole } : null,
+    logo: wym
+      ? {
+          cx: n / 2 + m,
+          cy: n / 2 + m,
+          w: wym.lw,
+          h: wym.lh,
+          rx: (w.logoZaokraglenie * Math.min(wym.lw, wym.lh)) / 2,
+          obrot: w.logoObrot,
+          rozciagnij: w.logoProporcje !== undefined,
+          podklad: w.tloLogo
+            ? {
+                w: wym.pw,
+                h: wym.ph,
+                rx: Math.min(Math.max(0.6, (w.logoZaokraglenie * Math.min(wym.pw, wym.ph)) / 2), Math.min(wym.pw, wym.ph) / 2),
+              }
+            : null,
+        }
+      : null,
   };
 }
 

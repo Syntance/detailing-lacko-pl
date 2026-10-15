@@ -23,8 +23,12 @@ export const QrSvg = forwardRef<SVGSVGElement, QrSvgProps>(function QrSvg(
   const geometria = useMemo(() => zbudujGeometrie(tekst, wyglad), [tekst, wyglad]);
   // Unikalne id gradientu — na stronie jest wiele miniatur naraz.
   const idGradientu = `qr-g-${useId().replace(/[^a-zA-Z0-9-]/g, "")}`;
-  const { bok } = geometria;
+  const idKlipu = `${idGradientu}-logo`;
+  const { bok, logo } = geometria;
   const zGradientem = wyglad.gradient !== "brak";
+  // Podkład: wybrany kolor, a bez niego kolor tła kodu (przy przezroczystym tle — bez podkładu,
+  // moduły pod logo i tak są wycięte).
+  const kolorPodkladu = wyglad.kolorTlaLogo ?? (wyglad.przezroczysteTlo ? null : wyglad.tlo);
 
   return (
     <svg
@@ -55,25 +59,31 @@ export const QrSvg = forwardRef<SVGSVGElement, QrSvgProps>(function QrSvg(
       <path d={geometria.moduly} fill={zGradientem ? `url(#${idGradientu})` : wyglad.kolor} />
       <path d={geometria.ramki} fill={wyglad.kolorOczek} fillRule="evenodd" />
       <path d={geometria.srodki} fill={wyglad.kolorOczek} />
-      {geometria.pole && !wyglad.przezroczysteTlo ? (
-        <rect
-          x={geometria.pole.start}
-          y={geometria.pole.start}
-          width={geometria.pole.bok}
-          height={geometria.pole.bok}
-          rx={0.6}
-          fill={wyglad.tlo}
-        />
-      ) : null}
-      {geometria.logo && wyglad.logo ? (
-        <image
-          href={wyglad.logo}
-          x={geometria.logo.start}
-          y={geometria.logo.start}
-          width={geometria.logo.bok}
-          height={geometria.logo.bok}
-          preserveAspectRatio="xMidYMid meet"
-        />
+      {logo && wyglad.logo ? (
+        <g transform={`rotate(${logo.obrot} ${logo.cx} ${logo.cy})`}>
+          {logo.podklad && kolorPodkladu ? (
+            <rect
+              x={logo.cx - logo.podklad.w / 2}
+              y={logo.cy - logo.podklad.h / 2}
+              width={logo.podklad.w}
+              height={logo.podklad.h}
+              rx={logo.podklad.rx}
+              fill={kolorPodkladu}
+            />
+          ) : null}
+          <clipPath id={idKlipu}>
+            <rect x={logo.cx - logo.w / 2} y={logo.cy - logo.h / 2} width={logo.w} height={logo.h} rx={logo.rx} />
+          </clipPath>
+          <image
+            href={wyglad.logo}
+            x={logo.cx - logo.w / 2}
+            y={logo.cy - logo.h / 2}
+            width={logo.w}
+            height={logo.h}
+            preserveAspectRatio={logo.rozciagnij ? "none" : "xMidYMid meet"}
+            clipPath={`url(#${idKlipu})`}
+          />
+        </g>
       ) : null}
     </svg>
   );

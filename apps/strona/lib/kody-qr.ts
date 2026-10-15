@@ -91,8 +91,15 @@ export const wygladSchema = z.object({
    * podkład razem z obrotem i proporcjami mieści się w kwadracie wyznaczonym
    * przez `rozmiarLogo` (większe logo jest skalowane w dół — patrz zbudujGeometrie).
    */
-  /** Zaokrąglenie rogów logo i podkładu: 0 = ostre, 1 = pełne zaokrąglenie (koło przy kwadracie). */
+  /** Zaokrąglenie wszystkich rogów logo naraz: 0 = ostre, 1 = pełne (koło przy kwadracie). Starszy zapis — `logoRogi` ma pierwszeństwo. */
   logoZaokraglenie: z.number().min(0).max(1).default(0),
+  /**
+   * Zaokrąglenie każdego rogu LOGO osobno: lewy górny, prawy górny, prawy dolny,
+   * lewy dolny (0–1, ułamek połowy krótszego boku). Brak = wszystkie jak `logoZaokraglenie`.
+   */
+  logoRogi: z
+    .tuple([z.number().min(0).max(1), z.number().min(0).max(1), z.number().min(0).max(1), z.number().min(0).max(1)])
+    .optional(),
   /** Szerokość / wysokość logo. Brak = kwadrat z oryginalnymi proporcjami obrazu. */
   logoProporcje: z.number().min(0.4).max(2.5).optional(),
   /** Szerokość / wysokość wgranego pliku — punkt startowy suwaka proporcji. */
@@ -104,7 +111,7 @@ export const wygladSchema = z.object({
   /**
    * Zaokrąglenie każdego rogu podkładu osobno: lewy górny, prawy górny, prawy dolny,
    * lewy dolny (0 = ostry, 1 = połowa krótszego boku). Rogi obracają się z logo.
-   * Brak = podkład zaokrągla się tak jak logo (`logoZaokraglenie`).
+   * Brak = podkład zaokrągla się tak jak logo (każdy róg jak odpowiedni róg logo).
    */
   podkladRogi: z
     .tuple([z.number().min(0).max(1), z.number().min(0).max(1), z.number().min(0).max(1), z.number().min(0).max(1)])

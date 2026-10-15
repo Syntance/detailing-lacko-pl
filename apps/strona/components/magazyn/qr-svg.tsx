@@ -74,7 +74,7 @@ export const QrSvg = forwardRef<SVGSVGElement, QrSvgProps>(function QrSvg(
             />
           ) : null}
           <clipPath id={idKlipu}>
-            <rect x={logo.cx - logo.w / 2} y={logo.cy - logo.h / 2} width={logo.w} height={logo.h} rx={logo.rx} />
+            <path d={prostokat(logo.cx - logo.w / 2, logo.cy - logo.h / 2, logo.w, logo.h, logo.rogi)} />
           </clipPath>
           <image
             href={wyglad.logo}

@@ -264,8 +264,8 @@ export type LogoGeometria = {
   /** Wymiary obrazu przed obrotem. */
   w: number;
   h: number;
-  /** Promień zaokrąglenia obrazu. */
-  rx: number;
+  /** Promienie rogów obrazu: lewy górny, prawy górny, prawy dolny, lewy dolny. */
+  rogi: Rogi;
   /** Obrót w stopniach wokół środka. */
   obrot: number;
   /** Proporcje ustawione ręcznie → obraz wypełnia cały prostokąt; inaczej mieści się w kwadracie. */
@@ -312,22 +312,38 @@ function wymiaryLogo(n: number, w: WygladQr) {
   return { lw, lh, pw, ph, bw, bh };
 }
 
+// Zaokrąglenie do tysięcznych — inaczej w ścieżce SVG lądują liczby w rodzaju 0.7000000000000001.
+const zaokr = (r: number) => Math.round(r * 1000) / 1000;
+
+/** Ustawienia rogów logo (0–1): własne albo wszystkie jak `logoZaokraglenie`. */
+export function ustawieniaRogowLogo(w: WygladQr): Rogi {
+  return w.logoRogi ?? [w.logoZaokraglenie, w.logoZaokraglenie, w.logoZaokraglenie, w.logoZaokraglenie];
+}
+
 /**
- * Promienie rogów podkładu. Własne ustawienie rogu (0–1) to ułamek połowy krótszego
- * boku — więc nawet 100% na wszystkich czterech rogach nie wymaga przycinania
- * (sąsiednie promienie nigdy nie sumują się do więcej niż bok). Bez własnego
- * ustawienia podkład zaokrągla się jak logo, z minimum 0,6 modułu jak dotąd.
+ * Promienie rogów logo. Ustawienie rogu (0–1) to ułamek połowy krótszego boku —
+ * więc nawet 100% na wszystkich czterech rogach nie wymaga przycinania
+ * (sąsiednie promienie nigdy nie sumują się do więcej niż bok).
+ */
+function rogiLogo(w: WygladQr, lw: number, lh: number): Rogi {
+  const polowa = Math.min(lw, lh) / 2;
+  const [tl, tr, br, bl] = ustawieniaRogowLogo(w);
+  return [zaokr(tl * polowa), zaokr(tr * polowa), zaokr(br * polowa), zaokr(bl * polowa)];
+}
+
+/**
+ * Promienie rogów podkładu — jak wyżej. Bez własnego ustawienia każdy róg
+ * podkładu zaokrągla się jak odpowiedni róg logo, z minimum 0,6 modułu jak dotąd.
  */
 function rogiPodkladu(w: WygladQr, pw: number, ph: number): Rogi {
   const polowa = Math.min(pw, ph) / 2;
-  // Zaokrąglenie do tysięcznych — inaczej w ścieżce SVG lądują liczby w rodzaju 0.7000000000000001.
-  const zaokr = (r: number) => Math.round(r * 1000) / 1000;
   if (w.podkladRogi) {
     const [tl, tr, br, bl] = w.podkladRogi;
     return [zaokr(tl * polowa), zaokr(tr * polowa), zaokr(br * polowa), zaokr(bl * polowa)];
   }
-  const r = zaokr(Math.min(Math.max(0.6, w.logoZaokraglenie * polowa), polowa));
-  return [r, r, r, r];
+  const jakLogo = (v: number) => zaokr(Math.min(Math.max(0.6, v * polowa), polowa));
+  const [tl, tr, br, bl] = ustawieniaRogowLogo(w);
+  return [jakLogo(tl), jakLogo(tr), jakLogo(br), jakLogo(bl)];
 }
 
 export function zbudujGeometrie(tekst: string, w: WygladQr): GeometriaQr {
@@ -375,7 +391,7 @@ export function zbudujGeometrie(tekst: string, w: WygladQr): GeometriaQr {
           cy: n / 2 + m,
           w: wym.lw,
           h: wym.lh,
-          rx: (w.logoZaokraglenie * Math.min(wym.lw, wym.lh)) / 2,
+          rogi: rogiLogo(w, wym.lw, wym.lh),
           obrot: w.logoObrot,
           rozciagnij: w.logoProporcje !== undefined,
           podklad: w.tloLogo ? { w: wym.pw, h: wym.ph, rogi: rogiPodkladu(w, wym.pw, wym.ph) } : null,

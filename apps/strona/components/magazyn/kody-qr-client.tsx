@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type ReactNode } from "react";
+import { useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Input, PageHeader, cn } from "@moduly/ui";
 import {
@@ -29,7 +29,7 @@ import {
   type KodyQrData,
   type WygladQr,
 } from "@/lib/kody-qr";
-import { korekcjaEfektywna, srodekEfektywny } from "@/lib/qr-geometria";
+import { korekcjaEfektywna, srodekEfektywny, ustawieniaRogowLogo, type Rogi } from "@/lib/qr-geometria";
 import { useMagazynHistory } from "@/hooks/use-magazyn-history";
 import { Checkbox, Field, Fieldset, UndoRedoToolbar, putEditorData } from "./editor-ui";
 import {
@@ -43,8 +43,102 @@ import {
 } from "./qr-kafelki";
 import { QrSvg } from "./qr-svg";
 
-/** Kolejność jak w `podkladRogi`: lewy górny, prawy górny, prawy dolny, lewy dolny. */
-const ROGI_PODKLADU = ["Lewy górny", "Prawy górny", "Prawy dolny", "Lewy dolny"] as const;
+/** Kolejność jak w `logoRogi` i `podkladRogi`: lewy górny, prawy górny, prawy dolny, lewy dolny. */
+const ROGI_NAZWY = ["Lewy górny", "Prawy górny", "Prawy dolny", "Lewy dolny"] as const;
+
+/**
+ * Zaokrąglenie czterech rogów: suwak „wszystkie rogi", cztery suwaki osobno i
+ * podgląd kształtu (pole 56×40 px, promienie proporcjonalne do ustawień).
+ * Wspólny dla logo i podkładu — obie rzeczy mają dokładnie ten sam model.
+ */
+function BlokRogow({
+  tytul,
+  wartosci,
+  onChange,
+  onReset,
+  resetEtykieta,
+  resetWylaczony,
+  wylaczony = false,
+  podglad,
+  opis,
+}: {
+  tytul: string;
+  wartosci: Rogi;
+  onChange: (v: Rogi) => void;
+  onReset: () => void;
+  resetEtykieta: string;
+  resetWylaczony: boolean;
+  wylaczony?: boolean;
+  podglad: CSSProperties;
+  opis: string;
+}) {
+  const srednia = Math.round((wartosci.reduce((a, b) => a + b, 0) / 4) * 100);
+  return (
+    <div className={cn("space-y-3 rounded-lg border border-border p-3", wylaczony && "opacity-50")}>
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm font-medium">{tytul}</p>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="gap-1.5"
+          disabled={wylaczony || resetWylaczony}
+          onClick={onReset}
+        >
+          <RotateCcw className="size-4" aria-hidden /> {resetEtykieta}
+        </Button>
+      </div>
+      <div className="flex items-center gap-3">
+        <div
+          aria-hidden
+          className="h-10 w-14 shrink-0 border border-ink/40"
+          style={{ ...podglad, borderRadius: wartosci.map((r) => `${r * 20}px`).join(" ") }}
+        />
+        <label className="flex min-w-0 flex-1 flex-col gap-1 text-xs">
+          <span className="font-medium">
+            {tytul}, wszystkie rogi: {srednia}%
+          </span>
+          <input
+            type="range"
+            min={0}
+            max={100}
+            disabled={wylaczony}
+            value={srednia}
+            onChange={(e) => {
+              const v = Number(e.target.value) / 100;
+              onChange([v, v, v, v]);
+            }}
+            className="accent-primary"
+          />
+        </label>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        {ROGI_NAZWY.map((nazwa, i) => (
+          <label key={nazwa} className="flex flex-col gap-1 text-xs">
+            <span className="font-medium">
+              {nazwa}: {Math.round((wartosci[i] ?? 0) * 100)}%
+            </span>
+            <input
+              type="range"
+              min={0}
+              max={100}
+              disabled={wylaczony}
+              value={Math.round((wartosci[i] ?? 0) * 100)}
+              aria-label={`${tytul}: ${nazwa.toLowerCase()} róg`}
+              onChange={(e) => {
+                const kopia: Rogi = [...wartosci];
+                kopia[i] = Number(e.target.value) / 100;
+                onChange(kopia);
+              }}
+              className="accent-primary"
+            />
+          </label>
+        ))}
+      </div>
+      <p className="text-xs text-muted-foreground">{opis}</p>
+    </div>
+  );
+}
 
 const ETYKIETY_TRYBU: Record<TrybKodu, string> = {
   dynamiczny: "Dynamiczny",
@@ -451,6 +545,7 @@ export function KodyQrClient({
         logoProporcje: undefined,
         logoObrot: 0,
         logoZaokraglenie: 0,
+        logoRogi: undefined,
         podkladRogi: undefined,
       });
     } catch (e) {
@@ -476,10 +571,10 @@ export function KodyQrClient({
   const tekstWybranego = wybrany ? tekstKodu(wybrany, adresBazowy) : null;
   // Suwak proporcji startuje od proporcji wgranego pliku, żeby pierwszy ruch nie zniekształcał logo skokowo.
   const proporcjeLogo = w ? (w.logoProporcje ?? w.logoOryginalne ?? 1) : 1;
-  // Zaokrąglenie rogów podkładu do pokazania w suwakach: własne albo to samo co logo.
-  const rogiPodkladu: [number, number, number, number] = w
-    ? (w.podkladRogi ?? [w.logoZaokraglenie, w.logoZaokraglenie, w.logoZaokraglenie, w.logoZaokraglenie])
-    : [0, 0, 0, 0];
+  // Rogi do pokazania w suwakach: logo — własne albo wszystkie jak dotychczasowe zaokrąglenie;
+  // podkład — własne albo jak odpowiednie rogi logo.
+  const rogiLogo: Rogi = w ? ustawieniaRogowLogo(w) : [0, 0, 0, 0];
+  const rogiPodkladu: Rogi = w ? (w.podkladRogi ?? rogiLogo) : [0, 0, 0, 0];
   const uwagi = w ? ostrzezenia(w) : [];
   if (statyczny && tekstWybranego && tekstWybranego.length > 80) {
     uwagi.push("Długi link = gęsty kod. Drukuj go większy (min. ok. 3 × 3 cm) albo użyj kodu dynamicznego.");
@@ -843,6 +938,7 @@ export function KodyQrClient({
                           logoProporcje: undefined,
                           logoObrot: 0,
                           logoZaokraglenie: 0,
+                          logoRogi: undefined,
                           kolorTlaLogo: undefined,
                           podkladRogi: undefined,
                         })
@@ -925,29 +1021,16 @@ export function KodyQrClient({
                         </Button>
                       </div>
                     </Field>
-                    <Field label={`Zaokrąglenie rogów: ${Math.round(w.logoZaokraglenie * 100)}%`}>
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="range"
-                          min={0}
-                          max={100}
-                          value={Math.round(w.logoZaokraglenie * 100)}
-                          onChange={(e) => zmienWyglad({ logoZaokraglenie: Number(e.target.value) / 100 })}
-                          className="min-w-0 flex-1 accent-primary"
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          disabled={w.logoZaokraglenie === 0}
-                          onClick={() => zmienWyglad({ logoZaokraglenie: 0 })}
-                          aria-label="Wyzeruj zaokrąglenie rogów logo"
-                          title="Ostre rogi"
-                        >
-                          <RotateCcw className="size-4" aria-hidden />
-                        </Button>
-                      </div>
-                    </Field>
+                    <BlokRogow
+                      tytul="Rogi logo"
+                      wartosci={rogiLogo}
+                      onChange={(v) => zmienWyglad({ logoRogi: v })}
+                      onReset={() => zmienWyglad({ logoRogi: undefined, logoZaokraglenie: 0 })}
+                      resetEtykieta="Ostre rogi"
+                      resetWylaczony={w.logoRogi === undefined && w.logoZaokraglenie === 0}
+                      podglad={{ background: `url(${w.logo}) center / 100% 100% no-repeat` }}
+                      opis="Liczone od lewego górnego rogu zgodnie z ruchem wskazówek zegara; obracają się razem z logo."
+                    />
                     <label className="flex items-center gap-2.5 text-sm">
                       <Checkbox
                         checked={w.tloLogo}
@@ -963,75 +1046,17 @@ export function KodyQrClient({
                       disabled={!w.tloLogo}
                       onChange={(kolor) => zmienWyglad({ kolorTlaLogo: kolor === w.tlo ? undefined : kolor })}
                     />
-                    <div className={cn("space-y-3 rounded-lg border border-border p-3", !w.tloLogo && "opacity-50")}>
-                      <div className="flex items-center justify-between gap-3">
-                        <p className="text-sm font-medium">Rogi podkładu</p>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="gap-1.5"
-                          disabled={!w.tloLogo || w.podkladRogi === undefined}
-                          onClick={() => zmienWyglad({ podkladRogi: undefined })}
-                        >
-                          <RotateCcw className="size-4" aria-hidden /> Jak logo
-                        </Button>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        {/* Podgląd kształtu: promienie w px proporcjonalne do ustawień (pole 56×40 px). */}
-                        <div
-                          aria-hidden
-                          className="h-10 w-14 shrink-0 border border-ink/40"
-                          style={{
-                            background: w.kolorTlaLogo ?? w.tlo,
-                            borderRadius: rogiPodkladu.map((r) => `${r * 20}px`).join(" "),
-                          }}
-                        />
-                        <label className="flex min-w-0 flex-1 flex-col gap-1 text-xs">
-                          <span className="font-medium">
-                            Wszystkie rogi: {Math.round((rogiPodkladu.reduce((a, b) => a + b, 0) / 4) * 100)}%
-                          </span>
-                          <input
-                            type="range"
-                            min={0}
-                            max={100}
-                            disabled={!w.tloLogo}
-                            value={Math.round((rogiPodkladu.reduce((a, b) => a + b, 0) / 4) * 100)}
-                            onChange={(e) => {
-                              const v = Number(e.target.value) / 100;
-                              zmienWyglad({ podkladRogi: [v, v, v, v] });
-                            }}
-                            className="accent-primary"
-                          />
-                        </label>
-                      </div>
-                      <div className="grid gap-3 sm:grid-cols-2">
-                        {ROGI_PODKLADU.map((nazwa, i) => (
-                          <label key={nazwa} className="flex flex-col gap-1 text-xs">
-                            <span className="font-medium">
-                              {nazwa}: {Math.round((rogiPodkladu[i] ?? 0) * 100)}%
-                            </span>
-                            <input
-                              type="range"
-                              min={0}
-                              max={100}
-                              disabled={!w.tloLogo}
-                              value={Math.round((rogiPodkladu[i] ?? 0) * 100)}
-                              onChange={(e) => {
-                                const kopia: [number, number, number, number] = [...rogiPodkladu];
-                                kopia[i] = Number(e.target.value) / 100;
-                                zmienWyglad({ podkladRogi: kopia });
-                              }}
-                              className="accent-primary"
-                            />
-                          </label>
-                        ))}
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        Rogi liczone względem logo, więc obracają się razem z nim. Bez własnego ustawienia podkład
-                        zaokrągla się tak jak logo.
-                      </p>
-                    </div>
+                    <BlokRogow
+                      tytul="Rogi podkładu"
+                      wartosci={rogiPodkladu}
+                      onChange={(v) => zmienWyglad({ podkladRogi: v })}
+                      onReset={() => zmienWyglad({ podkladRogi: undefined })}
+                      resetEtykieta="Jak logo"
+                      resetWylaczony={w.podkladRogi === undefined}
+                      wylaczony={!w.tloLogo}
+                      podglad={{ background: w.kolorTlaLogo ?? w.tlo }}
+                      opis="Rogi liczone względem logo, więc obracają się razem z nim. Bez własnego ustawienia każdy róg podkładu zaokrągla się tak jak odpowiedni róg logo."
+                    />
                     <p className="text-xs text-muted-foreground">
                       Kształt logo i podkładu nie wpływa na skanowanie: wycięty obszar nigdy nie jest większy niż
                       wynika z suwaka wielkości.

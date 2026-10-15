@@ -2,7 +2,7 @@
 
 import { forwardRef, useId, useMemo } from "react";
 import type { WygladQr } from "@/lib/kody-qr";
-import { zbudujGeometrie } from "@/lib/qr-geometria";
+import { prostokat, zbudujGeometrie } from "@/lib/qr-geometria";
 
 export type QrSvgProps = {
   tekst: string;
@@ -62,12 +62,14 @@ export const QrSvg = forwardRef<SVGSVGElement, QrSvgProps>(function QrSvg(
       {logo && wyglad.logo ? (
         <g transform={`rotate(${logo.obrot} ${logo.cx} ${logo.cy})`}>
           {logo.podklad && kolorPodkladu ? (
-            <rect
-              x={logo.cx - logo.podklad.w / 2}
-              y={logo.cy - logo.podklad.h / 2}
-              width={logo.podklad.w}
-              height={logo.podklad.h}
-              rx={logo.podklad.rx}
+            <path
+              d={prostokat(
+                logo.cx - logo.podklad.w / 2,
+                logo.cy - logo.podklad.h / 2,
+                logo.podklad.w,
+                logo.podklad.h,
+                logo.podklad.rogi,
+              )}
               fill={kolorPodkladu}
             />
           ) : null}

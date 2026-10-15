@@ -43,6 +43,9 @@ import {
 } from "./qr-kafelki";
 import { QrSvg } from "./qr-svg";
 
+/** Kolejność jak w `podkladRogi`: lewy górny, prawy górny, prawy dolny, lewy dolny. */
+const ROGI_PODKLADU = ["Lewy górny", "Prawy górny", "Prawy dolny", "Lewy dolny"] as const;
+
 const ETYKIETY_TRYBU: Record<TrybKodu, string> = {
   dynamiczny: "Dynamiczny",
   statyczny: "Statyczny",
@@ -448,6 +451,7 @@ export function KodyQrClient({
         logoProporcje: undefined,
         logoObrot: 0,
         logoZaokraglenie: 0,
+        podkladRogi: undefined,
       });
     } catch (e) {
       setBladLogo(e instanceof Error ? e.message : "Nie udało się wczytać logo.");
@@ -472,6 +476,10 @@ export function KodyQrClient({
   const tekstWybranego = wybrany ? tekstKodu(wybrany, adresBazowy) : null;
   // Suwak proporcji startuje od proporcji wgranego pliku, żeby pierwszy ruch nie zniekształcał logo skokowo.
   const proporcjeLogo = w ? (w.logoProporcje ?? w.logoOryginalne ?? 1) : 1;
+  // Zaokrąglenie rogów podkładu do pokazania w suwakach: własne albo to samo co logo.
+  const rogiPodkladu: [number, number, number, number] = w
+    ? (w.podkladRogi ?? [w.logoZaokraglenie, w.logoZaokraglenie, w.logoZaokraglenie, w.logoZaokraglenie])
+    : [0, 0, 0, 0];
   const uwagi = w ? ostrzezenia(w) : [];
   if (statyczny && tekstWybranego && tekstWybranego.length > 80) {
     uwagi.push("Długi link = gęsty kod. Drukuj go większy (min. ok. 3 × 3 cm) albo użyj kodu dynamicznego.");
@@ -836,6 +844,7 @@ export function KodyQrClient({
                           logoObrot: 0,
                           logoZaokraglenie: 0,
                           kolorTlaLogo: undefined,
+                          podkladRogi: undefined,
                         })
                       }
                     >
@@ -954,9 +963,78 @@ export function KodyQrClient({
                       disabled={!w.tloLogo}
                       onChange={(kolor) => zmienWyglad({ kolorTlaLogo: kolor === w.tlo ? undefined : kolor })}
                     />
+                    <div className={cn("space-y-3 rounded-lg border border-border p-3", !w.tloLogo && "opacity-50")}>
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-sm font-medium">Rogi podkładu</p>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="gap-1.5"
+                          disabled={!w.tloLogo || w.podkladRogi === undefined}
+                          onClick={() => zmienWyglad({ podkladRogi: undefined })}
+                        >
+                          <RotateCcw className="size-4" aria-hidden /> Jak logo
+                        </Button>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        {/* Podgląd kształtu: promienie w px proporcjonalne do ustawień (pole 56×40 px). */}
+                        <div
+                          aria-hidden
+                          className="h-10 w-14 shrink-0 border border-ink/40"
+                          style={{
+                            background: w.kolorTlaLogo ?? w.tlo,
+                            borderRadius: rogiPodkladu.map((r) => `${r * 20}px`).join(" "),
+                          }}
+                        />
+                        <label className="flex min-w-0 flex-1 flex-col gap-1 text-xs">
+                          <span className="font-medium">
+                            Wszystkie rogi: {Math.round((rogiPodkladu.reduce((a, b) => a + b, 0) / 4) * 100)}%
+                          </span>
+                          <input
+                            type="range"
+                            min={0}
+                            max={100}
+                            disabled={!w.tloLogo}
+                            value={Math.round((rogiPodkladu.reduce((a, b) => a + b, 0) / 4) * 100)}
+                            onChange={(e) => {
+                              const v = Number(e.target.value) / 100;
+                              zmienWyglad({ podkladRogi: [v, v, v, v] });
+                            }}
+                            className="accent-primary"
+                          />
+                        </label>
+                      </div>
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        {ROGI_PODKLADU.map((nazwa, i) => (
+                          <label key={nazwa} className="flex flex-col gap-1 text-xs">
+                            <span className="font-medium">
+                              {nazwa}: {Math.round((rogiPodkladu[i] ?? 0) * 100)}%
+                            </span>
+                            <input
+                              type="range"
+                              min={0}
+                              max={100}
+                              disabled={!w.tloLogo}
+                              value={Math.round((rogiPodkladu[i] ?? 0) * 100)}
+                              onChange={(e) => {
+                                const kopia: [number, number, number, number] = [...rogiPodkladu];
+                                kopia[i] = Number(e.target.value) / 100;
+                                zmienWyglad({ podkladRogi: kopia });
+                              }}
+                              className="accent-primary"
+                            />
+                          </label>
+                        ))}
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Rogi liczone względem logo, więc obracają się razem z nim. Bez własnego ustawienia podkład
+                        zaokrągla się tak jak logo.
+                      </p>
+                    </div>
                     <p className="text-xs text-muted-foreground">
-                      Kształt logo nie wpływa na skanowanie: wycięty obszar nigdy nie jest większy niż wynika z
-                      suwaka wielkości.
+                      Kształt logo i podkładu nie wpływa na skanowanie: wycięty obszar nigdy nie jest większy niż
+                      wynika z suwaka wielkości.
                     </p>
                   </>
                 ) : null}

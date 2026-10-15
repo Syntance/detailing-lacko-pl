@@ -13,7 +13,7 @@ export type KsztaltModulu = WygladQr["ksztaltModulow"];
 export type KsztaltOczka = WygladQr["ksztaltOczek"];
 export type KsztaltSrodka = NonNullable<WygladQr["ksztaltSrodka"]>;
 
-type Rogi = [number, number, number, number];
+export type Rogi = [number, number, number, number];
 type Sasiedzi = { g: boolean; d: boolean; l: boolean; p: boolean };
 
 const f = (n: number) => Math.round(n * 1000) / 1000;
@@ -270,8 +270,8 @@ export type LogoGeometria = {
   obrot: number;
   /** Proporcje ustawione ręcznie → obraz wypełnia cały prostokąt; inaczej mieści się w kwadracie. */
   rozciagnij: boolean;
-  /** Podkład (null = bez podkładu, moduły nie są wycinane). */
-  podklad: { w: number; h: number; rx: number } | null;
+  /** Podkład (null = bez podkładu, moduły nie są wycinane); `rogi` = promienie TL, TR, BR, BL. */
+  podklad: { w: number; h: number; rogi: Rogi } | null;
 };
 
 export type GeometriaQr = {
@@ -310,6 +310,24 @@ function wymiaryLogo(n: number, w: WygladQr) {
   bw *= skala;
   bh *= skala;
   return { lw, lh, pw, ph, bw, bh };
+}
+
+/**
+ * Promienie rogów podkładu. Własne ustawienie rogu (0–1) to ułamek połowy krótszego
+ * boku — więc nawet 100% na wszystkich czterech rogach nie wymaga przycinania
+ * (sąsiednie promienie nigdy nie sumują się do więcej niż bok). Bez własnego
+ * ustawienia podkład zaokrągla się jak logo, z minimum 0,6 modułu jak dotąd.
+ */
+function rogiPodkladu(w: WygladQr, pw: number, ph: number): Rogi {
+  const polowa = Math.min(pw, ph) / 2;
+  // Zaokrąglenie do tysięcznych — inaczej w ścieżce SVG lądują liczby w rodzaju 0.7000000000000001.
+  const zaokr = (r: number) => Math.round(r * 1000) / 1000;
+  if (w.podkladRogi) {
+    const [tl, tr, br, bl] = w.podkladRogi;
+    return [zaokr(tl * polowa), zaokr(tr * polowa), zaokr(br * polowa), zaokr(bl * polowa)];
+  }
+  const r = zaokr(Math.min(Math.max(0.6, w.logoZaokraglenie * polowa), polowa));
+  return [r, r, r, r];
 }
 
 export function zbudujGeometrie(tekst: string, w: WygladQr): GeometriaQr {
@@ -360,13 +378,7 @@ export function zbudujGeometrie(tekst: string, w: WygladQr): GeometriaQr {
           rx: (w.logoZaokraglenie * Math.min(wym.lw, wym.lh)) / 2,
           obrot: w.logoObrot,
           rozciagnij: w.logoProporcje !== undefined,
-          podklad: w.tloLogo
-            ? {
-                w: wym.pw,
-                h: wym.ph,
-                rx: Math.min(Math.max(0.6, (w.logoZaokraglenie * Math.min(wym.pw, wym.ph)) / 2), Math.min(wym.pw, wym.ph) / 2),
-              }
-            : null,
+          podklad: w.tloLogo ? { w: wym.pw, h: wym.ph, rogi: rogiPodkladu(w, wym.pw, wym.ph) } : null,
         }
       : null,
   };

@@ -101,6 +101,14 @@ export const wygladSchema = z.object({
   logoObrot: z.number().int().min(-180).max(180).default(0),
   /** Kolor podkładu pod logo. Brak = kolor tła kodu. */
   kolorTlaLogo: kolor.optional(),
+  /**
+   * Zaokrąglenie każdego rogu podkładu osobno: lewy górny, prawy górny, prawy dolny,
+   * lewy dolny (0 = ostry, 1 = połowa krótszego boku). Rogi obracają się z logo.
+   * Brak = podkład zaokrągla się tak jak logo (`logoZaokraglenie`).
+   */
+  podkladRogi: z
+    .tuple([z.number().min(0).max(1), z.number().min(0).max(1), z.number().min(0).max(1), z.number().min(0).max(1)])
+    .optional(),
 });
 
 export type WygladQr = z.infer<typeof wygladSchema>;
